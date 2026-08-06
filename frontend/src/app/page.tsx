@@ -551,6 +551,33 @@ export default function Home() {
           setCurrentWaypointIndex(pathIdx);
         }
 
+        // 3b. Check Maze Pit Hazard Tile Logic (Fell into pit -> triggers failure animation and sends back to START)
+        if (currentWpNew.type === 'pit') {
+          soundManager.playError();
+          const newFailCount = levelFailCount + 1;
+          setLevelFailCount(newFailCount);
+
+          if (newFailCount <= 3) {
+            setLoadingSpriteSrc('/monkey17.svg');
+            setSpeechBubble('Fell into Maze Pit! (Try again)');
+          } else {
+            setLoadingSpriteSrc('/monkey14.svg');
+            setSpeechBubble('Fell into Maze Pit! Returning to START!');
+          }
+
+          setIsGlobalLoading(true);
+          setIsZoomingQuickly(true);
+          await new Promise(res => setTimeout(res, 1850));
+          setIsZoomingQuickly(false);
+          setIsGlobalLoading(false);
+          setLoadingSpriteSrc('/monkey1.svg');
+
+          setIsRunning(false);
+          setActiveStepIndex(null);
+          handleReturnToStartPos();
+          return;
+        }
+
         // 4. Check Finish Pipe Goal - Flag goal reached on current step
         if (currentWpNew.type === 'goal' || pathIdx === waypoints.length - 1) {
           setSpeechBubble('Reached Goal Pipe!');

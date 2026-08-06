@@ -519,6 +519,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   </div>
                 )}
 
+                {/* 6. Maze Pit Hazard Tile (maze_pit.svg) */}
+                {wp.type === 'pit' && (
+                  <div className="w-10 h-10 relative flex items-center justify-center filter drop-shadow-lg animate-pulse">
+                    <Image src="/maze_pit.svg" alt="Maze Pit" fill className="object-contain" />
+                  </div>
+                )}
+
                 {/* 6. Normal Path Badge - Only visible during Track Mapper calibration */}
                 {wp.type === 'normal' && calibrationMode && (
                   <div className="w-6 h-6 rounded-full bg-emerald-400 border-2 border-slate-950 text-slate-950 font-mono font-black text-[10px] flex items-center justify-center shadow-lg">
