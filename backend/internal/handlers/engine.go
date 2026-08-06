@@ -56,21 +56,10 @@ func (h *Handler) HandshakeHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if h.DB == nil {
-		// Fallback for offline/no-DB mode
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{
-			"success": true,
-			"source":  "fallback",
-			"user": database.User{
-				ID:         1,
-				Username:   req.Username,
-				Role:       req.Role,
-				GroupID:    1,
-				GroupName:  req.GroupName,
-				Avatar:     req.Avatar,
-				TotalXP:    req.InitialXP,
-				TotalStars: 3,
-			},
+			"success": false,
+			"error":   "Database connection unavailable",
 		})
 		return
 	}
@@ -145,25 +134,32 @@ func (h *Handler) EventHandler(w http.ResponseWriter, r *http.Request) {
 		req.UserID = 1
 	}
 
-	if h.DB != nil {
-		ctx := r.Context()
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
+	}
 
-		// Upsert User Progress for Level
-		_, err := h.DB.ExecContext(ctx, `
-			INSERT INTO user_progress (user_id, level_number, stars, score, completed)
-			VALUES (?, ?, ?, ?, TRUE)
-			ON DUPLICATE KEY UPDATE stars = GREATEST(stars, VALUES(stars)), score = GREATEST(score, VALUES(score)), completed = TRUE
-		`, req.UserID, req.LevelNumber, req.Stars, req.Score)
+	ctx := r.Context()
 
-		if err == nil {
-			// Update User Total XP & Total Stars
-			_, _ = h.DB.ExecContext(ctx, `
-				UPDATE users SET 
-					total_xp = total_xp + ?,
-					total_stars = (SELECT COALESCE(SUM(stars), 0) FROM user_progress WHERE user_id = ?)
-				WHERE id = ?
-			`, req.XPEarned, req.UserID, req.UserID)
-		}
+	// Upsert User Progress for Level
+	_, err := h.DB.ExecContext(ctx, `
+		INSERT INTO user_progress (user_id, level_number, stars, score, completed)
+		VALUES (?, ?, ?, ?, TRUE)
+		ON DUPLICATE KEY UPDATE stars = GREATEST(stars, VALUES(stars)), score = GREATEST(score, VALUES(score)), completed = TRUE
+	`, req.UserID, req.LevelNumber, req.Stars, req.Score)
+
+	if err == nil {
+		// Update User Total XP & Total Stars
+		_, _ = h.DB.ExecContext(ctx, `
+			UPDATE users SET 
+				total_xp = total_xp + ?,
+				total_stars = (SELECT COALESCE(SUM(stars), 0) FROM user_progress WHERE user_id = ?)
+			WHERE id = ?
+		`, req.XPEarned, req.UserID, req.UserID)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -173,7 +169,7 @@ func (h *Handler) EventHandler(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetLeaderboardHandler returns group-ranked leaderboard members
+// GetLeaderboardHandler returns group-ranked leaderboard members directly from database
 func (h *Handler) GetLeaderboardHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -185,82 +181,68 @@ func (h *Handler) GetLeaderboardHandler(w http.ResponseWriter, r *http.Request) 
 		}
 	}
 
-	if h.DB != nil {
-		rows, err := h.DB.QueryContext(r.Context(), `
-			SELECT u.id, u.username, u.role, u.group_id, g.name, u.avatar, u.total_xp, u.total_stars
-			FROM users u
-			LEFT JOIN groups g ON u.group_id = g.id
-			WHERE u.group_id = ?
-			ORDER BY u.total_xp DESC, u.total_stars DESC
-			LIMIT 25
-		`, groupID)
-
-		if err == nil {
-			defer rows.Close()
-			var members []database.User
-			for rows.Next() {
-				var u database.User
-				var gName *string
-				if err := rows.Scan(&u.ID, &u.Username, &u.Role, &u.GroupID, &gName, &u.Avatar, &u.TotalXP, &u.TotalStars); err == nil {
-					if gName != nil {
-						u.GroupName = *gName
-					}
-					members = append(members, u)
-				}
-			}
-
-			if len(members) > 0 {
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(map[string]interface{}{
-					"success":  true,
-					"group_id": groupID,
-					"members":  members,
-				})
-				return
-			}
-		}
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
 	}
 
-	// Fallback mock leaderboard for offline mode
-	fallbackMembers := []database.User{
-		{ID: 1, Username: "Admin_Explorer", Role: "admin", GroupID: groupID, GroupName: "Jungle Explorers Group A", Avatar: "/monkey1.svg", TotalXP: 1450, TotalStars: 18},
-		{ID: 2, Username: "Alex_Master", Role: "user", GroupID: groupID, GroupName: "Jungle Explorers Group A", Avatar: "/monkey2.svg", TotalXP: 1250, TotalStars: 15},
-		{ID: 3, Username: "Monkey_Coder", Role: "user", GroupID: groupID, GroupName: "Jungle Explorers Group A", Avatar: "/monkey3.svg", TotalXP: 980, TotalStars: 12},
-		{ID: 4, Username: "CodeNinja_99", Role: "user", GroupID: groupID, GroupName: "Jungle Explorers Group A", Avatar: "/monkey4.svg", TotalXP: 870, TotalStars: 9},
-		{ID: 5, Username: "PixelQuest", Role: "user", GroupID: groupID, GroupName: "Jungle Explorers Group A", Avatar: "/monkey5.svg", TotalXP: 620, TotalStars: 6},
+	rows, err := h.DB.QueryContext(r.Context(), `
+		SELECT u.id, u.username, u.role, u.group_id, g.name, u.avatar, u.total_xp, u.total_stars
+		FROM users u
+		LEFT JOIN groups g ON u.group_id = g.id
+		WHERE u.group_id = ?
+		ORDER BY u.total_xp DESC, u.total_stars DESC
+		LIMIT 25
+	`, groupID)
+
+	var members []database.User = make([]database.User, 0)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var u database.User
+			var gName *string
+			if err := rows.Scan(&u.ID, &u.Username, &u.Role, &u.GroupID, &gName, &u.Avatar, &u.TotalXP, &u.TotalStars); err == nil {
+				if gName != nil {
+					u.GroupName = *gName
+				}
+				members = append(members, u)
+			}
+		}
 	}
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
 		"group_id": groupID,
-		"members":  fallbackMembers,
+		"members":  members,
 	})
 }
 
-// GetGroupsHandler lists available groups
+// GetGroupsHandler lists available groups directly from database
 func (h *Handler) GetGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	groups := []database.Group{
-		{ID: 1, Name: "Jungle Explorers Group A", Code: "jungle-explorers-a"},
-		{ID: 2, Name: "Code Academy Group B", Code: "code-academy-b"},
-		{ID: 3, Name: "Scratch Masters Group C", Code: "scratch-masters-c"},
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
 	}
 
-	if h.DB != nil {
-		rows, err := h.DB.QueryContext(r.Context(), "SELECT id, name, code FROM groups ORDER BY id ASC")
-		if err == nil {
-			defer rows.Close()
-			var dbGroups []database.Group
-			for rows.Next() {
-				var g database.Group
-				if err := rows.Scan(&g.ID, &g.Name, &g.Code); err == nil {
-					dbGroups = append(dbGroups, g)
-				}
-			}
-			if len(dbGroups) > 0 {
-				groups = dbGroups
+	var groups []database.Group = make([]database.Group, 0)
+	rows, err := h.DB.QueryContext(r.Context(), "SELECT id, name, code FROM groups ORDER BY id ASC")
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var g database.Group
+			if err := rows.Scan(&g.ID, &g.Name, &g.Code); err == nil {
+				groups = append(groups, g)
 			}
 		}
 	}

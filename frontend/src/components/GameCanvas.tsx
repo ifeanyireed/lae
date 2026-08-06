@@ -17,6 +17,7 @@ import {
 import { LevelConfig, PathWaypoint } from '@/types/game';
 import { BoardCharacterSprite } from '@/components/BoardCharacterSprite';
 import { soundManager } from '@/utils/sound';
+import { API_BASE_URL } from '@/utils/api';
 
 interface GameCanvasProps {
   level: LevelConfig;
@@ -260,7 +261,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     if (onUpdateWaypoints) onUpdateWaypoints(liveWaypoints);
 
     try {
-      const res = await fetch(`http://localhost:8080/api/v1/levels/${level.levelNumber}/waypoints`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/levels/${level.levelNumber}/waypoints`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

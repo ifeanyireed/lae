@@ -8,6 +8,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
+import { API_BASE_URL } from '@/utils/api';
 
 interface CustomizerLeaderboardProps {
   onClose: () => void;
@@ -20,16 +21,10 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
   groupId = 1,
   groupName = 'Jungle Explorers Group A',
 }) => {
-  const [leaderboards, setLeaderboards] = React.useState<Array<{ rank: number; name: string; score: number; avatar: string; badge: string }>>([
-    { rank: 1, name: 'Admin_Explorer', score: 1450, avatar: '/monkey1.svg', badge: 'CHAMPION' },
-    { rank: 2, name: 'Alex_Master', score: 1250, avatar: '/monkey2.svg', badge: 'PRO' },
-    { rank: 3, name: 'Monkey_Coder', score: 980, avatar: '/monkey3.svg', badge: 'STAR' },
-    { rank: 4, name: 'CodeNinja_99', score: 870, avatar: '/monkey4.svg', badge: 'EXPERT' },
-    { rank: 5, name: 'PixelQuest', score: 620, avatar: '/monkey5.svg', badge: 'ROOKIE' },
-  ]);
+  const [leaderboards, setLeaderboards] = React.useState<Array<{ rank: number; name: string; score: number; avatar: string; badge: string }>>([]);
 
   React.useEffect(() => {
-    fetch(`http://localhost:8080/api/v1/leaderboard?group_id=${groupId}`)
+    fetch(`${API_BASE_URL}/api/v1/leaderboard?group_id=${groupId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && Array.isArray(data.members) && data.members.length > 0) {

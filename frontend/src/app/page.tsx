@@ -13,6 +13,7 @@ import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal
 import { ADVENTURE_1, PUZZLE_LEVELS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
+import { API_BASE_URL } from '@/utils/api';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('studio');
@@ -74,7 +75,7 @@ export default function Home() {
     };
     window.addEventListener('message', handleHostMessage);
 
-    fetch('http://localhost:8080/api/v1/engine/handshake', {
+    fetch(`${API_BASE_URL}/api/v1/engine/handshake`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -105,7 +106,7 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    fetch('http://localhost:8080/api/v1/adventures')
+    fetch(`${API_BASE_URL}/api/v1/adventures`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.adventures && data.adventures.length > 0) {
@@ -116,7 +117,7 @@ export default function Home() {
       })
       .catch(() => {});
 
-    fetch('http://localhost:8080/api/v1/levels')
+    fetch(`${API_BASE_URL}/api/v1/levels`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.levels && data.levels.length > 0) {
@@ -402,7 +403,7 @@ export default function Home() {
             }, '*');
           }
 
-          fetch('http://localhost:8080/api/v1/engine/events', {
+          fetch(`${API_BASE_URL}/api/v1/engine/events`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
