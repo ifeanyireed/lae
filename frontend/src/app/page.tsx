@@ -605,7 +605,34 @@ export default function Home() {
     setIsRunning(false);
     setActiveStepIndex(null);
 
+    const totalCoinsInLevel = waypoints.filter(w => w.type === 'coin').length;
+    const isAllCoinsCollected = totalCoinsInLevel === 0 || coinsCollectedSoFar.length >= totalCoinsInLevel;
+
     if (pathIdx === waypoints.length - 1) {
+      if (!isAllCoinsCollected) {
+        soundManager.playError();
+        const newFailCount = levelFailCount + 1;
+        setLevelFailCount(newFailCount);
+
+        if (newFailCount <= 3) {
+          setLoadingSpriteSrc('/monkey17.svg');
+          setSpeechBubble('Missed coins! Collect all coins before finishing!');
+        } else {
+          setLoadingSpriteSrc('/monkey14.svg');
+          setSpeechBubble('Missed coins! Returning to START!');
+        }
+
+        setIsGlobalLoading(true);
+        setIsZoomingQuickly(true);
+        await new Promise(res => setTimeout(res, 1850));
+        setIsZoomingQuickly(false);
+        setIsGlobalLoading(false);
+        setLoadingSpriteSrc('/monkey1.svg');
+
+        handleReturnToStartPos();
+        return;
+      }
+
       setSpeechBubble('MAZE CLEARED!');
       soundManager.playEquip();
 
