@@ -26,6 +26,7 @@ export interface PathWaypoint {
   type?: 'start' | 'goal' | 'coin' | 'star' | 'shell' | 'pit' | 'question_block' | 'vine' | 'normal';
   label?: string;
   effect?: 'advance_3' | 'back_2' | 'shortcut';
+  initialHeading?: 'N' | 'E' | 'S' | 'W';
 }
 
 export interface LevelConfig {

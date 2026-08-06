@@ -71,13 +71,15 @@ export default function Home() {
   const [loadingSpriteSrc, setLoadingSpriteSrc] = useState<string>('/monkey1.svg');
 
   const getInitialHeading = (wps: PathWaypoint[]): 'N' | 'E' | 'S' | 'W' => {
-    if (!wps || wps.length < 2) return 'S';
+    if (!wps || wps.length === 0) return 'S';
+    if (wps[0]?.initialHeading) return wps[0].initialHeading;
+    if (wps.length < 2) return 'S';
     const dx = (wps[1].xPercent ?? 0) - (wps[0].xPercent ?? 0);
     const dy = (wps[1].yPercent ?? 0) - (wps[0].yPercent ?? 0);
-    if (Math.abs(dx) >= Math.abs(dy)) {
-      return dx >= 0 ? 'E' : 'W';
-    } else {
+    if (Math.abs(dy) >= Math.abs(dx)) {
       return dy >= 0 ? 'S' : 'N';
+    } else {
+      return dx >= 0 ? 'E' : 'W';
     }
   };
 

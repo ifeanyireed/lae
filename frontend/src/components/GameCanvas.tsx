@@ -267,6 +267,15 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     if (onUpdateWaypoints) onUpdateWaypoints(updated);
   };
 
+  const handleUpdateStartHeading = (index: number, initialHeading: 'N' | 'E' | 'S' | 'W') => {
+    soundManager.playClick();
+    const updated = liveWaypoints.map(wp => 
+      wp.index === index ? { ...wp, initialHeading } : wp
+    );
+    setLiveWaypoints(updated);
+    if (onUpdateWaypoints) onUpdateWaypoints(updated);
+  };
+
   const handleDeleteWaypoint = (index: number) => {
     soundManager.playClick();
     const filtered = liveWaypoints.filter(wp => wp.index !== index).map((wp, i) => ({
@@ -730,6 +739,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                         <option value="pit">Maze Pit (Reset to Start)</option>
                         <option value="goal">Finish Pipe</option>
                       </select>
+
+                      {wp.type === 'start' && (
+                        <select
+                          value={wp.initialHeading || 'S'}
+                          onChange={(e) => handleUpdateStartHeading(wp.index, e.target.value as 'N' | 'E' | 'S' | 'W')}
+                          className="bg-amber-100 text-slate-950 font-black text-xs px-2 py-1 rounded-full border border-amber-400 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-sm"
+                          title="Start Facing Direction"
+                        >
+                          <option value="S">South (Facing Down Y-axis)</option>
+                          <option value="E">East (Facing Right X-axis)</option>
+                          <option value="W">West (Facing Left X-axis)</option>
+                          <option value="N">North (Facing Up Y-axis)</option>
+                        </select>
+                      )}
 
                       <button
                         type="button"
