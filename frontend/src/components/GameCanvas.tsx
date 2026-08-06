@@ -56,6 +56,50 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const currentWaypoint = liveWaypoints[currentWaypointIndex] || liveWaypoints[0] || { xPercent: 35, yPercent: 15 };
 
+  // Determine Monkey Sprite Face & Orientation (X-axis vs Y-axis)
+  const calculateSpriteOrientation = () => {
+    if (!liveWaypoints || liveWaypoints.length === 0) {
+      return { spriteSrc: '/monkey1.svg', flipX: false };
+    }
+
+    let currIdx = currentWaypointIndex;
+    let nextIdx = currentWaypointIndex + 1;
+
+    if (nextIdx >= liveWaypoints.length) {
+      currIdx = Math.max(0, liveWaypoints.length - 2);
+      nextIdx = liveWaypoints.length - 1;
+    }
+
+    const wpCurr = liveWaypoints[currIdx];
+    const wpNext = liveWaypoints[nextIdx];
+
+    if (!wpCurr || !wpNext) {
+      return { spriteSrc: '/monkey1.svg', flipX: false };
+    }
+
+    const dx = (wpNext.xPercent ?? 0) - (wpCurr.xPercent ?? 0);
+    const dy = (wpNext.yPercent ?? 0) - (wpCurr.yPercent ?? 0);
+
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+
+    // If movement vector is along X-axis (horizontal)
+    if (absDx >= absDy) {
+      return {
+        spriteSrc: '/monkey1_forward_x.png',
+        flipX: dx < 0, // Flip horizontally if moving West / left
+      };
+    }
+
+    // If movement vector is along Y-axis (vertical)
+    return {
+      spriteSrc: '/monkey1.svg',
+      flipX: false,
+    };
+  };
+
+  const { spriteSrc: activeSpriteSrc, flipX: activeFlipX } = calculateSpriteOrientation();
+
   // Interactive Zoom State: Clamped strictly between 1.0x (100% fully stretched) and 3.0x (300%)
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
 
@@ -412,9 +456,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                     : 'pointer-events-none'
                 } ${isDragging ? 'scale-130 ring-4 ring-amber-400 z-50 shadow-[0_0_25px_rgba(251,191,36,1)]' : ''}`}
               >
-                {/* 1. START Green Warp Pipe (maze_start.svg) */}
+                {/* 1. START Green Warp Pipe (maze_start.svg) - Offset slightly left of the waypoint point */}
                 {wp.type === 'start' && (
-                  <div className="w-10 h-10 relative flex items-center justify-center filter drop-shadow-md">
+                  <div className="w-10 h-10 relative flex items-center justify-center filter drop-shadow-md -translate-x-[65%]">
                     <Image src="/maze_start.svg" alt="Start Pipe" fill className="object-contain" />
                   </div>
                 )}
@@ -498,7 +542,11 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
               {/* Monkey Character Sprite */}
               <div className="w-10 h-10 relative transform hover:scale-110 transition z-[100] flex items-center justify-center">
-                <BoardCharacterSprite selectedCharacter={selectedCharacter} />
+                <BoardCharacterSprite
+                  selectedCharacter={selectedCharacter}
+                  spriteSrc={activeSpriteSrc}
+                  flipX={activeFlipX}
+                />
               </div>
             </motion.div>
           )}
