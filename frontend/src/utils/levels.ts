@@ -18,43 +18,135 @@ export const LEVEL_2_WAYPOINTS: PathWaypoint[] = [
   { index: 5, r: 5, c: 0, xPercent: 49.44, yPercent: 69.2, type: 'goal', label: 'FINISH' },
 ];
 
-// Shared Waypoints matching maze path layout
-const DEFAULT_WAYPOINTS: PathWaypoint[] = [
-  { index: 0, r: 0, c: 0, xPercent: 12, yPercent: 10, type: 'start', label: 'START' },
-  { index: 1, r: 1, c: 0, xPercent: 12, yPercent: 22, type: 'normal' },
-  { index: 2, r: 2, c: 0, xPercent: 12, yPercent: 34, type: 'normal' },
-  { index: 3, r: 3, c: 0, xPercent: 12, yPercent: 46, type: 'normal' },
-  { index: 4, r: 3, c: 1, xPercent: 25, yPercent: 46, type: 'shell', effect: 'back_2', label: 'GO BACK 2 SPACES' },
-  { index: 5, r: 3, c: 2, xPercent: 38, yPercent: 46, type: 'coin', label: 'COIN' },
-  { index: 6, r: 2, c: 2, xPercent: 38, yPercent: 34, type: 'normal' },
-  { index: 7, r: 1, c: 2, xPercent: 38, yPercent: 22, type: 'normal' },
-  { index: 8, r: 0, c: 2, xPercent: 38, yPercent: 10, type: 'shell', effect: 'back_2', label: 'GO BACK 2 SPACES' },
-  { index: 9, r: 0, c: 3, xPercent: 50, yPercent: 10, type: 'normal' },
-  { index: 10, r: 0, c: 4, xPercent: 62, yPercent: 10, type: 'normal' },
-  { index: 11, r: 0, c: 5, xPercent: 75, yPercent: 10, type: 'normal' },
-  { index: 12, r: 0, c: 6, xPercent: 88, yPercent: 10, type: 'normal' },
-  { index: 13, r: 1, c: 6, xPercent: 88, yPercent: 22, type: 'coin', label: 'COIN' },
-  { index: 14, r: 2, c: 6, xPercent: 88, yPercent: 34, type: 'normal' },
-  { index: 15, r: 3, c: 6, xPercent: 88, yPercent: 46, type: 'normal' },
-  { index: 16, r: 4, c: 6, xPercent: 88, yPercent: 58, type: 'star', effect: 'advance_3', label: 'ADVANCE 3 SPACES' },
-  { index: 17, r: 5, c: 6, xPercent: 88, yPercent: 70, type: 'normal' },
-  { index: 18, r: 6, c: 6, xPercent: 88, yPercent: 82, type: 'normal' },
-  { index: 19, r: 7, c: 6, xPercent: 88, yPercent: 92, type: 'shell', effect: 'back_2', label: 'GO BACK 2 SPACES' },
-  { index: 20, r: 7, c: 5, xPercent: 75, yPercent: 92, type: 'coin', label: 'COIN' },
-  { index: 21, r: 7, c: 4, xPercent: 62, yPercent: 92, type: 'normal' },
-  { index: 22, r: 6, c: 4, xPercent: 62, yPercent: 80, type: 'coin', label: 'COIN' },
-  { index: 23, r: 5, c: 4, xPercent: 62, yPercent: 68, type: 'normal' },
-  { index: 24, r: 4, c: 4, xPercent: 62, yPercent: 56, type: 'normal' },
-  { index: 25, r: 4, c: 3, xPercent: 50, yPercent: 56, type: 'star', effect: 'advance_3', label: 'ADVANCE 3 SPACES' },
-  { index: 26, r: 4, c: 2, xPercent: 38, yPercent: 56, type: 'normal' },
-  { index: 27, r: 5, c: 2, xPercent: 38, yPercent: 68, type: 'normal' },
-  { index: 28, r: 6, c: 2, xPercent: 38, yPercent: 80, type: 'coin', label: 'COIN' },
-  { index: 29, r: 6, c: 1, xPercent: 25, yPercent: 80, type: 'shell', effect: 'back_2', label: 'GO BACK 2 SPACES' },
-  { index: 30, r: 6, c: 0, xPercent: 12, yPercent: 80, type: 'coin', label: 'COIN' },
-  { index: 31, r: 7, c: 0, xPercent: 12, yPercent: 92, type: 'normal' },
-  { index: 32, r: 7, c: 1, xPercent: 25, yPercent: 92, type: 'normal' },
-  { index: 33, r: 7, c: 2, xPercent: 38, yPercent: 92, type: 'normal' },
-  { index: 34, r: 7, c: 3, xPercent: 50, yPercent: 92, type: 'goal', label: 'FINISH' },
+// Level 3 specific track waypoints (Obstacle avoidance track)
+export const LEVEL_3_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 50.16, yPercent: 35.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 50.16, yPercent: 44.0, type: 'normal' },
+  { index: 2, r: 2, c: 0, xPercent: 50.16, yPercent: 53.0, type: 'normal' },
+  { index: 3, r: 2, c: 1, xPercent: 62.0, yPercent: 53.0, type: 'normal' },
+  { index: 4, r: 3, c: 1, xPercent: 62.0, yPercent: 65.0, type: 'normal' },
+  { index: 5, r: 3, c: 0, xPercent: 50.16, yPercent: 65.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 4 specific track waypoints (Energy crystal collectible)
+export const LEVEL_4_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 48.0, yPercent: 32.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 48.0, yPercent: 41.0, type: 'normal' },
+  { index: 2, r: 2, c: 0, xPercent: 48.0, yPercent: 50.0, type: 'normal' },
+  { index: 3, r: 2, c: 1, xPercent: 60.0, yPercent: 50.0, type: 'coin', label: 'ENERGY CRYSTAL' },
+  { index: 4, r: 3, c: 1, xPercent: 60.0, yPercent: 60.0, type: 'normal' },
+  { index: 5, r: 4, c: 1, xPercent: 60.0, yPercent: 70.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 5 specific track waypoints (Treasure trail multi-collectible)
+export const LEVEL_5_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 42.0, yPercent: 30.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 42.0, yPercent: 40.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 52.0, yPercent: 40.0, type: 'coin', label: 'CRYSTAL 1' },
+  { index: 3, r: 1, c: 2, xPercent: 62.0, yPercent: 40.0, type: 'normal' },
+  { index: 4, r: 2, c: 2, xPercent: 62.0, yPercent: 52.0, type: 'coin', label: 'CRYSTAL 2' },
+  { index: 5, r: 3, c: 2, xPercent: 62.0, yPercent: 64.0, type: 'normal' },
+  { index: 6, r: 3, c: 1, xPercent: 52.0, yPercent: 64.0, type: 'coin', label: 'CRYSTAL 3' },
+  { index: 7, r: 3, c: 0, xPercent: 42.0, yPercent: 64.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 6 specific track waypoints (Danger ahead hazard avoidance)
+export const LEVEL_6_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 45.0, yPercent: 28.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 45.0, yPercent: 38.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 55.0, yPercent: 38.0, type: 'shell', effect: 'back_2', label: 'HAZARD PIT' },
+  { index: 3, r: 2, c: 0, xPercent: 45.0, yPercent: 48.0, type: 'normal' },
+  { index: 4, r: 3, c: 0, xPercent: 45.0, yPercent: 58.0, type: 'normal' },
+  { index: 5, r: 3, c: 1, xPercent: 55.0, yPercent: 58.0, type: 'coin', label: 'CRYSTAL' },
+  { index: 6, r: 4, c: 1, xPercent: 55.0, yPercent: 68.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 7 specific track waypoints (Watch your step alternative safe routes)
+export const LEVEL_7_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 38.0, yPercent: 28.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 38.0, yPercent: 40.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 50.0, yPercent: 40.0, type: 'shell', effect: 'back_2', label: 'PIT' },
+  { index: 3, r: 2, c: 0, xPercent: 38.0, yPercent: 52.0, type: 'normal' },
+  { index: 4, r: 2, c: 1, xPercent: 50.0, yPercent: 52.0, type: 'star', effect: 'advance_3', label: 'SUPER STAR' },
+  { index: 5, r: 2, c: 2, xPercent: 62.0, yPercent: 52.0, type: 'normal' },
+  { index: 6, r: 3, c: 2, xPercent: 62.0, yPercent: 64.0, type: 'coin', label: 'COIN' },
+  { index: 7, r: 4, c: 2, xPercent: 62.0, yPercent: 76.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 8 specific track waypoints (Hidden rewards bonus star quest)
+export const LEVEL_8_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 35.0, yPercent: 25.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 35.0, yPercent: 36.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 47.0, yPercent: 36.0, type: 'coin', label: 'COIN' },
+  { index: 3, r: 1, c: 2, xPercent: 59.0, yPercent: 36.0, type: 'star', effect: 'advance_3', label: 'SUPER STAR' },
+  { index: 4, r: 2, c: 2, xPercent: 59.0, yPercent: 48.0, type: 'normal' },
+  { index: 5, r: 2, c: 1, xPercent: 47.0, yPercent: 48.0, type: 'shell', effect: 'back_2', label: 'HAZARD' },
+  { index: 6, r: 3, c: 2, xPercent: 59.0, yPercent: 60.0, type: 'normal' },
+  { index: 7, r: 4, c: 2, xPercent: 59.0, yPercent: 72.0, type: 'coin', label: 'COIN' },
+  { index: 8, r: 4, c: 1, xPercent: 47.0, yPercent: 72.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 9 specific track waypoints (Treasure hunt exploration)
+export const LEVEL_9_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 32.0, yPercent: 22.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 32.0, yPercent: 34.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 44.0, yPercent: 34.0, type: 'coin', label: 'COIN 1' },
+  { index: 3, r: 1, c: 2, xPercent: 56.0, yPercent: 34.0, type: 'normal' },
+  { index: 4, r: 1, c: 3, xPercent: 68.0, yPercent: 34.0, type: 'coin', label: 'COIN 2' },
+  { index: 5, r: 2, c: 3, xPercent: 68.0, yPercent: 46.0, type: 'normal' },
+  { index: 6, r: 3, c: 3, xPercent: 68.0, yPercent: 58.0, type: 'star', effect: 'advance_3', label: 'STAR' },
+  { index: 7, r: 3, c: 2, xPercent: 56.0, yPercent: 58.0, type: 'coin', label: 'COIN 3' },
+  { index: 8, r: 3, c: 1, xPercent: 44.0, yPercent: 58.0, type: 'normal' },
+  { index: 9, r: 4, c: 1, xPercent: 44.0, yPercent: 70.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 10 specific track waypoints (Choose wisely path optimization)
+export const LEVEL_10_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 30.0, yPercent: 20.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 30.0, yPercent: 32.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 42.0, yPercent: 32.0, type: 'shell', effect: 'back_2', label: 'TRAP' },
+  { index: 3, r: 2, c: 0, xPercent: 30.0, yPercent: 44.0, type: 'coin', label: 'SAFE COIN' },
+  { index: 4, r: 2, c: 1, xPercent: 42.0, yPercent: 44.0, type: 'normal' },
+  { index: 5, r: 2, c: 2, xPercent: 54.0, yPercent: 44.0, type: 'star', effect: 'advance_3', label: 'BOOST' },
+  { index: 6, r: 2, c: 3, xPercent: 66.0, yPercent: 44.0, type: 'normal' },
+  { index: 7, r: 3, c: 3, xPercent: 66.0, yPercent: 56.0, type: 'coin', label: 'COIN' },
+  { index: 8, r: 3, c: 2, xPercent: 54.0, yPercent: 56.0, type: 'normal' },
+  { index: 9, r: 4, c: 2, xPercent: 54.0, yPercent: 68.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 11 specific track waypoints (Explorer's Trial multi-hazard trial)
+export const LEVEL_11_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 25.0, yPercent: 18.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 25.0, yPercent: 30.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 37.0, yPercent: 30.0, type: 'coin', label: 'COIN 1' },
+  { index: 3, r: 1, c: 2, xPercent: 49.0, yPercent: 30.0, type: 'normal' },
+  { index: 4, r: 1, c: 3, xPercent: 61.0, yPercent: 30.0, type: 'shell', effect: 'back_2', label: 'TRAP' },
+  { index: 5, r: 1, c: 4, xPercent: 73.0, yPercent: 30.0, type: 'star', effect: 'advance_3', label: 'STAR' },
+  { index: 6, r: 2, c: 4, xPercent: 73.0, yPercent: 44.0, type: 'normal' },
+  { index: 7, r: 2, c: 3, xPercent: 61.0, yPercent: 44.0, type: 'coin', label: 'COIN 2' },
+  { index: 8, r: 2, c: 2, xPercent: 49.0, yPercent: 44.0, type: 'normal' },
+  { index: 9, r: 3, c: 2, xPercent: 49.0, yPercent: 58.0, type: 'coin', label: 'COIN 3' },
+  { index: 10, r: 3, c: 3, xPercent: 61.0, yPercent: 58.0, type: 'normal' },
+  { index: 11, r: 4, c: 3, xPercent: 61.0, yPercent: 72.0, type: 'goal', label: 'FINISH' },
+];
+
+// Level 12 specific track waypoints (Journey Home final mastery track)
+export const LEVEL_12_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 20.0, yPercent: 15.0, type: 'start', label: 'START' },
+  { index: 1, r: 1, c: 0, xPercent: 20.0, yPercent: 27.0, type: 'normal' },
+  { index: 2, r: 1, c: 1, xPercent: 32.0, yPercent: 27.0, type: 'coin', label: 'COIN 1' },
+  { index: 3, r: 1, c: 2, xPercent: 44.0, yPercent: 27.0, type: 'normal' },
+  { index: 4, r: 1, c: 3, xPercent: 56.0, yPercent: 27.0, type: 'shell', effect: 'back_2', label: 'HAZARD 1' },
+  { index: 5, r: 1, c: 4, xPercent: 68.0, yPercent: 27.0, type: 'star', effect: 'advance_3', label: 'SUPER STAR' },
+  { index: 6, r: 1, c: 5, xPercent: 80.0, yPercent: 27.0, type: 'normal' },
+  { index: 7, r: 2, c: 5, xPercent: 80.0, yPercent: 42.0, type: 'coin', label: 'COIN 2' },
+  { index: 8, r: 2, c: 4, xPercent: 68.0, yPercent: 42.0, type: 'normal' },
+  { index: 9, r: 2, c: 3, xPercent: 56.0, yPercent: 42.0, type: 'shell', effect: 'back_2', label: 'HAZARD 2' },
+  { index: 10, r: 2, c: 2, xPercent: 44.0, yPercent: 42.0, type: 'coin', label: 'COIN 3' },
+  { index: 11, r: 3, c: 2, xPercent: 44.0, yPercent: 57.0, type: 'star', effect: 'advance_3', label: 'BOOST' },
+  { index: 12, r: 3, c: 3, xPercent: 56.0, yPercent: 57.0, type: 'normal' },
+  { index: 13, r: 3, c: 4, xPercent: 68.0, yPercent: 57.0, type: 'coin', label: 'FINAL COIN' },
+  { index: 14, r: 4, c: 4, xPercent: 68.0, yPercent: 75.0, type: 'goal', label: 'FINISH' },
 ];
 
 export const ADVENTURE_1: AdventureConfig = {
@@ -97,7 +189,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Navigate around an obstacle.',
       mechanic: 'Turning (Left/Right)',
       bgImage: '/The Lost Monkey Explorer - Level 3.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_3_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right'],
       maxBlocks: 10,
     },
@@ -109,7 +201,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Collect your first item before reaching the goal.',
       mechanic: 'Collectibles',
       bgImage: '/The Lost Monkey Explorer - Level 4.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_4_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right'],
       maxBlocks: 10,
     },
@@ -121,7 +213,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Collect every energy crystal on the path.',
       mechanic: 'Planning and multiple collectibles',
       bgImage: '/The Lost Monkey Explorer - Level 5.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_5_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 12,
     },
@@ -133,7 +225,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Reach the finish without touching dangerous tiles.',
       mechanic: 'Hazard avoidance',
       bgImage: '/The Lost Monkey Explorer - Level 6.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_6_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 12,
     },
@@ -145,7 +237,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Find a safe route around a pit.',
       mechanic: 'Hazards and alternative paths',
       bgImage: '/The Lost Monkey Explorer - Level 7.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_7_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 12,
     },
@@ -157,7 +249,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Explore to collect optional stars before finishing.',
       mechanic: 'Exploration and bonus objectives',
       bgImage: '/The Lost Monkey Explorer - Level 8.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_8_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 15,
     },
@@ -169,7 +261,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Collect all treasures and return safely to the finish.',
       mechanic: 'Exploration and route planning',
       bgImage: '/The Lost Monkey Explorer - Level 9.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_9_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 15,
     },
@@ -181,7 +273,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Find the safest and smartest path through the maze.',
       mechanic: 'Decision making and optimization',
       bgImage: '/The Lost Monkey Explorer - Level 10.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_10_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 15,
     },
@@ -193,7 +285,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Combine everything you\'ve learned to solve a complex maze.',
       mechanic: 'Integrated sequencing, planning, and hazard avoidance',
       bgImage: '/The Lost Monkey Explorer - Level 11.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_11_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 20,
     },
@@ -205,7 +297,7 @@ export const ADVENTURE_1: AdventureConfig = {
       objective: 'Guide the robot through its final mission and help it return home.',
       mechanic: 'Mastery challenge (all mechanics combined)',
       bgImage: '/The Lost Monkey Explorer - Level 12.svg',
-      waypoints: DEFAULT_WAYPOINTS,
+      waypoints: LEVEL_12_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
       maxBlocks: 25,
     },

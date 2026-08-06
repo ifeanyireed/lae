@@ -240,15 +240,157 @@ func (db *DB) SeedAdventure1() error {
 		{WaypointIndex: 5, XPercent: 49.44, YPercent: 69.2, Type: "goal", Label: "FINISH"},
 	}
 
+	level3Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 50.16, YPercent: 35.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 50.16, YPercent: 44.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 50.16, YPercent: 53.0, Type: "normal"},
+		{WaypointIndex: 3, XPercent: 62.0, YPercent: 53.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 62.0, YPercent: 65.0, Type: "normal"},
+		{WaypointIndex: 5, XPercent: 50.16, YPercent: 65.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level4Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 48.0, YPercent: 32.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 48.0, YPercent: 41.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 48.0, YPercent: 50.0, Type: "normal"},
+		{WaypointIndex: 3, XPercent: 60.0, YPercent: 50.0, Type: "coin", Label: "ENERGY CRYSTAL"},
+		{WaypointIndex: 4, XPercent: 60.0, YPercent: 60.0, Type: "normal"},
+		{WaypointIndex: 5, XPercent: 60.0, YPercent: 70.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level5Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 42.0, YPercent: 30.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 42.0, YPercent: 40.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 52.0, YPercent: 40.0, Type: "coin", Label: "CRYSTAL 1"},
+		{WaypointIndex: 3, XPercent: 62.0, YPercent: 40.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 62.0, YPercent: 52.0, Type: "coin", Label: "CRYSTAL 2"},
+		{WaypointIndex: 5, XPercent: 62.0, YPercent: 64.0, Type: "normal"},
+		{WaypointIndex: 6, XPercent: 52.0, YPercent: 64.0, Type: "coin", Label: "CRYSTAL 3"},
+		{WaypointIndex: 7, XPercent: 42.0, YPercent: 64.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level6Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 45.0, YPercent: 28.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 45.0, YPercent: 38.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 55.0, YPercent: 38.0, Type: "shell", Effect: "back_2", Label: "HAZARD PIT"},
+		{WaypointIndex: 3, XPercent: 45.0, YPercent: 48.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 45.0, YPercent: 58.0, Type: "normal"},
+		{WaypointIndex: 5, XPercent: 55.0, YPercent: 58.0, Type: "coin", Label: "CRYSTAL"},
+		{WaypointIndex: 6, XPercent: 55.0, YPercent: 68.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level7Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 38.0, YPercent: 28.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 38.0, YPercent: 40.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 50.0, YPercent: 40.0, Type: "shell", Effect: "back_2", Label: "PIT"},
+		{WaypointIndex: 3, XPercent: 38.0, YPercent: 52.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 50.0, YPercent: 52.0, Type: "star", Effect: "advance_3", Label: "SUPER STAR"},
+		{WaypointIndex: 5, XPercent: 62.0, YPercent: 52.0, Type: "normal"},
+		{WaypointIndex: 6, XPercent: 62.0, YPercent: 64.0, Type: "coin", Label: "COIN"},
+		{WaypointIndex: 7, XPercent: 62.0, YPercent: 76.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level8Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 35.0, YPercent: 25.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 35.0, YPercent: 36.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 47.0, YPercent: 36.0, Type: "coin", Label: "COIN"},
+		{WaypointIndex: 3, XPercent: 59.0, YPercent: 36.0, Type: "star", Effect: "advance_3", Label: "SUPER STAR"},
+		{WaypointIndex: 4, XPercent: 59.0, YPercent: 48.0, Type: "normal"},
+		{WaypointIndex: 5, XPercent: 47.0, YPercent: 48.0, Type: "shell", Effect: "back_2", Label: "HAZARD"},
+		{WaypointIndex: 6, XPercent: 59.0, YPercent: 60.0, Type: "normal"},
+		{WaypointIndex: 7, XPercent: 59.0, YPercent: 72.0, Type: "coin", Label: "COIN"},
+		{WaypointIndex: 8, XPercent: 47.0, YPercent: 72.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level9Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 32.0, YPercent: 22.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 32.0, YPercent: 34.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 44.0, YPercent: 34.0, Type: "coin", Label: "COIN 1"},
+		{WaypointIndex: 3, XPercent: 56.0, YPercent: 34.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 68.0, YPercent: 34.0, Type: "coin", Label: "COIN 2"},
+		{WaypointIndex: 5, XPercent: 68.0, YPercent: 46.0, Type: "normal"},
+		{WaypointIndex: 6, XPercent: 68.0, YPercent: 58.0, Type: "star", Effect: "advance_3", Label: "STAR"},
+		{WaypointIndex: 7, XPercent: 56.0, YPercent: 58.0, Type: "coin", Label: "COIN 3"},
+		{WaypointIndex: 8, XPercent: 44.0, YPercent: 58.0, Type: "normal"},
+		{WaypointIndex: 9, XPercent: 44.0, YPercent: 70.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level10Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 30.0, YPercent: 20.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 30.0, YPercent: 32.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 42.0, YPercent: 32.0, Type: "shell", Effect: "back_2", Label: "TRAP"},
+		{WaypointIndex: 3, XPercent: 30.0, YPercent: 44.0, Type: "coin", Label: "SAFE COIN"},
+		{WaypointIndex: 4, XPercent: 42.0, YPercent: 44.0, Type: "normal"},
+		{WaypointIndex: 5, XPercent: 54.0, YPercent: 44.0, Type: "star", Effect: "advance_3", Label: "BOOST"},
+		{WaypointIndex: 6, XPercent: 66.0, YPercent: 44.0, Type: "normal"},
+		{WaypointIndex: 7, XPercent: 66.0, YPercent: 56.0, Type: "coin", Label: "COIN"},
+		{WaypointIndex: 8, XPercent: 54.0, YPercent: 56.0, Type: "normal"},
+		{WaypointIndex: 9, XPercent: 54.0, YPercent: 68.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level11Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 25.0, YPercent: 18.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 25.0, YPercent: 30.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 37.0, YPercent: 30.0, Type: "coin", Label: "COIN 1"},
+		{WaypointIndex: 3, XPercent: 49.0, YPercent: 30.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 61.0, YPercent: 30.0, Type: "shell", Effect: "back_2", Label: "TRAP"},
+		{WaypointIndex: 5, XPercent: 73.0, YPercent: 30.0, Type: "star", Effect: "advance_3", Label: "STAR"},
+		{WaypointIndex: 6, XPercent: 73.0, YPercent: 44.0, Type: "normal"},
+		{WaypointIndex: 7, XPercent: 61.0, YPercent: 44.0, Type: "coin", Label: "COIN 2"},
+		{WaypointIndex: 8, XPercent: 49.0, YPercent: 44.0, Type: "normal"},
+		{WaypointIndex: 9, XPercent: 49.0, YPercent: 58.0, Type: "coin", Label: "COIN 3"},
+		{WaypointIndex: 10, XPercent: 61.0, YPercent: 58.0, Type: "normal"},
+		{WaypointIndex: 11, XPercent: 61.0, YPercent: 72.0, Type: "goal", Label: "FINISH"},
+	}
+
+	level12Waypoints := []LevelWaypoint{
+		{WaypointIndex: 0, XPercent: 20.0, YPercent: 15.0, Type: "start", Label: "START"},
+		{WaypointIndex: 1, XPercent: 20.0, YPercent: 27.0, Type: "normal"},
+		{WaypointIndex: 2, XPercent: 32.0, YPercent: 27.0, Type: "coin", Label: "COIN 1"},
+		{WaypointIndex: 3, XPercent: 44.0, YPercent: 27.0, Type: "normal"},
+		{WaypointIndex: 4, XPercent: 56.0, YPercent: 27.0, Type: "shell", Effect: "back_2", Label: "HAZARD 1"},
+		{WaypointIndex: 5, XPercent: 68.0, YPercent: 27.0, Type: "star", Effect: "advance_3", Label: "SUPER STAR"},
+		{WaypointIndex: 6, XPercent: 80.0, YPercent: 27.0, Type: "normal"},
+		{WaypointIndex: 7, XPercent: 80.0, YPercent: 42.0, Type: "coin", Label: "COIN 2"},
+		{WaypointIndex: 8, XPercent: 68.0, YPercent: 42.0, Type: "normal"},
+		{WaypointIndex: 9, XPercent: 56.0, YPercent: 42.0, Type: "shell", Effect: "back_2", Label: "HAZARD 2"},
+		{WaypointIndex: 10, XPercent: 44.0, YPercent: 42.0, Type: "coin", Label: "COIN 3"},
+		{WaypointIndex: 11, XPercent: 44.0, YPercent: 57.0, Type: "star", Effect: "advance_3", Label: "BOOST"},
+		{WaypointIndex: 12, XPercent: 56.0, YPercent: 57.0, Type: "normal"},
+		{WaypointIndex: 13, XPercent: 68.0, YPercent: 57.0, Type: "coin", Label: "FINAL COIN"},
+		{WaypointIndex: 14, XPercent: 68.0, YPercent: 75.0, Type: "goal", Label: "FINISH"},
+	}
+
 	for _, l := range levelsData {
 		svgPath := fmt.Sprintf("/The Lost Monkey Explorer - Level %d.svg", l.Number)
 		blocksJSON, _ := json.Marshal(l.Blocks)
 
 		var wps []LevelWaypoint
-		if l.Number == 1 {
+		switch l.Number {
+		case 1:
 			wps = level1Waypoints
-		} else if l.Number == 2 {
+		case 2:
 			wps = level2Waypoints
+		case 3:
+			wps = level3Waypoints
+		case 4:
+			wps = level4Waypoints
+		case 5:
+			wps = level5Waypoints
+		case 6:
+			wps = level6Waypoints
+		case 7:
+			wps = level7Waypoints
+		case 8:
+			wps = level8Waypoints
+		case 9:
+			wps = level9Waypoints
+		case 10:
+			wps = level10Waypoints
+		case 11:
+			wps = level11Waypoints
+		case 12:
+			wps = level12Waypoints
 		}
 
 		var waypointsJSON string
