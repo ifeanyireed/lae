@@ -821,8 +821,8 @@ export default function Home() {
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 z-10 filter drop-shadow-lg">
                           {isUnlocked ? (
                             <Image 
-                              src={isCompleted ? '/maze_finish.svg' : '/Quest.svg'} 
-                              alt={isCompleted ? 'Finished' : 'Ready'} 
+                              src="/maze_finish.svg" 
+                              alt="Activated Level" 
                               fill 
                               className="object-contain" 
                             />

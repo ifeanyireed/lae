@@ -152,7 +152,16 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-40'}`}
                     />
 
-                    {!isUnlocked && (
+                    {isUnlocked ? (
+                      <div className="absolute -bottom-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 z-10 filter drop-shadow-md">
+                        <Image
+                          src="/maze_finish.svg"
+                          alt="Activated Level"
+                          fill
+                          className="object-contain"
+                        />
+                      </div>
+                    ) : (
                       <motion.div
                         className="absolute inset-0 z-20"
                         animate={lockedVibrateIdx === idx ? {
