@@ -413,6 +413,14 @@ export default function Home() {
   const handleSelectLevel = (index: number) => {
     soundManager.playClick();
     setCurrentLevelIndex(index);
+    setLevelsProgress((prev) =>
+      prev.map((l, idx) => {
+        if (idx === index || idx <= currentLevelIndex + 1) {
+          return { ...l, unlocked: true };
+        }
+        return l;
+      })
+    );
     setCustomWaypoints(null);
     setCurrentWaypointIndex(0);
     setFacingSegmentIndex(0);
@@ -738,6 +746,20 @@ export default function Home() {
         totalXP: prev.totalXP + earnedXP,
         totalScore: prev.totalScore + earnedScore,
       }));
+
+      // Immediately unlock next level locally in levelsProgress state
+      const clearedLvlNum = currentLevel.levelNumber;
+      setLevelsProgress((prev) =>
+        prev.map((l, idx) => {
+          if (l.levelNumber === clearedLvlNum) {
+            return { ...l, completed: true, unlocked: true, stars: 3 };
+          }
+          if (idx === currentLevelIndex + 1) {
+            return { ...l, unlocked: true };
+          }
+          return l;
+        })
+      );
 
       // Strategic Point 2: Write Stage Completion Event to Database
       fetch(`${API_BASE_URL}/api/v1/engine/events`, {
