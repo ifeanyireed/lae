@@ -11,6 +11,7 @@ import { ActionTooltip } from '@/components/ActionTooltip';
 import { LevelWelcomeModal, LevelInfo } from '@/components/LevelWelcomeModal';
 import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal';
 import { SplashScreen } from '@/components/SplashScreen';
+import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 import { ADVENTURE_1, PUZZLE_LEVELS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
@@ -63,6 +64,9 @@ export default function Home() {
   const [adventureStory, setAdventureStory] = useState<string>(ADVENTURE_1.story);
   const [dbLevels, setDbLevels] = useState<LevelConfig[]>(PUZZLE_LEVELS);
 
+  const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>('Synchronizing Adventure Data...');
+
   // Database Progress Sync Helper
   const syncProgressFromDB = (dbProgress: any[]) => {
     if (!Array.isArray(dbProgress) || dbProgress.length === 0) return;
@@ -95,6 +99,8 @@ export default function Home() {
 
   const fetchUserProgressFromDB = (userID: number) => {
     if (!userID || userID <= 0) return;
+    setIsGlobalLoading(true);
+    setLoadingMessage('Fetching Adventure Map Progress...');
     fetch(`${API_BASE_URL}/api/v1/engine/progress?user_id=${userID}`)
       .then((res) => res.json())
       .then((data) => {
@@ -108,7 +114,10 @@ export default function Home() {
           }
         }
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        setIsGlobalLoading(false);
+      });
   };
 
   // Strategic Point 1: Handshake and Initial Load Sync from Database
@@ -1143,6 +1152,12 @@ export default function Home() {
           />
         )}
       </AnimatePresence>
+
+      {/* Global Framer Motion Wave Loading Overlay over blurred destination screen */}
+      <GlobalLoadingOverlay
+        isLoading={isGlobalLoading}
+        message={loadingMessage}
+      />
 
     </main>
   );
