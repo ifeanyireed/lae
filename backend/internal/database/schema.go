@@ -52,6 +52,7 @@ type Group struct {
 type User struct {
 	ID         int       `json:"id"`
 	Username   string    `json:"username"`
+	AccessCode string    `json:"access_code,omitempty"`
 	Role       string    `json:"role"` // "admin" or "user"
 	GroupID    int       `json:"group_id"`
 	GroupName  string    `json:"group_name,omitempty"`
@@ -131,6 +132,7 @@ func (db *DB) InitSchema() error {
 	CREATE TABLE IF NOT EXISTS users (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		username VARCHAR(100) UNIQUE NOT NULL,
+		access_code VARCHAR(50) UNIQUE DEFAULT NULL,
 		role VARCHAR(50) DEFAULT 'user',
 		group_id INT DEFAULT 1,
 		avatar VARCHAR(255) DEFAULT '/monkey1.svg',
@@ -171,12 +173,42 @@ func (db *DB) InitSchema() error {
 	if _, err := db.ExecContext(ctx, createUsersTable); err != nil {
 		log.Printf("Warning: Users table creation error: %v", err)
 	}
+	_, _ = db.ExecContext(ctx, "ALTER TABLE users ADD COLUMN access_code VARCHAR(50) UNIQUE DEFAULT NULL;")
+
 	if _, err := db.ExecContext(ctx, createUserProgressTable); err != nil {
 		log.Printf("Warning: User Progress table creation error: %v", err)
 	}
 
+	// Seed default access code users into database
+	db.seedAccessCodeUsers(ctx)
+
 	log.Println("✅ Database schema & engine tables (groups, users, progress) initialized successfully.")
 	return nil
+}
+
+func (db *DB) seedAccessCodeUsers(ctx context.Context) {
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, name, code) VALUES (1, 'Jungle Explorers Group A', 'jungle-a')")
+
+	seedUsers := []struct {
+		Username   string
+		AccessCode string
+		Role       string
+		Avatar     string
+		XP         int
+	}{
+		{"Admin_Explorer", "ADMN-2026", "admin", "/monkey1.svg", 1500},
+		{"Cadet_Leo", "KIDS-1001", "user", "/monkey1.svg", 450},
+		{"Cadet_Maya", "KIDS-1002", "user", "/Profile.svg", 300},
+		{"Cadet_Sam", "KIDS-1003", "user", "/monkey1.svg", 600},
+	}
+
+	for _, u := range seedUsers {
+		_, _ = db.ExecContext(ctx, `
+			INSERT INTO users (username, access_code, role, group_id, avatar, total_xp, total_stars)
+			VALUES (?, ?, ?, 1, ?, ?, 3)
+			ON DUPLICATE KEY UPDATE access_code = VALUES(access_code), role = VALUES(role)
+		`, u.Username, u.AccessCode, u.Role, u.Avatar, u.XP)
+	}
 }
 
 // SeedAdventure1 populates Adventure 1 and its 12 levels into the database if not already present
@@ -210,18 +242,18 @@ func (db *DB) SeedAdventure1() error {
 		Blocks    []string
 		MaxBlocks int
 	}{
-		{1, "Power Up!", "Learn that a robot only acts when given instructions.", "Basic movement (Move Forward)", []string{"move_forward"}, 5},
-		{2, "First Steps", "Create a longer sequence of instructions.", "Sequential execution", []string{"move_forward"}, 8},
-		{3, "Around the Tree", "Navigate around an obstacle.", "Turning (Left/Right)", []string{"move_forward", "turn_left", "turn_right"}, 10},
+		{1, "Power Up!", "Learn that a robot only acts when given instructions.", "Basic Movement", []string{"move_forward"}, 5},
+		{2, "First Steps", "Create a longer sequence of instructions.", "Sequential Execution", []string{"move_forward"}, 8},
+		{3, "Around the Tree", "Navigate around an obstacle.", "Turning", []string{"move_forward", "turn_left", "turn_right"}, 10},
 		{4, "Energy Crystal", "Collect your first item before reaching the goal.", "Collectibles", []string{"move_forward", "turn_left", "turn_right"}, 10},
-		{5, "Treasure Trail", "Collect every energy crystal on the path.", "Planning and multiple collectibles", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
-		{6, "Danger Ahead", "Reach the finish without touching dangerous tiles.", "Hazard avoidance", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
-		{7, "Watch Your Step!", "Find a safe route around a pit.", "Hazards and alternative paths", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
-		{8, "Hidden Rewards", "Explore to collect optional stars before finishing.", "Exploration and bonus objectives", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
-		{9, "Treasure Hunt", "Collect all treasures and return safely to the finish.", "Exploration and route planning", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
-		{10, "Choose Wisely", "Find the safest and smartest path through the maze.", "Decision making and optimization", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
-		{11, "Explorer's Trial", "Combine everything you've learned to solve a complex maze.", "Integrated sequencing, planning, and hazard avoidance", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 20},
-		{12, "Journey Home", "Guide the robot through its final mission and help it return home.", "Mastery challenge (all mechanics combined)", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 25},
+		{5, "Treasure Trail", "Collect every energy crystal on the path.", "Planning & Collectibles", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
+		{6, "Danger Ahead", "Reach the finish without touching dangerous tiles.", "Hazard Avoidance", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
+		{7, "Watch Your Step!", "Find a safe route around a pit.", "Alternative Paths", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 12},
+		{8, "Hidden Rewards", "Explore to collect optional stars before finishing.", "Bonus Objectives", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
+		{9, "Treasure Hunt", "Collect all treasures and return safely to the finish.", "Route Planning", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
+		{10, "Choose Wisely", "Find the safest and smartest path through the maze.", "Path Optimization", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 15},
+		{11, "Explorer's Trial", "Combine everything you've learned to solve a complex maze.", "Integrated Trial", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 20},
+		{12, "Journey Home", "Guide the robot through its final mission and help it return home.", "Mastery Challenge", []string{"move_forward", "turn_left", "turn_right", "repeat"}, 25},
 	}
 
 	level1Waypoints := []LevelWaypoint{

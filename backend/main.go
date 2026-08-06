@@ -49,6 +49,7 @@ func main() {
 
 	// Embeddable Engine routes
 	mux.HandleFunc("POST /api/v1/engine/handshake", h.HandshakeHandler)
+	mux.HandleFunc("POST /api/v1/engine/code-login", h.CodeLoginHandler)
 	mux.HandleFunc("POST /api/v1/engine/events", h.EventHandler)
 	mux.HandleFunc("GET /api/v1/leaderboard", h.GetLeaderboardHandler)
 	mux.HandleFunc("GET /api/v1/groups", h.GetGroupsHandler)

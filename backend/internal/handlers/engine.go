@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"backend/internal/database"
 )
@@ -15,6 +16,10 @@ type HandshakeRequest struct {
 	GroupCode string `json:"group_code"`  // e.g. "jungle-a"
 	Avatar    string `json:"avatar"`
 	InitialXP int    `json:"xp"`
+}
+
+type CodeLoginRequest struct {
+	Code string `json:"code"`
 }
 
 type EventRequest struct {
@@ -251,5 +256,87 @@ func (h *Handler) GetGroupsHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success": true,
 		"groups":  groups,
+	})
+}
+
+// CodeLoginHandler logs in a user or kid via their access code
+func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req CodeLoginRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Code == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Valid game code is required",
+		})
+		return
+	}
+
+	rawCode := strings.ReplaceAll(strings.TrimSpace(strings.ToUpper(req.Code)), "-", "")
+	formattedCode := strings.TrimSpace(strings.ToUpper(req.Code))
+	if len(rawCode) == 8 {
+		formattedCode = rawCode[:4] + "-" + rawCode[4:]
+	}
+
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
+	}
+
+	ctx := r.Context()
+
+	var user database.User
+	err := h.DB.QueryRowContext(ctx, `
+		SELECT u.id, u.username, COALESCE(u.access_code, ''), u.role, u.group_id, COALESCE(g.name, 'Jungle Explorers Group A'), u.avatar, u.total_xp, u.total_stars 
+		FROM users u
+		LEFT JOIN groups g ON u.group_id = g.id
+		WHERE UPPER(u.access_code) = ? OR UPPER(u.username) = ? OR UPPER(u.access_code) = ?
+	`, formattedCode, rawCode, rawCode).
+		Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.GroupName, &user.Avatar, &user.TotalXP, &user.TotalStars)
+
+	if err != nil {
+		// Auto-generate or match new Cadet explorer for this code
+		newUsername := "Cadet_" + formattedCode
+		role := "user"
+		if strings.HasPrefix(formattedCode, "ADMN") || strings.HasPrefix(formattedCode, "ADMIN") {
+			role = "admin"
+			newUsername = "Admin_Explorer"
+		}
+
+		res, err := h.DB.ExecContext(ctx, `
+			INSERT INTO users (username, access_code, role, group_id, avatar, total_xp, total_stars)
+			VALUES (?, ?, ?, 1, '/monkey1.svg', 250, 0)
+		`, newUsername, formattedCode, role)
+
+		if err == nil {
+			id, _ := res.LastInsertId()
+			user.ID = int(id)
+			user.Username = newUsername
+			user.AccessCode = formattedCode
+			user.Role = role
+			user.GroupID = 1
+			user.GroupName = "Jungle Explorers Group A"
+			user.Avatar = "/monkey1.svg"
+			user.TotalXP = 250
+			user.TotalStars = 0
+		} else {
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"success": false,
+				"error":   "Invalid code or user creation error",
+			})
+			return
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"user":    user,
 	})
 }

@@ -10,6 +10,8 @@ import { VictoryModal } from '@/components/VictoryModal';
 import { ActionTooltip } from '@/components/ActionTooltip';
 import { LevelWelcomeModal, LevelInfo } from '@/components/LevelWelcomeModal';
 import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal';
+import { SplashScreen } from '@/components/SplashScreen';
+import { FallbackAuthModal } from '@/components/FallbackAuthModal';
 import { ADVENTURE_1, PUZZLE_LEVELS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
@@ -23,15 +25,19 @@ export default function Home() {
   const [equippedHat, setEquippedHat] = useState('knight_helmet');
   const [totalXP, setTotalXP] = useState(450);
 
+  const [showSplash, setShowSplash] = useState(true);
+  const [showFallbackAuth, setShowFallbackAuth] = useState(false);
+
   // Embeddable Engine User & Host Handshake Session Context
   const [userContext, setUserContext] = useState({
     id: 1,
     username: 'Admin_Explorer',
-    role: 'admin', // Default admin role for dev; updated by Host Platform token
+    role: 'admin' as 'admin' | 'user', // Default admin role for dev; updated by Host Platform token or Auth modal
     groupId: 1,
     groupName: 'Jungle Explorers Group A',
     avatar: '/monkey1.svg',
     totalXP: 450,
+    totalScore: 1420,
     totalStars: 3,
   });
 
@@ -88,16 +94,19 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.user) {
-          setUserContext({
+          const userXp = data.user.total_xp ?? 450;
+          setTotalXP(userXp);
+          setUserContext((prev) => ({
+            ...prev,
             id: data.user.id || 1,
             username: data.user.username || 'Admin_Explorer',
-            role: data.user.role || 'admin',
+            role: (data.user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
             groupId: data.user.group_id || 1,
             groupName: data.user.group_name || 'Jungle Explorers Group A',
             avatar: data.user.avatar || '/monkey1.svg',
-            totalXP: data.user.total_xp ?? 450,
+            totalXP: userXp,
             totalStars: data.user.total_stars ?? 3,
-          });
+          }));
         }
       })
       .catch(() => {});
@@ -376,14 +385,21 @@ export default function Home() {
         if (currentWp.type === 'goal' || pathIdx === waypoints.length - 1) {
           setSpeechBubble('MAZE CLEARED!');
           soundManager.playEquip();
-          setTotalXP(prev => prev + 250);
-          setUserContext(prev => ({ ...prev, totalXP: prev.totalXP + 250 }));
+          const earnedXP = 250;
+          const earnedScore = 1420;
+
+          setTotalXP(prev => prev + earnedXP);
+          setUserContext(prev => ({
+            ...prev,
+            totalXP: prev.totalXP + earnedXP,
+            totalScore: prev.totalScore + earnedScore,
+          }));
 
           // Update Adventure Map Progress
           setLevelsProgress(prev =>
             prev.map((l, idx) => {
               if (idx === currentLevelIndex) {
-                return { ...l, completed: true, stars: 3, score: 1420 };
+                return { ...l, completed: true, stars: 3, score: earnedScore };
               }
               if (idx === currentLevelIndex + 1) {
                 return { ...l, unlocked: true };
@@ -397,8 +413,8 @@ export default function Home() {
             window.parent.postMessage({
               type: 'STAGE_COMPLETED',
               levelNumber: currentLevel.levelNumber,
-              xpEarned: 250,
-              score: 1420,
+              xpEarned: earnedXP,
+              score: earnedScore,
               stars: 3,
             }, '*');
           }
@@ -410,8 +426,8 @@ export default function Home() {
               user_id: userContext.id,
               level_number: currentLevel.levelNumber,
               stars: 3,
-              score: 1420,
-              xp_earned: 250,
+              score: earnedScore,
+              xp_earned: earnedXP,
             }),
           }).catch(() => {});
 
@@ -454,19 +470,48 @@ export default function Home() {
     { id: 'exit', svg: '/Exit.svg', title: 'Exit' },
   ];
 
+  const handleCodeSubmit = async (code: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/engine/code-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+      });
+      const data = await res.json();
+      if (data && data.success && data.user) {
+        const userXp = data.user.total_xp ?? 450;
+        setUserContext({
+          id: data.user.id || 1,
+          username: data.user.username || 'Explorer',
+          role: (data.user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
+          groupId: data.user.group_id || 1,
+          groupName: data.user.group_name || 'Jungle Explorers Group A',
+          avatar: data.user.avatar || '/monkey1.svg',
+          totalXP: userXp,
+          totalScore: userContext.totalScore,
+          totalStars: data.user.total_stars ?? 3,
+        });
+        setTotalXP(userXp);
+        soundManager.playEquip();
+        return true;
+      }
+    } catch {}
+    return false;
+  };
+
   return (
     <main className="min-h-screen bg-[#0d0906] text-slate-100 flex flex-col font-sans relative overflow-hidden">
       
       {/* Background Image */}
-      <div className="fixed inset-0 z-0">
+      <div className="fixed inset-0 z-0 overflow-hidden">
         <Image 
-          src="/images/board_game_tabletop_bg.jpg" 
-          alt="Tabletop Desk Background" 
+          src="/full_maze.jpeg" 
+          alt="Full Maze Background" 
           fill 
-          className="object-cover object-center opacity-75 filter brightness-90 saturate-125"
+          className="object-cover object-center filter brightness-90 contrast-110 blur-xl scale-105 opacity-65"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0906] via-transparent to-[#0d0906]/60" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0906]/60 via-[#0d0906]/35 to-[#0d0906]/50 backdrop-blur-md" />
       </div>
 
       {/* Top Application Header Bar */}
@@ -564,13 +609,13 @@ export default function Home() {
             </button>
           </ActionTooltip>
 
-          {/* 4. Profile Button */}
-          <ActionTooltip label="Character Profile" position="bottom">
+          {/* 4. Profile / Auth Session Button */}
+          <ActionTooltip label={`Profile & Database Auth (${userContext.role.toUpperCase()})`} position="bottom">
             <button
-              onClick={() => { soundManager.playClick(); setActiveTab('customizer'); }}
+              onClick={() => { soundManager.playClick(); setShowFallbackAuth(true); }}
               className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
             >
-              <Image src="/Profile.svg" alt="Profile" fill className="object-contain" />
+              <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
             </button>
           </ActionTooltip>
 
@@ -604,7 +649,7 @@ export default function Home() {
             onUpdateWaypoints={handleUpdateWaypoints}
             userRole={userContext.role}
             totalXP={userContext.totalXP}
-            levelScore={1420}
+            levelScore={userContext.totalScore}
           />
 
           {/* FLOATING COLLAPSIBLE SCRATCH BLOCK EDITOR MODAL (STUDIO TAB) */}
@@ -983,6 +1028,47 @@ export default function Home() {
         totalXP={userContext.totalXP}
         groupName={userContext.groupName}
       />
+
+      {/* Fallback Auth Screen Modal for Unrouted / Standalone Sessions */}
+      <FallbackAuthModal
+        isOpen={showFallbackAuth}
+        onClose={() => setShowFallbackAuth(false)}
+        userContext={userContext}
+        onUpdateUserContext={(updated) => {
+          setUserContext(updated);
+          setTotalXP(updated.totalXP);
+          setShowSplash(false);
+          setShowWelcomeModal(false);
+          setActiveTab('map');
+        }}
+      />
+
+      {/* Game Application Launcher Splash Screen */}
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen
+            onStartGame={() => {
+              setShowSplash(false);
+              setShowWelcomeModal(false);
+              setActiveTab('map');
+            }}
+            onOpenAuth={() => setShowFallbackAuth(true)}
+            onCodeSubmit={async (code) => {
+              const ok = await handleCodeSubmit(code);
+              if (ok) {
+                setShowSplash(false);
+                setShowWelcomeModal(false);
+                setActiveTab('map');
+              }
+              return ok;
+            }}
+            username={userContext.username}
+            role={userContext.role}
+            groupName={userContext.groupName}
+            totalXP={userContext.totalXP}
+          />
+        )}
+      </AnimatePresence>
 
     </main>
   );

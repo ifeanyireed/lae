@@ -143,22 +143,22 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
           {/* Content Overlay directly matching badge_sample.jpg layout */}
           <div className="relative z-10 flex flex-col justify-between h-full pt-6 pb-8 px-8 sm:px-12">
             
-            {/* 1. TOP GREEN LEAF RIBBON: THE LOST EXPLORER (matching "SPECIAL OFFER") */}
+            {/* 1. TOP GREEN LEAF RIBBON: PUZZLEPRO */}
             <div className="text-center pt-8 sm:pt-10">
               <span className="inline-block px-4 py-1 text-xs sm:text-sm font-black font-varela uppercase tracking-tighter text-white">
-                THE LOST EXPLORER
+                PUZZLEPRO
               </span>
             </div>
 
             {/* 2. CENTER WOODEN BOARD: Level Title ("Power Up") & Mechanics */}
-            <div className="text-center my-auto pt-2 space-y-3">
-              <h1 className="font-black font-varela uppercase tracking-tighter text-white text-3xl sm:text-5xl drop-shadow-md">
+            <div className="text-center my-auto pt-6 sm:pt-10 mt-2 sm:mt-3 space-y-2 max-w-[68%] sm:max-w-[62%] mx-auto flex flex-col items-center justify-center">
+              <h1 className="font-black font-varela uppercase tracking-tighter text-white text-2xl sm:text-3xl md:text-4xl leading-[0.88] drop-shadow-md break-words text-balance px-2 pt-3 sm:pt-5">
                 {levelInfo.title}
               </h1>
 
               {/* LOWER WOODEN RIBBON AREA: "BASIC MOVEMENT" */}
-              <div className="pt-2">
-                <span className="font-black font-varela uppercase tracking-tighter text-white text-sm sm:text-base drop-shadow-md">
+              <div className="pt-1">
+                <span className="font-black font-varela uppercase tracking-tighter text-white text-xs sm:text-sm md:text-base drop-shadow-md">
                   BASIC MOVEMENT
                 </span>
               </div>
@@ -182,7 +182,7 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
                 className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full transition cursor-pointer flex-shrink-0 drop-shadow-2xl z-30"
                 title="Start Level"
               >
-                <Image src="/Quest.svg" alt="Start Level Quest Button" fill className="object-contain" priority />
+                <Image src="/Login.svg" alt="Start Level Login Button" fill className="object-contain" priority />
               </motion.button>
             </div>
 
