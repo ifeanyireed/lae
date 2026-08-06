@@ -727,6 +727,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                         <option value="coin">Gold Coin</option>
                         <option value="star">Super Star (Advance +3)</option>
                         <option value="shell">Danger Hazard (Go Back 2)</option>
+                        <option value="pit">Maze Pit (Reset to Start)</option>
                         <option value="goal">Finish Pipe</option>
                       </select>
 
