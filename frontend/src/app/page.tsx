@@ -84,7 +84,11 @@ export default function Home() {
   };
 
   const findNextWaypointInHeading = (currWp: PathWaypoint, heading: 'N' | 'E' | 'S' | 'W', wps: PathWaypoint[]): PathWaypoint | null => {
-    if (!currWp || !wps) return null;
+    if (!currWp || !wps || wps.length === 0) return null;
+
+    let closestWp: PathWaypoint | null = null;
+    let minDistance = Infinity;
+
     for (const wp of wps) {
       if (wp.index === currWp.index) continue;
       const dx = (wp.xPercent ?? 0) - (currWp.xPercent ?? 0);
@@ -92,12 +96,22 @@ export default function Home() {
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
-      if (heading === 'E' && dx > 1.5 && absDy < 3.5) return wp;
-      if (heading === 'W' && dx < -1.5 && absDy < 3.5) return wp;
-      if (heading === 'S' && dy > 1.5 && absDx < 3.5) return wp;
-      if (heading === 'N' && dy < -1.5 && absDx < 3.5) return wp;
+      let isMatchingDirection = false;
+      if (heading === 'E' && dx > 1.5 && absDy < 5.0) isMatchingDirection = true;
+      if (heading === 'W' && dx < -1.5 && absDy < 5.0) isMatchingDirection = true;
+      if (heading === 'S' && dy > 1.5 && absDx < 5.0) isMatchingDirection = true;
+      if (heading === 'N' && dy < -1.5 && absDx < 5.0) isMatchingDirection = true;
+
+      if (isMatchingDirection) {
+        const dist = Math.hypot(dx, dy);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestWp = wp;
+        }
+      }
     }
-    return null;
+
+    return closestWp;
   };
 
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
