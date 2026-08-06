@@ -65,7 +65,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       if (ok) {
         onStartGame();
       } else {
-        setCodeStatus('Invalid code. Try ADMN-2026 or KIDS-1001');
+        setCodeStatus('Invalid Code. Contact your Teacher or Guardian.');
       }
     } else {
       onStartGame();

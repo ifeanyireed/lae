@@ -328,7 +328,7 @@ func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusNotFound)
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"success": false,
-				"error":   "Invalid code or user creation error",
+				"error":   "Invalid Code. Contact your Teacher or Guardian.",
 			})
 			return
 		}
