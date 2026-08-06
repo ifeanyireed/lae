@@ -18,8 +18,13 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "Scratch Board Game Maze Studio",
+  title: "PuzzlePro - The Lost Monkey Explorer",
   description: "Interactive Tabletop Scratch Block Maze Game",
+  icons: {
+    icon: "/monkey1.svg",
+    shortcut: "/monkey1.svg",
+    apple: "/monkey1.svg",
+  },
 };
 
 export default function RootLayout({
