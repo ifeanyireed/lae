@@ -476,7 +476,7 @@ export default function Home() {
         for (let i = 0; i < count; i++) {
           flatSteps.push({ action: 'move_forward', blockIndex: idx, distance: 1 });
         }
-      } else if (block.type === 'move_forward' || block.type === 'turn_left' || block.type === 'turn_right') {
+      } else if (block.type === 'move_forward' || block.type === 'turn_left' || block.type === 'turn_right' || block.type === 'turn_around') {
         const count = Math.max(1, Math.min(10, stepVal));
         for (let i = 0; i < count; i++) {
           flatSteps.push({ action: block.type, blockIndex: idx, distance: 1 });
@@ -511,6 +511,13 @@ export default function Home() {
         setSpeechBubble('Turning Left!');
         const leftMap: Record<string, 'N' | 'E' | 'S' | 'W'> = { N: 'W', W: 'S', S: 'E', E: 'N' };
         heading = leftMap[heading];
+        setCurrentHeading(heading);
+        await new Promise(res => setTimeout(res, stepDelay));
+      } else if (step.action === 'turn_around') {
+        soundManager.playClick();
+        setSpeechBubble('Turning Around 180°!');
+        const reverseMap: Record<string, 'N' | 'E' | 'S' | 'W'> = { N: 'S', S: 'N', E: 'W', W: 'E' };
+        heading = reverseMap[heading] || 'S';
         setCurrentHeading(heading);
         await new Promise(res => setTimeout(res, stepDelay));
       } else if (step.action === 'move_forward' || step.action === 'jump') {

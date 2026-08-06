@@ -17,6 +17,7 @@ import {
   IconArrowBackUp,
   IconArrowForwardUp,
   IconCornerUpRight,
+  IconRotate,
   IconMessage,
   IconBell,
   IconRepeat
@@ -56,6 +57,7 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'move_forward', label: 'move forward', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconArrowRight className="w-3.5 h-3.5" /> },
   { type: 'turn_left', label: 'turn left', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconArrowBackUp className="w-3.5 h-3.5" /> },
   { type: 'turn_right', label: 'turn right', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconArrowForwardUp className="w-3.5 h-3.5" /> },
+  { type: 'turn_around', label: 'turn around', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconRotate className="w-3.5 h-3.5" /> },
   { type: 'jump', label: 'jump', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconCornerUpRight className="w-3.5 h-3.5" /> },
   { type: 'go_to_start', label: 'go to start', category: 'motion', blockClass: 'block-motion', icon: <IconArrowBackUp className="w-3.5 h-3.5" /> },
 

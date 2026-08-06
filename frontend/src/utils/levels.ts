@@ -190,7 +190,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Turning',
       bgImage: '/The Lost Monkey Explorer - Level 3.svg',
       waypoints: LEVEL_3_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
       maxBlocks: 10,
     },
     {
@@ -202,7 +202,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Collectibles',
       bgImage: '/The Lost Monkey Explorer - Level 4.svg',
       waypoints: LEVEL_4_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
       maxBlocks: 10,
     },
     {
@@ -214,7 +214,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Planning & Collectibles',
       bgImage: '/The Lost Monkey Explorer - Level 5.svg',
       waypoints: LEVEL_5_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 12,
     },
     {
@@ -226,7 +226,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Hazard Avoidance',
       bgImage: '/The Lost Monkey Explorer - Level 6.svg',
       waypoints: LEVEL_6_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 12,
     },
     {
@@ -238,7 +238,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Alternative Paths',
       bgImage: '/The Lost Monkey Explorer - Level 7.svg',
       waypoints: LEVEL_7_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 12,
     },
     {
@@ -250,7 +250,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Bonus Objectives',
       bgImage: '/The Lost Monkey Explorer - Level 8.svg',
       waypoints: LEVEL_8_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 15,
     },
     {
@@ -262,7 +262,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Route Planning',
       bgImage: '/The Lost Monkey Explorer - Level 9.svg',
       waypoints: LEVEL_9_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 15,
     },
     {
@@ -274,7 +274,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Path Optimization',
       bgImage: '/The Lost Monkey Explorer - Level 10.svg',
       waypoints: LEVEL_10_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 15,
     },
     {
@@ -286,7 +286,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Integrated Trial',
       bgImage: '/The Lost Monkey Explorer - Level 11.svg',
       waypoints: LEVEL_11_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 20,
     },
     {
@@ -298,7 +298,7 @@ export const ADVENTURE_1: AdventureConfig = {
       mechanic: 'Mastery Challenge',
       bgImage: '/The Lost Monkey Explorer - Level 12.svg',
       waypoints: LEVEL_12_WAYPOINTS,
-      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'repeat'],
+      availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 25,
     },
   ],
