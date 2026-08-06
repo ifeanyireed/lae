@@ -512,10 +512,7 @@ export default function Home() {
 
           setIsRunning(false);
           setActiveStepIndex(null);
-
-          if (newFailCount > 3) {
-            handleReturnToStartPos();
-          }
+          handleReturnToStartPos();
           return;
         }
 
