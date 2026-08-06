@@ -68,6 +68,7 @@ export default function Home() {
   const [levelFailCount, setLevelFailCount] = useState<number>(0);
   const [overrideSpriteSrc, setOverrideSpriteSrc] = useState<string | null>(null);
   const [isZoomingQuickly, setIsZoomingQuickly] = useState<boolean>(false);
+  const [isJumping, setIsJumping] = useState<boolean>(false);
   const [loadingSpriteSrc, setLoadingSpriteSrc] = useState<string>('/monkey1.svg');
 
   const getInitialHeading = (wps: PathWaypoint[]): 'N' | 'E' | 'S' | 'W' => {
@@ -520,7 +521,60 @@ export default function Home() {
         heading = reverseMap[heading] || 'S';
         setCurrentHeading(heading);
         await new Promise(res => setTimeout(res, stepDelay));
-      } else if (step.action === 'move_forward' || step.action === 'jump') {
+      } else if (step.action === 'jump') {
+        const jumpDistance = Math.max(1, step.distance || 2);
+        soundManager.playEquip();
+        setSpeechBubble(`Jumping ${jumpDistance} spaces!`);
+        setIsJumping(true);
+
+        let targetWp: PathWaypoint | null = waypoints[pathIdx];
+        for (let j = 0; j < jumpDistance; j++) {
+          if (!targetWp) break;
+          targetWp = findNextWaypointInHeading(targetWp, heading, waypoints);
+        }
+
+        if (!targetWp) {
+          soundManager.playError();
+          const newFailCount = levelFailCount + 1;
+          setLevelFailCount(newFailCount);
+
+          if (newFailCount <= 3) {
+            setLoadingSpriteSrc('/monkey17.svg');
+            setSpeechBubble('Jumped off track! (Try again)');
+          } else {
+            setLoadingSpriteSrc('/monkey14.svg');
+            setSpeechBubble('Jumped off track! Returning to START!');
+          }
+
+          setIsGlobalLoading(true);
+          setIsZoomingQuickly(true);
+          await new Promise(res => setTimeout(res, 1850));
+          setIsZoomingQuickly(false);
+          setIsGlobalLoading(false);
+          setLoadingSpriteSrc('/monkey1.svg');
+
+          setIsRunning(false);
+          setActiveStepIndex(null);
+          setIsJumping(false);
+          handleReturnToStartPos();
+          return;
+        }
+
+        pathIdx = targetWp.index;
+        setCurrentWaypointIndex(pathIdx);
+        setFacingSegmentIndex(pathIdx);
+
+        const currentWpNew = waypoints[pathIdx];
+        if (currentWpNew.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
+          coinsCollectedSoFar.push(pathIdx);
+          setCollectedCoins([...coinsCollectedSoFar]);
+          soundManager.playCoin();
+          setSpeechBubble('Landed on a Coin!');
+        }
+
+        await new Promise(res => setTimeout(res, stepDelay));
+        setIsJumping(false);
+      } else if (step.action === 'move_forward') {
         const currentWp = waypoints[pathIdx];
         const nextWp = findNextWaypointInHeading(currentWp, heading, waypoints);
 
@@ -918,6 +972,7 @@ export default function Home() {
             facingSegmentIndex={facingSegmentIndex}
             overrideSpriteSrc={overrideSpriteSrc}
             isZoomingQuickly={isZoomingQuickly}
+            isJumping={isJumping}
             collectedCoins={collectedCoins}
             speechBubble={speechBubble}
             equippedHat={equippedHat}

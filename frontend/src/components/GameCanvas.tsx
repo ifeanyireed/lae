@@ -26,6 +26,7 @@ interface GameCanvasProps {
   facingSegmentIndex?: number;
   overrideSpriteSrc?: string | null;
   isZoomingQuickly?: boolean;
+  isJumping?: boolean;
   collectedCoins?: number[];
   speechBubble?: string | null;
   equippedHat?: string;
@@ -44,6 +45,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   facingSegmentIndex,
   overrideSpriteSrc,
   isZoomingQuickly = false,
+  isJumping = false,
   collectedCoins = [],
   selectedCharacter,
   onUpdateWaypoints,
@@ -583,6 +585,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   spriteSrc={activeSpriteSrc}
                   flipX={activeFlipX}
                   isZoomingQuickly={isZoomingQuickly}
+                  isJumping={isJumping}
                 />
               </div>
             </motion.div>

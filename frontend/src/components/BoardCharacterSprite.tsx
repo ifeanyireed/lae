@@ -10,6 +10,7 @@ interface BoardCharacterSpriteProps {
   spriteSrc?: string;
   flipX?: boolean;
   isZoomingQuickly?: boolean;
+  isJumping?: boolean;
 }
 
 export const BoardCharacterSprite: React.FC<BoardCharacterSpriteProps> = ({
@@ -17,13 +18,23 @@ export const BoardCharacterSprite: React.FC<BoardCharacterSpriteProps> = ({
   spriteSrc = "/monkey1.svg",
   flipX = false,
   isZoomingQuickly = false,
+  isJumping = false,
 }) => {
   return (
     <motion.div
-      animate={isZoomingQuickly ? {
-        scale: [1, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1],
-      } : {}}
-      transition={{ duration: 1.2, ease: 'easeInOut' }}
+      animate={
+        isZoomingQuickly ? {
+          scale: [1, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1],
+        } : isJumping ? {
+          y: [0, -35, 0],
+          scale: [1, 1.25, 1],
+        } : {}
+      }
+      transition={
+        isJumping
+          ? { duration: 0.5, ease: 'easeOut' }
+          : { duration: 1.2, ease: 'easeInOut' }
+      }
       className={`relative flex items-center justify-center z-[100] ${className}`}
       style={{
         transform: flipX ? 'scaleX(-1)' : 'none',
