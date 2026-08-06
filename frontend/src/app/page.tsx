@@ -291,6 +291,14 @@ export default function Home() {
     }
   }, []);
 
+  // Re-evaluate initial heading whenever active level or waypoints update from database
+  React.useEffect(() => {
+    const activeWps = customWaypoints || currentLevel?.waypoints || [];
+    if (activeWps.length >= 2) {
+      setCurrentHeading(getInitialHeading(activeWps));
+    }
+  }, [currentLevelIndex, customWaypoints, dbLevels]);
+
   const currentLevel = dbLevels[currentLevelIndex] || PUZZLE_LEVELS[currentLevelIndex] || ADVENTURE_1.levels[0];
   const waypoints = customWaypoints || currentLevel.waypoints || [];
 
