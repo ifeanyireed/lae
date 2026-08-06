@@ -438,9 +438,9 @@ func (db *DB) SeedAdventure1() error {
 			_, err := db.ExecContext(ctx, `
 				INSERT INTO levels (adventure_id, level_number, title, objective, mechanic, svg_map, max_blocks, available_blocks, waypoints)
 				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-				ON DUPLICATE KEY UPDATE title=?, objective=?, mechanic=?, svg_map=?, max_blocks=?, available_blocks=?, waypoints=?
+				ON DUPLICATE KEY UPDATE title=?, objective=?, mechanic=?, svg_map=?, max_blocks=?, available_blocks=?
 			`, advID, l.Number, l.Title, l.Objective, l.Mechanic, svgPath, l.MaxBlocks, string(blocksJSON), waypointsJSON,
-				l.Title, l.Objective, l.Mechanic, svgPath, l.MaxBlocks, string(blocksJSON), waypointsJSON,
+				l.Title, l.Objective, l.Mechanic, svgPath, l.MaxBlocks, string(blocksJSON),
 			)
 			if err != nil {
 				log.Printf("Error seeding level %d: %v", l.Number, err)
