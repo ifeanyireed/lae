@@ -72,10 +72,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     }
 
     if (currentHeading) {
-      if (currentHeading === 'E') return { spriteSrc: '/monkey1_forward_x.png', flipX: false };
-      if (currentHeading === 'W') return { spriteSrc: '/monkey1_forward_x.png', flipX: true };
+      if (currentHeading === 'E') return { spriteSrc: '/monkey1_forward_right_x.svg', flipX: false };
+      if (currentHeading === 'W') return { spriteSrc: '/monkey1_forward_left_x.svg', flipX: false };
       if (currentHeading === 'S') return { spriteSrc: '/monkey1.svg', flipX: false };
-      if (currentHeading === 'N') return { spriteSrc: '/monkey1.svg', flipX: false };
+      if (currentHeading === 'N') return { spriteSrc: '/monkey1_backward_y.svg', flipX: false };
     }
 
     if (!liveWaypoints || liveWaypoints.length === 0) {
@@ -106,14 +106,14 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     // If movement vector is along X-axis (horizontal)
     if (absDx >= absDy) {
       return {
-        spriteSrc: '/monkey1_forward_x.png',
-        flipX: dx < 0, // Flip horizontally if moving West / left
+        spriteSrc: dx >= 0 ? '/monkey1_forward_right_x.svg' : '/monkey1_forward_left_x.svg',
+        flipX: false,
       };
     }
 
     // If movement vector is along Y-axis (vertical)
     return {
-      spriteSrc: '/monkey1.svg',
+      spriteSrc: dy >= 0 ? '/monkey1.svg' : '/monkey1_backward_y.svg',
       flipX: false,
     };
   };
