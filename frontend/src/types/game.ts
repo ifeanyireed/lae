@@ -53,6 +53,8 @@ export interface AdventureConfig {
   id: number;
   slug: string;
   title: string;
+  concept: string;
+  icon: string;
   story: string;
   learningObjective: string;
   totalLevels: number;

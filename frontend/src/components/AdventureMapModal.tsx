@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Star, Play } from 'lucide-react';
 import { soundManager } from '@/utils/sound';
+import { ALL_ADVENTURES } from '@/utils/levels';
 
 export interface LevelProgress {
   levelNumber: number;
@@ -35,8 +36,12 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   groupName = 'Jungle Explorers Group A',
 }) => {
   const [lockedVibrateIdx, setLockedVibrateIdx] = React.useState<number | null>(null);
+  const [selectedAdvId, setSelectedAdvId] = React.useState<number>(1);
 
   if (!isOpen) return null;
+
+  const currentAdv = ALL_ADVENTURES.find(a => a.id === selectedAdvId) || ALL_ADVENTURES[0];
+  const activeLevels = currentAdv.levels;
 
   return (
     <AnimatePresence>
@@ -66,11 +71,16 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
               </div>
               <div>
                 <h2 className="text-xl sm:text-3xl font-black font-varela text-amber-200 uppercase tracking-tight">
-                  ADVENTURE MAP
+                  {currentAdv.title}
                 </h2>
-                <p className="text-xs sm:text-sm font-bold text-amber-400">
-                  PuzzlePro &bull; {groupName}
-                </p>
+                <div className="flex items-center space-x-2 mt-0.5">
+                  <span className="bg-amber-400/20 text-amber-300 font-mono font-black text-[10px] sm:text-xs px-2 py-0.5 rounded-full border border-amber-500/30 uppercase">
+                    Concept: {currentAdv.concept}
+                  </span>
+                  <p className="text-xs sm:text-sm font-bold text-amber-400">
+                    PuzzlePro &bull; {groupName}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -89,11 +99,41 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </div>
           </div>
 
+          {/* 5 Adventure Modules Selector Bar */}
+          <div className="flex items-center justify-center flex-wrap gap-2 pb-3 mb-3 border-b border-amber-600/30 z-10 shrink-0">
+            {ALL_ADVENTURES.map((adv) => {
+              const isSelected = selectedAdvId === adv.id;
+              return (
+                <button
+                  key={`modal-adv-tab-${adv.id}`}
+                  onClick={() => {
+                    soundManager.playClick();
+                    setSelectedAdvId(adv.id);
+                  }}
+                  className={`px-3 py-1.5 rounded-2xl font-black text-xs flex items-center space-x-1.5 transition transform cursor-pointer border shadow-sm ${
+                    isSelected
+                      ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 scale-105 shadow-[0_0_15px_rgba(251,191,36,0.5)]'
+                      : 'bg-amber-900/60 text-amber-100 border-amber-500/40 hover:bg-amber-800 hover:text-white'
+                  }`}
+                >
+                  <span className="text-sm sm:text-base">{adv.icon}</span>
+                  <div className="flex flex-col text-left leading-tight">
+                    <span className="text-[9px] uppercase font-mono font-bold tracking-wider opacity-80">
+                      Adv {adv.id}: {adv.concept}
+                    </span>
+                    <span className="font-extrabold line-clamp-1">{adv.title}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+
           {/* 12-Level Grid Path */}
           <div className="overflow-y-auto flex-1 pr-2 py-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-            {levelsProgress.map((lvl, idx) => {
-              const isCurrent = currentLevelIndex === idx;
-              const isUnlocked = lvl.unlocked || idx === 0 || idx <= currentLevelIndex;
+            {activeLevels.map((lvl, idx) => {
+              const lvlProg = levelsProgress[idx];
+              const isCurrent = currentLevelIndex === idx && selectedAdvId === 1;
+              const isUnlocked = selectedAdvId === 1 ? (lvlProg?.unlocked || idx === 0 || idx <= currentLevelIndex) : true;
 
               return (
                 <motion.div
@@ -129,7 +169,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
 
                     {isUnlocked ? (
                       <span className="text-[10px] font-black uppercase text-amber-300">
-                        {lvl.completed ? 'COMPLETED' : (isCurrent ? 'ACTIVE' : 'READY')}
+                        {lvlProg?.completed ? 'COMPLETED' : (isCurrent ? 'ACTIVE' : 'READY')}
                       </span>
                     ) : (
                       <Lock className="w-4 h-4 text-amber-500/80 animate-pulse" />
@@ -193,7 +233,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                         <Star
                           key={`star-${lvl.levelNumber}-${starIdx}`}
                           className={`w-3.5 h-3.5 ${
-                            starIdx <= (lvl.stars || (lvl.completed ? 3 : 0))
+                            starIdx <= (lvlProg?.stars || (lvlProg?.completed ? 3 : 0))
                               ? 'text-amber-400 fill-amber-400 drop-shadow'
                               : 'text-slate-600 fill-slate-700'
                           }`}

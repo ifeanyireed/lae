@@ -153,8 +153,10 @@ export const ADVENTURE_1: AdventureConfig = {
   id: 1,
   slug: 'the-lost-monkey-explorer',
   title: 'The Lost Monkey Explorer',
+  concept: 'Sequencing',
+  icon: '🐵',
   story: `A friendly little robot has crash-landed in the Whispering Forest. Its navigation system is broken, and only by giving it the correct instructions can it find its way home. Every level repairs a little more of the robot's memory and unlocks the path ahead.`,
-  learningObjective: `Follow and create simple sequences; Understand that instructions execute in order; Navigate using movement commands; Plan a route before execution; Collect required items while completing a task; Recognize and avoid hazards; Debug simple mistakes; Complete increasingly complex algorithmic challenges.`,
+  learningObjective: `Put instructions in order; Follow and create simple sequences; Navigate using movement commands; Plan a route before execution.`,
   totalLevels: 12,
   levels: [
     {
@@ -303,5 +305,157 @@ export const ADVENTURE_1: AdventureConfig = {
     },
   ],
 };
+
+export const ADVENTURE_2: AdventureConfig = {
+  id: 2,
+  slug: 'the-crystal-cave',
+  title: 'The Crystal Cave',
+  concept: 'Loops',
+  icon: '💎',
+  story: `The Monkey enters a magical cave filled with glowing crystals. Many paths repeat, and doing the same action over and over is too slow. The Monkey discovers the power of Repeat.`,
+  learningObjective: `Repeat instructions efficiently; Master loop counts and pattern repetition.`,
+  totalLevels: 12,
+  levels: [
+    'Repeating Steps',
+    'Crystal Corridor',
+    'Mine All Crystals',
+    'Climbing the Spiral',
+    'Crossing the Bridge',
+    'Repeat ×3',
+    'Repeat ×5',
+    'Loop the Tunnel',
+    'The Crystal Maze',
+    'Save Energy',
+    'Master the Loop',
+    'Crystal Guardian (Boss)'
+  ].map((name, i) => ({
+    id: 200 + i + 1,
+    levelNumber: i + 1,
+    title: name,
+    description: `Adventure 2: Master loops and repeats in ${name}.`,
+    objective: `Use repeat loops to complete ${name}.`,
+    mechanic: 'Loops (Repeat)',
+    bgImage: `/The Lost Monkey Explorer - Level ${(i % 12) + 1}.svg`,
+    waypoints: LEVEL_1_WAYPOINTS,
+    availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
+    maxBlocks: 15,
+  })),
+};
+
+export const ADVENTURE_3: AdventureConfig = {
+  id: 3,
+  slug: 'the-enchanted-jungle',
+  title: 'The Enchanted Jungle',
+  concept: 'Conditionals',
+  icon: '🌿',
+  story: `The jungle is alive. Bridges appear and disappear, gates open with keys, and animals react differently depending on what the Monkey finds. The Monkey must learn to make decisions.`,
+  learningObjective: `Make decisions based on situations; Use logic branches (If / Else).`,
+  totalLevels: 12,
+  levels: [
+    'The Locked Gate',
+    'Find the Key',
+    'Hungry Crocodile',
+    'Choose the Safe Bridge',
+    'Rain or Sunshine',
+    'If You Find a Banana...',
+    'If Danger, Turn Away',
+    'Two Jungle Paths',
+    'Rescue the Baby Monkey',
+    'Jungle Puzzle',
+    'Smart Decisions',
+    'Escape the Temple (Boss)'
+  ].map((name, i) => ({
+    id: 300 + i + 1,
+    levelNumber: i + 1,
+    title: name,
+    description: `Adventure 3: Make smart decisions in ${name}.`,
+    objective: `Use conditionals to pass ${name}.`,
+    mechanic: 'If / Else Logic',
+    bgImage: `/The Lost Monkey Explorer - Level ${(i % 12) + 1}.svg`,
+    waypoints: LEVEL_1_WAYPOINTS,
+    availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
+    maxBlocks: 15,
+  })),
+};
+
+export const ADVENTURE_4: AdventureConfig = {
+  id: 4,
+  slug: 'monkeys-treasure-island',
+  title: "Monkey's Treasure Island",
+  concept: 'Variables',
+  icon: '🏝️',
+  story: `The Monkey lands on an island where bananas, coins, gems, and hearts are collected and counted. Progress depends on keeping track of resources.`,
+  learningObjective: `Store and update information; Track scores, inventories, and counters.`,
+  totalLevels: 12,
+  levels: [
+    'Count Your Bananas',
+    'Collect 5 Coins',
+    'Spend a Coin',
+    'Gain a Heart',
+    'Lose a Heart',
+    'Open the Treasure Chest',
+    'Keep Score',
+    'Enough Bananas?',
+    'Collect Everything',
+    'Trade with the Pirate',
+    'Treasure Race',
+    'Island Champion (Boss)'
+  ].map((name, i) => ({
+    id: 400 + i + 1,
+    levelNumber: i + 1,
+    title: name,
+    description: `Adventure 4: Track variables and resources in ${name}.`,
+    objective: `Manage counters and variables in ${name}.`,
+    mechanic: 'Variables & Counters',
+    bgImage: `/The Lost Monkey Explorer - Level ${(i % 12) + 1}.svg`,
+    waypoints: LEVEL_1_WAYPOINTS,
+    availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
+    maxBlocks: 15,
+  })),
+};
+
+export const ADVENTURE_5: AdventureConfig = {
+  id: 5,
+  slug: 'the-monkey-inventors-workshop',
+  title: "The Monkey Inventor's Workshop",
+  concept: 'Functions',
+  icon: '⚙️',
+  story: `The Monkey becomes an inventor. Instead of repeating long instruction sequences, it creates reusable "Monkey Moves" that can be used again and again.`,
+  learningObjective: `Reuse groups of instructions; Define and call modular functions.`,
+  totalLevels: 12,
+  levels: [
+    'Build Your First Function',
+    'Call the Function',
+    'Cross Every Bridge',
+    'Banana Collector',
+    'Build a Ladder',
+    'Repeat Your Function',
+    'Two Different Functions',
+    'Function Challenge',
+    'Fix the Broken Function',
+    'Workshop Puzzle',
+    'Inventor\'s Test',
+    'Master Inventor (Boss)'
+  ].map((name, i) => ({
+    id: 500 + i + 1,
+    levelNumber: i + 1,
+    title: name,
+    description: `Adventure 5: Build modular functions in ${name}.`,
+    objective: `Create reusable function moves in ${name}.`,
+    mechanic: 'Functions & Reusability',
+    bgImage: `/The Lost Monkey Explorer - Level ${(i % 12) + 1}.svg`,
+    waypoints: LEVEL_1_WAYPOINTS,
+    availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
+    maxBlocks: 20,
+  })),
+};
+
+export const ALL_ADVENTURES: AdventureConfig[] = [
+  ADVENTURE_1,
+  ADVENTURE_2,
+  ADVENTURE_3,
+  ADVENTURE_4,
+  ADVENTURE_5,
+];
 
 export const PUZZLE_LEVELS: LevelConfig[] = ADVENTURE_1.levels;

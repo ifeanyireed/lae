@@ -12,7 +12,7 @@ import { LevelWelcomeModal, LevelInfo } from '@/components/LevelWelcomeModal';
 import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal';
 import { SplashScreen } from '@/components/SplashScreen';
 import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
-import { ADVENTURE_1, PUZZLE_LEVELS } from '@/utils/levels';
+import { ADVENTURE_1, PUZZLE_LEVELS, ALL_ADVENTURES } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
 import { API_BASE_URL } from '@/utils/api';
@@ -30,7 +30,7 @@ export default function Home() {
   // Embeddable Engine User & Host Handshake Session Context
   const [userContext, setUserContext] = useState({
     id: 1,
-    username: 'Admin_Explorer',
+    username: 'Explorer',
     role: 'admin' as 'admin' | 'user', // Default admin role for dev; updated by Host Platform token or Auth modal
     groupId: 1,
     groupName: 'Jungle Explorers Group A',
@@ -41,6 +41,7 @@ export default function Home() {
   });
 
   const [showMapModal, setShowMapModal] = useState(false);
+  const [selectedAdventureId, setSelectedAdventureId] = useState<number>(1);
   const [levelsProgress, setLevelsProgress] = useState<LevelProgress[]>(
     PUZZLE_LEVELS.map((l, idx) => ({
       levelNumber: l.levelNumber,
@@ -1070,18 +1071,64 @@ export default function Home() {
                 ✕ Close Map
               </button>
 
-              {/* Map Title Header - Read from Database */}
+              {/* Map Title Header & Concept Badge */}
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center mt-6 mb-2 px-4"
               >
-                <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-                  {adventureTitle}
-                </h1>
-                <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-xl mx-auto drop-shadow-sm">
-                  {adventureStory}
-                </p>
+                {(() => {
+                  const currAdv = ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
+                  return (
+                    <>
+                      <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 font-mono font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase mb-2">
+                        <span>{currAdv.icon}</span>
+                        <span>Adv {currAdv.id}: {currAdv.concept}</span>
+                      </div>
+                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                        {currAdv.title}
+                      </h1>
+                      <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
+                        {currAdv.story}
+                      </p>
+                    </>
+                  );
+                })()}
+              </motion.div>
+
+              {/* 5 Adventure Modules Selector Bar */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center justify-center flex-wrap gap-2 my-2.5 z-20 max-w-5xl px-2"
+              >
+                {ALL_ADVENTURES.map((adv) => {
+                  const isSelected = selectedAdventureId === adv.id;
+                  return (
+                    <button
+                      key={`map-adv-tab-${adv.id}`}
+                      onClick={() => {
+                        soundManager.playClick();
+                        setSelectedAdventureId(adv.id);
+                        setAdventureTitle(adv.title);
+                        setAdventureStory(adv.story);
+                      }}
+                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl font-black text-xs sm:text-sm flex items-center space-x-1.5 transition transform cursor-pointer border shadow-lg ${
+                        isSelected
+                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 scale-105 shadow-[0_0_20px_rgba(251,191,36,0.6)]'
+                          : 'bg-slate-900/80 text-amber-100 border-amber-500/40 hover:bg-amber-950/90 hover:text-white hover:border-amber-400'
+                      }`}
+                    >
+                      <span className="text-base sm:text-lg">{adv.icon}</span>
+                      <div className="flex flex-col text-left leading-tight">
+                        <span className="text-[9px] sm:text-[10px] uppercase font-mono font-bold tracking-wider opacity-80">
+                          Adv {adv.id}: {adv.concept}
+                        </span>
+                        <span className="font-extrabold line-clamp-1">{adv.title}</span>
+                      </div>
+                    </button>
+                  );
+                })}
               </motion.div>
 
               <motion.div
@@ -1108,13 +1155,12 @@ export default function Home() {
                 exit="exit"
                 className="grid grid-cols-6 gap-3 sm:gap-5 max-w-5xl w-full py-4"
               >
-                {Array.from({ length: 12 }, (_, i) => {
+                {(ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0]).levels.map((lvlConfig, i) => {
                   const levelNum = i + 1;
                   const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
-                  const lvlConfig = dbLevels[i] || PUZZLE_LEVELS[i] || ADVENTURE_1.levels[i];
                   const levelTitle = lvlConfig?.title || `Level ${levelNum}`;
                   const lvlProg = levelsProgress[i];
-                  const isUnlocked = lvlProg?.unlocked || i === 0 || i <= currentLevelIndex;
+                  const isUnlocked = selectedAdventureId === 1 ? (lvlProg?.unlocked || i === 0 || i <= currentLevelIndex) : true;
                   const isCompleted = lvlProg?.completed;
                   const isVibrating = lockedVibrateLevelIndex === i;
 
