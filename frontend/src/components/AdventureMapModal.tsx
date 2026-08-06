@@ -205,6 +205,58 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
               );
             })}
           </div>
+
+          {/* Maze Items Legend / Key Bar */}
+          <div className="border-t border-amber-600/30 pt-3 mt-3 flex items-center justify-center sm:justify-between flex-wrap gap-2 z-10 shrink-0 bg-amber-900/40 px-3 py-2 rounded-2xl border border-amber-500/20">
+            <span className="text-[10px] font-black uppercase text-amber-400 tracking-wider flex items-center space-x-1 mr-1">
+              <span>🔑</span>
+              <span>MAZE KEY:</span>
+            </span>
+
+            <div className="flex items-center flex-wrap gap-1.5 sm:gap-2.5 text-[10px] font-bold text-amber-200">
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/maze_start.svg" alt="Start Pipe" fill className="object-contain" />
+                </div>
+                <span>Start Pipe</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/maze_finish.svg" alt="Goal Finish" fill className="object-contain" />
+                </div>
+                <span>Goal Finish</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/coin.svg" alt="Gold Coin" fill className="object-contain" />
+                </div>
+                <span>Gold Coin</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/maze_star.svg" alt="Advance 3" fill className="object-contain" />
+                </div>
+                <span>Advance 3</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/maze_dander.svg" alt="Go Back" fill className="object-contain" />
+                </div>
+                <span>Go Back</span>
+              </div>
+
+              <div className="flex items-center space-x-1.5 bg-amber-950/70 px-2 py-0.5 rounded-full border border-amber-600/30">
+                <div className="w-4 h-4 relative shrink-0">
+                  <Image src="/maze_pit.svg" alt="Reset to Start" fill className="object-contain" />
+                </div>
+                <span>Reset to Start</span>
+              </div>
+            </div>
+          </div>
         </motion.div>
       </div>
     </AnimatePresence>
