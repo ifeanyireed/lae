@@ -24,6 +24,8 @@ interface GameCanvasProps {
   currentWaypointIndex: number;
   currentHeading?: 'N' | 'E' | 'S' | 'W';
   facingSegmentIndex?: number;
+  overrideSpriteSrc?: string | null;
+  isZoomingQuickly?: boolean;
   collectedCoins?: number[];
   speechBubble?: string | null;
   equippedHat?: string;
@@ -40,6 +42,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   currentWaypointIndex,
   currentHeading,
   facingSegmentIndex,
+  overrideSpriteSrc,
+  isZoomingQuickly = false,
   collectedCoins = [],
   selectedCharacter,
   onUpdateWaypoints,
@@ -63,6 +67,10 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Determine Monkey Sprite Face & Orientation (X-axis vs Y-axis)
   const calculateSpriteOrientation = () => {
+    if (overrideSpriteSrc) {
+      return { spriteSrc: overrideSpriteSrc, flipX: false };
+    }
+
     if (currentHeading) {
       if (currentHeading === 'E') return { spriteSrc: '/monkey1_forward_x.png', flipX: false };
       if (currentHeading === 'W') return { spriteSrc: '/monkey1_forward_x.png', flipX: true };
@@ -558,6 +566,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   selectedCharacter={selectedCharacter}
                   spriteSrc={activeSpriteSrc}
                   flipX={activeFlipX}
+                  isZoomingQuickly={isZoomingQuickly}
                 />
               </div>
             </motion.div>

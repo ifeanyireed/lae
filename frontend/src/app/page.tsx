@@ -65,6 +65,9 @@ export default function Home() {
   const [dbLevels, setDbLevels] = useState<LevelConfig[]>(PUZZLE_LEVELS);
   const [facingSegmentIndex, setFacingSegmentIndex] = useState<number>(0);
   const [currentHeading, setCurrentHeading] = useState<'N' | 'E' | 'S' | 'W'>('S');
+  const [levelFailCount, setLevelFailCount] = useState<number>(0);
+  const [overrideSpriteSrc, setOverrideSpriteSrc] = useState<string | null>(null);
+  const [isZoomingQuickly, setIsZoomingQuickly] = useState<boolean>(false);
 
   const getInitialHeading = (wps: PathWaypoint[]): 'N' | 'E' | 'S' | 'W' => {
     if (!wps || wps.length < 2) return 'S';
@@ -396,6 +399,9 @@ export default function Home() {
     setShowVictoryModal(false);
     setShowWelcomeModal(true);
     setActiveTab('studio');
+    setLevelFailCount(0);
+    setOverrideSpriteSrc(null);
+    setIsZoomingQuickly(false);
     // Remove all previous blocks on new level, resetting to default 'when flag clicked'
     setProgram([
       {
@@ -488,9 +494,28 @@ export default function Home() {
 
         if (!nextWp) {
           soundManager.playError();
-          setSpeechBubble('Oops! Moved off the maze track! Turn block required!');
+          const newFailCount = levelFailCount + 1;
+          setLevelFailCount(newFailCount);
+
+          if (newFailCount <= 3) {
+            setOverrideSpriteSrc('/monkey17.svg');
+            setSpeechBubble('Oops! Off track! (Try again)');
+          } else {
+            setOverrideSpriteSrc('/monkey14.svg');
+            setSpeechBubble('Oops! Returning to START!');
+          }
+
+          setIsZoomingQuickly(true);
+          await new Promise(res => setTimeout(res, 1200));
+          setIsZoomingQuickly(false);
+          setOverrideSpriteSrc(null);
+
           setIsRunning(false);
           setActiveStepIndex(null);
+
+          if (newFailCount > 3) {
+            handleReturnToStartPos();
+          }
           return;
         }
 
@@ -556,6 +581,13 @@ export default function Home() {
     if (pathIdx === waypoints.length - 1) {
       setSpeechBubble('MAZE CLEARED!');
       soundManager.playEquip();
+
+      setOverrideSpriteSrc('/monkey18.svg');
+      setIsZoomingQuickly(true);
+      await new Promise(res => setTimeout(res, 1200));
+      setIsZoomingQuickly(false);
+      setOverrideSpriteSrc(null);
+
       const earnedXP = 250;
       const earnedScore = 1420;
 
@@ -797,6 +829,8 @@ export default function Home() {
             currentWaypointIndex={currentWaypointIndex}
             currentHeading={currentHeading}
             facingSegmentIndex={facingSegmentIndex}
+            overrideSpriteSrc={overrideSpriteSrc}
+            isZoomingQuickly={isZoomingQuickly}
             collectedCoins={collectedCoins}
             speechBubble={speechBubble}
             equippedHat={equippedHat}
