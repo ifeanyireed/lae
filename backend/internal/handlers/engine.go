@@ -414,6 +414,67 @@ func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
 		"user":     user,
+		"token":    "PUZZLEPRO_" + user.AccessCode,
+		"progress": progressList,
+	})
+}
+
+// VerifySessionHandler verifies a session code or token and returns full user context and DB progress
+func (h *Handler) VerifySessionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		token := r.Header.Get("Authorization")
+		if strings.HasPrefix(token, "Bearer ") {
+			code = strings.TrimPrefix(token, "Bearer ")
+		}
+	}
+
+	cleanCode := strings.ToUpper(strings.TrimSpace(code))
+	if len(cleanCode) == 8 && !strings.Contains(cleanCode, "-") {
+		cleanCode = cleanCode[:4] + "-" + cleanCode[4:]
+	}
+
+	if cleanCode == "" {
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Session token or code is required",
+		})
+		return
+	}
+
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
+	}
+
+	ctx := r.Context()
+	var user database.User
+	err := h.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE access_code = ? OR username = ?", cleanCode, cleanCode).
+		Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Session invalid",
+		})
+		return
+	}
+
+	progressList := h.getUserProgressList(ctx, user.ID)
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":  true,
+		"user":     user,
+		"token":    "PUZZLEPRO_" + user.AccessCode,
 		"progress": progressList,
 	})
 }

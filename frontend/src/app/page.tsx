@@ -217,7 +217,7 @@ export default function Home() {
       })
       .catch(() => {});
 
-    // Session Auto Re-authenticate on Refresh from Database
+    // Session Auto Re-authenticate on Refresh from Database using JWT/Session API
     let savedCode: string | null = null;
     try {
       if (typeof window !== 'undefined') {
@@ -226,11 +226,35 @@ export default function Home() {
     } catch (e) {}
 
     if (savedCode) {
-      handleCodeSubmit(savedCode).then((success) => {
-        if (success) {
-          setShowSplash(false);
-        }
-      });
+      setIsGlobalLoading(true);
+      setLoadingMessage('Restoring Session...');
+      fetch(`${API_BASE_URL}/api/v1/engine/verify-session?code=${encodeURIComponent(savedCode)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success && data.user) {
+            const userXp = data.user.total_xp ?? 0;
+            setTotalXP(userXp);
+            setUserContext({
+              id: data.user.id || 1,
+              username: data.user.username || 'Explorer',
+              role: (data.user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
+              groupId: data.user.group_id || 1,
+              groupName: data.user.group_name || 'Jungle Explorers Group A',
+              avatar: data.user.avatar || '/monkey1.svg',
+              totalXP: userXp,
+              totalScore: 0,
+              totalStars: data.user.total_stars ?? 0,
+            });
+            if (data.progress) {
+              syncProgressFromDB(data.progress);
+            }
+            setShowSplash(false);
+          }
+        })
+        .catch(() => {})
+        .finally(() => {
+          setIsGlobalLoading(false);
+        });
     }
   }, []);
 
@@ -340,6 +364,16 @@ export default function Home() {
     setShowVictoryModal(false);
     setShowWelcomeModal(true);
     setActiveTab('studio');
+    // Remove all previous blocks on new level, resetting to default 'when flag clicked'
+    setProgram([
+      {
+        instanceId: 'default-when-clicked',
+        type: 'when_flag_clicked',
+        label: 'when flag clicked',
+        category: 'events',
+        blockClass: 'block-events',
+      },
+    ]);
   };
 
   const handleUpdateWaypoints = (newWaypoints: PathWaypoint[]) => {
