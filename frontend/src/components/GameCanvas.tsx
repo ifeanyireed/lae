@@ -22,6 +22,7 @@ import { API_BASE_URL } from '@/utils/api';
 interface GameCanvasProps {
   level: LevelConfig;
   currentWaypointIndex: number;
+  currentHeading?: 'N' | 'E' | 'S' | 'W';
   facingSegmentIndex?: number;
   collectedCoins?: number[];
   speechBubble?: string | null;
@@ -37,6 +38,7 @@ interface GameCanvasProps {
 export const GameCanvas: React.FC<GameCanvasProps> = ({
   level,
   currentWaypointIndex,
+  currentHeading,
   facingSegmentIndex,
   collectedCoins = [],
   selectedCharacter,
@@ -52,13 +54,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const [liveWaypoints, setLiveWaypoints] = useState<PathWaypoint[]>(defaultWaypoints);
   
   React.useEffect(() => {
-    setLiveWaypoints(level.waypoints || []);
-  }, [level]);
+    if (level.waypoints && level.waypoints.length > 0) {
+      setLiveWaypoints(level.waypoints);
+    }
+  }, [level.levelNumber, level.waypoints]);
 
   const currentWaypoint = liveWaypoints[currentWaypointIndex] || liveWaypoints[0] || { xPercent: 35, yPercent: 15 };
 
   // Determine Monkey Sprite Face & Orientation (X-axis vs Y-axis)
   const calculateSpriteOrientation = () => {
+    if (currentHeading) {
+      if (currentHeading === 'E') return { spriteSrc: '/monkey1_forward_x.png', flipX: false };
+      if (currentHeading === 'W') return { spriteSrc: '/monkey1_forward_x.png', flipX: true };
+      if (currentHeading === 'S') return { spriteSrc: '/monkey1.svg', flipX: false };
+      if (currentHeading === 'N') return { spriteSrc: '/monkey1.svg', flipX: false };
+    }
+
     if (!liveWaypoints || liveWaypoints.length === 0) {
       return { spriteSrc: '/monkey1.svg', flipX: false };
     }

@@ -64,6 +64,35 @@ export default function Home() {
   const [adventureStory, setAdventureStory] = useState<string>(ADVENTURE_1.story);
   const [dbLevels, setDbLevels] = useState<LevelConfig[]>(PUZZLE_LEVELS);
   const [facingSegmentIndex, setFacingSegmentIndex] = useState<number>(0);
+  const [currentHeading, setCurrentHeading] = useState<'N' | 'E' | 'S' | 'W'>('S');
+
+  const getInitialHeading = (wps: PathWaypoint[]): 'N' | 'E' | 'S' | 'W' => {
+    if (!wps || wps.length < 2) return 'S';
+    const dx = (wps[1].xPercent ?? 0) - (wps[0].xPercent ?? 0);
+    const dy = (wps[1].yPercent ?? 0) - (wps[0].yPercent ?? 0);
+    if (Math.abs(dx) >= Math.abs(dy)) {
+      return dx >= 0 ? 'E' : 'W';
+    } else {
+      return dy >= 0 ? 'S' : 'N';
+    }
+  };
+
+  const findNextWaypointInHeading = (currWp: PathWaypoint, heading: 'N' | 'E' | 'S' | 'W', wps: PathWaypoint[]): PathWaypoint | null => {
+    if (!currWp || !wps) return null;
+    for (const wp of wps) {
+      if (wp.index === currWp.index) continue;
+      const dx = (wp.xPercent ?? 0) - (currWp.xPercent ?? 0);
+      const dy = (wp.yPercent ?? 0) - (currWp.yPercent ?? 0);
+      const absDx = Math.abs(dx);
+      const absDy = Math.abs(dy);
+
+      if (heading === 'E' && dx > 1.5 && absDy < 3.5) return wp;
+      if (heading === 'W' && dx < -1.5 && absDy < 3.5) return wp;
+      if (heading === 'S' && dy > 1.5 && absDx < 3.5) return wp;
+      if (heading === 'N' && dy < -1.5 && absDx < 3.5) return wp;
+    }
+    return null;
+  };
 
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('Synchronizing Adventure Data...');
@@ -348,6 +377,7 @@ export default function Home() {
     setActiveStepIndex(null);
     setCurrentWaypointIndex(0);
     setFacingSegmentIndex(0);
+    setCurrentHeading(getInitialHeading(waypoints));
     setSpeechBubble('Back at START Pipe!');
   };
 
@@ -357,6 +387,8 @@ export default function Home() {
     setCustomWaypoints(null);
     setCurrentWaypointIndex(0);
     setFacingSegmentIndex(0);
+    const selectedLvlWps = dbLevels[index]?.waypoints || PUZZLE_LEVELS[index]?.waypoints || [];
+    setCurrentHeading(getInitialHeading(selectedLvlWps));
     setCollectedCoins([]);
     setSpeechBubble(null);
     setIsRunning(false);
@@ -400,6 +432,8 @@ export default function Home() {
     handleResetLevel();
 
     let pathIdx = 0;
+    let heading: 'N' | 'E' | 'S' | 'W' = getInitialHeading(waypoints);
+    setCurrentHeading(heading);
     const coinsCollectedSoFar: number[] = [];
     const stepDelay = Math.max(250, 750 / speed);
 
@@ -429,27 +463,40 @@ export default function Home() {
 
       await new Promise(res => setTimeout(res, stepDelay));
 
-      if (step.action === 'move_forward' || step.action === 'jump') {
-        const dist = step.action === 'jump' ? 2 : step.distance;
+      if (step.action === 'turn_right') {
+        soundManager.playClick();
+        setSpeechBubble('Turning Right!');
+        const rightMap: Record<string, 'N' | 'E' | 'S' | 'W'> = { N: 'E', E: 'S', S: 'W', W: 'N' };
+        heading = rightMap[heading];
+        setCurrentHeading(heading);
+        await new Promise(res => setTimeout(res, stepDelay));
+      } else if (step.action === 'turn_left') {
+        soundManager.playClick();
+        setSpeechBubble('Turning Left!');
+        const leftMap: Record<string, 'N' | 'E' | 'S' | 'W'> = { N: 'W', W: 'S', S: 'E', E: 'N' };
+        heading = leftMap[heading];
+        setCurrentHeading(heading);
+        await new Promise(res => setTimeout(res, stepDelay));
+      } else if (step.action === 'move_forward' || step.action === 'jump') {
+        const currentWp = waypoints[pathIdx];
+        const nextWp = findNextWaypointInHeading(currentWp, heading, waypoints);
 
-        // Check Strict Track Bounds
-        const targetStepIndex = pathIdx + dist;
-        if (targetStepIndex >= waypoints.length) {
+        if (!nextWp) {
           soundManager.playError();
-          setSpeechBubble('Oops! Moved off the maze track! Code failed!');
+          setSpeechBubble('Oops! Moved off the maze track! Turn block required!');
           setIsRunning(false);
           setActiveStepIndex(null);
           return;
         }
 
         soundManager.playStep();
-        pathIdx = targetStepIndex;
+        pathIdx = nextWp.index;
         setCurrentWaypointIndex(pathIdx);
 
-        const currentWp = waypoints[pathIdx];
+        const currentWpNew = waypoints[pathIdx];
 
         // 1. Check Coin Tile Logic
-        if (currentWp.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
+        if (currentWpNew.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
           coinsCollectedSoFar.push(pathIdx);
           setCollectedCoins([...coinsCollectedSoFar]);
           soundManager.playCoin();
@@ -457,7 +504,7 @@ export default function Home() {
         }
 
         // 2. Check Super Star Tile Logic (Advance 3 spaces)
-        if (currentWp.type === 'star') {
+        if (currentWpNew.type === 'star') {
           soundManager.playEquip();
           setSpeechBubble('SUPER STAR! ADVANCE +3 SPACES!');
           await new Promise(res => setTimeout(res, 500));
@@ -466,7 +513,7 @@ export default function Home() {
         }
 
         // 3. Check Red Shell Hazard Tile Logic (Go back 2 spaces)
-        if (currentWp.type === 'shell') {
+        if (currentWpNew.type === 'shell') {
           soundManager.playError();
           setSpeechBubble('Ouch! Red Shell! GO BACK 2 SPACES!');
           await new Promise(res => setTimeout(res, 600));
@@ -475,7 +522,7 @@ export default function Home() {
         }
 
         // 4. Check Finish Pipe Goal - Flag goal reached on current step
-        if (currentWp.type === 'goal' || pathIdx === waypoints.length - 1) {
+        if (currentWpNew.type === 'goal' || pathIdx === waypoints.length - 1) {
           setSpeechBubble('Reached Goal Pipe!');
         }
 
@@ -743,6 +790,7 @@ export default function Home() {
           <GameCanvas 
             level={currentLevel}
             currentWaypointIndex={currentWaypointIndex}
+            currentHeading={currentHeading}
             facingSegmentIndex={facingSegmentIndex}
             collectedCoins={collectedCoins}
             speechBubble={speechBubble}
