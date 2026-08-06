@@ -6,11 +6,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 interface GlobalLoadingOverlayProps {
   isLoading: boolean;
-  message?: string;
+  spriteSrc?: string;
+  isQuickZoom?: boolean;
 }
 
 export const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({
   isLoading,
+  spriteSrc = '/monkey1.svg',
+  isQuickZoom = false,
 }) => {
   return (
     <AnimatePresence>
@@ -20,24 +23,26 @@ export const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.6, ease: 'easeInOut' }}
+          transition={{ duration: 0.3, ease: 'easeInOut' }}
           className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-md select-none pointer-events-auto"
         >
-          {/* Monkey1 Zooming In & Out Consistently with Smooth Motion */}
+          {/* Monkey Sprite Container with Smooth/Quick Zooming Animation */}
           <motion.div
-            animate={{
-              scale: [0.85, 1.25, 0.85],
-            }}
-            transition={{
-              duration: 1.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
-            className="relative w-28 h-28 sm:w-36 sm:h-36 filter drop-shadow-[0_12px_30px_rgba(0,0,0,0.6)]"
+            animate={
+              isQuickZoom
+                ? { scale: [1, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1.45, 0.85, 1] }
+                : { scale: [0.85, 1.25, 0.85] }
+            }
+            transition={
+              isQuickZoom
+                ? { duration: 1.2, ease: 'easeInOut' }
+                : { duration: 1.8, repeat: Infinity, ease: 'easeInOut' }
+            }
+            className="relative w-32 h-32 sm:w-44 sm:h-44 filter drop-shadow-[0_12px_30px_rgba(0,0,0,0.6)]"
           >
             <Image
-              src="/monkey1.svg"
-              alt="Loading Monkey"
+              src={spriteSrc}
+              alt="Monkey Animation"
               fill
               className="object-contain"
               priority

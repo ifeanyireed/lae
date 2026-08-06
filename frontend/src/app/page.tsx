@@ -68,6 +68,7 @@ export default function Home() {
   const [levelFailCount, setLevelFailCount] = useState<number>(0);
   const [overrideSpriteSrc, setOverrideSpriteSrc] = useState<string | null>(null);
   const [isZoomingQuickly, setIsZoomingQuickly] = useState<boolean>(false);
+  const [loadingSpriteSrc, setLoadingSpriteSrc] = useState<string>('/monkey1.svg');
 
   const getInitialHeading = (wps: PathWaypoint[]): 'N' | 'E' | 'S' | 'W' => {
     if (!wps || wps.length < 2) return 'S';
@@ -498,17 +499,19 @@ export default function Home() {
           setLevelFailCount(newFailCount);
 
           if (newFailCount <= 3) {
-            setOverrideSpriteSrc('/monkey17.svg');
+            setLoadingSpriteSrc('/monkey17.svg');
             setSpeechBubble('Oops! Off track! (Try again)');
           } else {
-            setOverrideSpriteSrc('/monkey14.svg');
+            setLoadingSpriteSrc('/monkey14.svg');
             setSpeechBubble('Oops! Returning to START!');
           }
 
+          setIsGlobalLoading(true);
           setIsZoomingQuickly(true);
           await new Promise(res => setTimeout(res, 1200));
           setIsZoomingQuickly(false);
-          setOverrideSpriteSrc(null);
+          setIsGlobalLoading(false);
+          setLoadingSpriteSrc('/monkey1.svg');
 
           setIsRunning(false);
           setActiveStepIndex(null);
@@ -579,11 +582,13 @@ export default function Home() {
       setSpeechBubble('MAZE CLEARED!');
       soundManager.playEquip();
 
-      setOverrideSpriteSrc('/monkey18.svg');
+      setLoadingSpriteSrc('/monkey18.svg');
+      setIsGlobalLoading(true);
       setIsZoomingQuickly(true);
       await new Promise(res => setTimeout(res, 1200));
       setIsZoomingQuickly(false);
-      setOverrideSpriteSrc(null);
+      setIsGlobalLoading(false);
+      setLoadingSpriteSrc('/monkey1.svg');
 
       const earnedXP = 250;
       const earnedScore = 1420;
@@ -1279,10 +1284,11 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* Global Framer Motion Wave Loading Overlay over blurred destination screen */}
+      {/* Global Framer Motion Wave Loading & Sprite Animation Overlay over blurred destination screen */}
       <GlobalLoadingOverlay
         isLoading={isGlobalLoading}
-        message={loadingMessage}
+        spriteSrc={loadingSpriteSrc}
+        isQuickZoom={isZoomingQuickly}
       />
 
     </main>
