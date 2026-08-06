@@ -1011,7 +1011,10 @@ export default function Home() {
       {/* Level Welcome Framer Motion Modal */}
       <LevelWelcomeModal
         isOpen={showWelcomeModal}
-        onClose={() => setShowWelcomeModal(false)}
+        onClose={() => {
+          setShowWelcomeModal(false);
+          setActiveTab('map');
+        }}
         onStartLevel={() => setShowWelcomeModal(false)}
         levelInfo={levelInfo}
       />
