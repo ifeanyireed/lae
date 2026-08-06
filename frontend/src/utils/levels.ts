@@ -155,7 +155,7 @@ export const ADVENTURE_1: AdventureConfig = {
   title: 'The Lost Monkey Explorer',
   concept: 'Sequencing',
   icon: '🐵',
-  story: `A friendly little robot has crash-landed in the Whispering Forest. Its navigation system is broken, and only by giving it the correct instructions can it find its way home. Every level repairs a little more of the robot's memory and unlocks the path ahead.`,
+  story: `A friendly little monkey has crash-landed in the Whispering Forest. Its navigation system is broken, and only by giving it the correct instructions can it find its way home. Every level repairs a little more of the monkey's memory and unlocks the path ahead.`,
   learningObjective: `Put instructions in order; Follow and create simple sequences; Navigate using movement commands; Plan a route before execution.`,
   totalLevels: 12,
   levels: [

@@ -1060,31 +1060,23 @@ export default function Home() {
               exit={{ opacity: 0 }}
               className="fixed inset-0 z-50 flex flex-col items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md pointer-events-auto overflow-y-auto"
             >
-              {/* Top Control Buttons */}
+              {/* Top Left Back Button */}
               <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-50">
-                {selectedAdventureId !== null && (
-                  <button
-                    onClick={() => {
-                      soundManager.playClick();
+                <button
+                  onClick={() => {
+                    soundManager.playClick();
+                    if (selectedAdventureId !== null) {
                       setSelectedAdventureId(null);
-                    }}
-                    className="text-amber-200 hover:text-white font-black text-xs sm:text-sm bg-amber-900/80 hover:bg-amber-800 border border-amber-500/40 px-3.5 py-1.5 rounded-full transition cursor-pointer shadow-lg flex items-center space-x-1.5"
-                  >
-                    <span>←</span>
-                    <span>Adventures</span>
-                  </button>
-                )}
+                    } else {
+                      setShowSplash(true);
+                      setActiveTab('studio');
+                    }
+                  }}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-50"
+                >
+                  <Image src="/Back.svg" alt="Back" fill className="object-contain" />
+                </button>
               </div>
-
-              <button
-                onClick={() => {
-                  soundManager.playClick();
-                  setActiveTab('studio');
-                }}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-300 hover:text-white font-medium text-[10px] sm:text-xs bg-white/10 border border-white/20 px-3 py-1.5 rounded-full transition cursor-pointer z-50"
-              >
-                ✕ Close Map
-              </button>
 
               {/* Map Title Header */}
               <motion.div
@@ -1094,10 +1086,10 @@ export default function Home() {
               >
                 {selectedAdventureId === null ? (
                   <>
-                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-amber-200 tracking-tight drop-shadow-lg font-varela uppercase">
-                      ADVENTURES
+                    <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                      Adventures
                     </h1>
-                    <p className="text-xs sm:text-sm font-semibold text-amber-400 mt-1 max-w-xl mx-auto drop-shadow-sm">
+                    <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
                       Select an Adventure to explore its 12 coding missions!
                     </p>
                   </>
@@ -1106,10 +1098,6 @@ export default function Home() {
                     const currAdv = ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
                     return (
                       <>
-                        <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 font-mono font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase mb-2">
-                          <span>{currAdv.icon}</span>
-                          <span>Adv {currAdv.id}: {currAdv.concept}</span>
-                        </div>
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
                           {currAdv.title}
                         </h1>

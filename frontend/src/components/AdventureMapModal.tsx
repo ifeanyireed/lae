@@ -71,10 +71,9 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                     soundManager.playClick();
                     setSelectedAdvId(null);
                   }}
-                  className="px-3 py-1.5 rounded-full bg-amber-900/80 hover:bg-amber-800 text-amber-200 hover:text-white transition border border-amber-500/40 cursor-pointer shadow-md flex items-center space-x-1 text-xs font-black"
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 flex-shrink-0 transition transform hover:scale-110 active:scale-95 cursor-pointer z-20"
                 >
-                  <ArrowLeft className="w-4 h-4" />
-                  <span>Adventures</span>
+                  <Image src="/Back.svg" alt="Back to Adventures" fill className="object-contain" />
                 </button>
               ) : (
                 <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0">
@@ -84,18 +83,11 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
 
               <div>
                 <h2 className="text-xl sm:text-3xl font-black font-varela text-amber-200 uppercase tracking-tight">
-                  {currentAdv ? currentAdv.title : 'ADVENTURES'}
+                  {currentAdv ? currentAdv.title : 'Adventures'}
                 </h2>
-                <div className="flex items-center space-x-2 mt-0.5">
-                  {currentAdv ? (
-                    <span className="bg-amber-400/20 text-amber-300 font-mono font-black text-[10px] sm:text-xs px-2 py-0.5 rounded-full border border-amber-500/30 uppercase">
-                      Concept: {currentAdv.concept}
-                    </span>
-                  ) : null}
-                  <p className="text-xs sm:text-sm font-bold text-amber-400">
-                    PuzzlePro &bull; {groupName}
-                  </p>
-                </div>
+                <p className="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">
+                  PuzzlePro &bull; {groupName}
+                </p>
               </div>
             </div>
 
