@@ -21,13 +21,13 @@ import { API_BASE_URL } from '@/utils/api';
 
 interface GameCanvasProps {
   level: LevelConfig;
-  playerPos: { r: number; c: number; dir: 'N' | 'E' | 'S' | 'W' };
   currentWaypointIndex: number;
-  collectedCoins: number[];
-  speechBubble: string | null;
-  equippedHat: string;
-  characterName: string;
-  selectedCharacter: string;
+  facingSegmentIndex?: number;
+  collectedCoins?: number[];
+  speechBubble?: string | null;
+  equippedHat?: string;
+  characterName?: string;
+  selectedCharacter?: string;
   onUpdateWaypoints?: (newWaypoints: PathWaypoint[]) => void;
   userRole?: string;
   totalXP?: number;
@@ -37,7 +37,8 @@ interface GameCanvasProps {
 export const GameCanvas: React.FC<GameCanvasProps> = ({
   level,
   currentWaypointIndex,
-  collectedCoins,
+  facingSegmentIndex,
+  collectedCoins = [],
   selectedCharacter,
   onUpdateWaypoints,
   speechBubble,
@@ -62,16 +63,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       return { spriteSrc: '/monkey1.svg', flipX: false };
     }
 
-    let currIdx = currentWaypointIndex;
-    let nextIdx = currentWaypointIndex + 1;
+    let segmentStartIdx = facingSegmentIndex !== undefined ? facingSegmentIndex : currentWaypointIndex;
+    let segmentEndIdx = segmentStartIdx + 1;
 
-    if (nextIdx >= liveWaypoints.length) {
-      currIdx = Math.max(0, liveWaypoints.length - 2);
-      nextIdx = liveWaypoints.length - 1;
+    if (segmentEndIdx >= liveWaypoints.length) {
+      segmentStartIdx = Math.max(0, liveWaypoints.length - 2);
+      segmentEndIdx = liveWaypoints.length - 1;
     }
 
-    const wpCurr = liveWaypoints[currIdx];
-    const wpNext = liveWaypoints[nextIdx];
+    const wpCurr = liveWaypoints[segmentStartIdx];
+    const wpNext = liveWaypoints[segmentEndIdx];
 
     if (!wpCurr || !wpNext) {
       return { spriteSrc: '/monkey1.svg', flipX: false };

@@ -63,6 +63,7 @@ export default function Home() {
   const [adventureTitle, setAdventureTitle] = useState<string>(ADVENTURE_1.title);
   const [adventureStory, setAdventureStory] = useState<string>(ADVENTURE_1.story);
   const [dbLevels, setDbLevels] = useState<LevelConfig[]>(PUZZLE_LEVELS);
+  const [facingSegmentIndex, setFacingSegmentIndex] = useState<number>(0);
 
   const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
   const [loadingMessage, setLoadingMessage] = useState<string>('Synchronizing Adventure Data...');
@@ -322,6 +323,7 @@ export default function Home() {
     setIsRunning(false);
     setActiveStepIndex(null);
     setCurrentWaypointIndex(0);
+    setFacingSegmentIndex(0);
     setSpeechBubble('Back at START Pipe!');
   };
 
@@ -330,6 +332,7 @@ export default function Home() {
     setCurrentLevelIndex(index);
     setCustomWaypoints(null);
     setCurrentWaypointIndex(0);
+    setFacingSegmentIndex(0);
     setCollectedCoins([]);
     setSpeechBubble(null);
     setIsRunning(false);
@@ -485,6 +488,17 @@ export default function Home() {
           return;
         }
 
+        // Auto update facing segment if next step is not a turn block
+        const nextStepAction = flatSteps[i + 1]?.action;
+        if (nextStepAction !== 'turn_right' && nextStepAction !== 'turn_left') {
+          setFacingSegmentIndex(pathIdx);
+        }
+
+      } else if (step.action === 'turn_right' || step.action === 'turn_left') {
+        soundManager.playClick();
+        setSpeechBubble(step.action === 'turn_right' ? 'Turning Right!' : 'Turning Left!');
+        setFacingSegmentIndex(pathIdx);
+        await new Promise(res => setTimeout(res, stepDelay));
       } else if (step.action === 'say_hello') {
         soundManager.playClick();
         setSpeechBubble('Navigating the Figma Maze Track!');
@@ -700,8 +714,8 @@ export default function Home() {
         <div className="w-full h-full relative z-10">
           <GameCanvas 
             level={currentLevel}
-            playerPos={{ r: waypoints[currentWaypointIndex]?.r || 0, c: waypoints[currentWaypointIndex]?.c || 0, dir: 'S' }}
             currentWaypointIndex={currentWaypointIndex}
+            facingSegmentIndex={facingSegmentIndex}
             collectedCoins={collectedCoins}
             speechBubble={speechBubble}
             equippedHat={equippedHat}
