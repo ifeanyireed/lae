@@ -188,39 +188,10 @@ export default function Home() {
               const expectedWaypoints = PUZZLE_LEVELS[idx]?.waypoints || [];
               let savedWps = null;
 
-              if (l.waypoints && l.waypoints.length > 0 && l.waypoints.length === expectedWaypoints.length) {
-                let validDB = true;
-                for (let i = 0; i < expectedWaypoints.length; i++) {
-                  if (Math.abs((l.waypoints[i].xPercent ?? 0) - (expectedWaypoints[i].xPercent ?? 0)) > 1.0 ||
-                      Math.abs((l.waypoints[i].yPercent ?? 0) - (expectedWaypoints[i].yPercent ?? 0)) > 1.0) {
-                    validDB = false;
-                    break;
-                  }
-                }
-                if (validDB) savedWps = l.waypoints;
+              if (l.waypoints && Array.isArray(l.waypoints) && l.waypoints.length > 0) {
+                savedWps = l.waypoints;
               }
 
-              if (!savedWps) {
-                try {
-                  const cachedKey = `level_waypoints_${lvlNum}`;
-                  const cached = typeof window !== 'undefined' ? localStorage.getItem(cachedKey) : null;
-                  if (cached) {
-                    const parsed = JSON.parse(cached);
-                    if (Array.isArray(parsed) && parsed.length === expectedWaypoints.length) {
-                      let validCache = true;
-                      for (let i = 0; i < expectedWaypoints.length; i++) {
-                        if (Math.abs((parsed[i].xPercent ?? 0) - (expectedWaypoints[i].xPercent ?? 0)) > 1.0 ||
-                            Math.abs((parsed[i].yPercent ?? 0) - (expectedWaypoints[i].yPercent ?? 0)) > 1.0) {
-                          validCache = false;
-                          break;
-                        }
-                      }
-                      if (validCache) savedWps = parsed;
-                      else localStorage.removeItem(cachedKey);
-                    }
-                  }
-                } catch (e) {}
-              }
               return {
                 ...(prev[idx] || {}),
                 id: l.id || idx + 1,
@@ -235,6 +206,22 @@ export default function Home() {
         }
       })
       .catch(() => {});
+
+    // Session Auto Re-authenticate on Refresh from Database
+    let savedCode: string | null = null;
+    try {
+      if (typeof window !== 'undefined') {
+        savedCode = sessionStorage.getItem('puzzlepro_session_code') || localStorage.getItem('puzzlepro_session_code');
+      }
+    } catch (e) {}
+
+    if (savedCode) {
+      handleCodeSubmit(savedCode).then((success) => {
+        if (success) {
+          setShowSplash(false);
+        }
+      });
+    }
   }, []);
 
   const currentLevel = dbLevels[currentLevelIndex] || PUZZLE_LEVELS[currentLevelIndex] || ADVENTURE_1.levels[0];
@@ -345,6 +332,14 @@ export default function Home() {
 
   const handleUpdateWaypoints = (newWaypoints: PathWaypoint[]) => {
     setCustomWaypoints(newWaypoints);
+    setDbLevels((prev) =>
+      prev.map((l, idx) => {
+        if (idx === currentLevelIndex) {
+          return { ...l, waypoints: newWaypoints };
+        }
+        return l;
+      })
+    );
   };
 
   // Path-Graph Execution Engine

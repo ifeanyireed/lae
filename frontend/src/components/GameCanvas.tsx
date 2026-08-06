@@ -51,31 +51,6 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   const [liveWaypoints, setLiveWaypoints] = useState<PathWaypoint[]>(defaultWaypoints);
   
   React.useEffect(() => {
-    try {
-      const cachedKey = `level_waypoints_${level.levelNumber}`;
-      const cached = typeof window !== 'undefined' ? localStorage.getItem(cachedKey) : null;
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        const expectedWps = level.waypoints || [];
-        if (Array.isArray(parsed) && parsed.length > 0 && parsed.length === expectedWps.length) {
-          let isAccurate = true;
-          for (let i = 0; i < expectedWps.length; i++) {
-            if (Math.abs((parsed[i].xPercent ?? 0) - (expectedWps[i].xPercent ?? 0)) > 1.0 ||
-                Math.abs((parsed[i].yPercent ?? 0) - (expectedWps[i].yPercent ?? 0)) > 1.0) {
-              isAccurate = false;
-              break;
-            }
-          }
-          if (isAccurate) {
-            setLiveWaypoints(parsed);
-            return;
-          } else {
-            localStorage.removeItem(cachedKey);
-          }
-        }
-      }
-    } catch (e) {}
-
     setLiveWaypoints(level.waypoints || []);
   }, [level]);
 
