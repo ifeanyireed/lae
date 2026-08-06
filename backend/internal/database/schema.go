@@ -196,19 +196,22 @@ func (db *DB) seedAccessCodeUsers(ctx context.Context) {
 		Avatar     string
 		XP         int
 	}{
-		{"Admin_Explorer", "ADMN-2026", "admin", "/monkey1.svg", 1500},
-		{"Cadet_Leo", "KIDS-1001", "user", "/monkey1.svg", 450},
-		{"Cadet_Maya", "KIDS-1002", "user", "/Profile.svg", 300},
-		{"Cadet_Sam", "KIDS-1003", "user", "/monkey1.svg", 600},
+		{"Admin_Explorer", "ADMN-2026", "admin", "/monkey1.svg", 0},
+		{"Cadet_Leo", "KIDS-1001", "user", "/monkey1.svg", 0},
+		{"Cadet_Maya", "KIDS-1002", "user", "/Profile.svg", 0},
+		{"Cadet_Sam", "KIDS-1003", "user", "/monkey1.svg", 0},
 	}
 
 	for _, u := range seedUsers {
 		_, _ = db.ExecContext(ctx, `
 			INSERT INTO users (username, access_code, role, group_id, avatar, total_xp, total_stars)
-			VALUES (?, ?, ?, 1, ?, ?, 3)
-			ON DUPLICATE KEY UPDATE access_code = VALUES(access_code), role = VALUES(role)
-		`, u.Username, u.AccessCode, u.Role, u.Avatar, u.XP)
+			VALUES (?, ?, ?, 1, ?, 0, 0)
+			ON DUPLICATE KEY UPDATE access_code = VALUES(access_code), role = VALUES(role), total_xp = 0, total_stars = 0
+		`, u.Username, u.AccessCode, u.Role, u.Avatar)
 	}
+
+	// Reset all users XP and stars to 0
+	_, _ = db.ExecContext(ctx, "UPDATE users SET total_xp = 0, total_stars = 0;")
 }
 
 // SeedAdventure1 populates Adventure 1 and its 12 levels into the database if not already present

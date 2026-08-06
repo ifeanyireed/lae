@@ -182,7 +182,7 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
                 className="relative w-24 h-24 sm:w-28 sm:h-28 rounded-full transition cursor-pointer flex-shrink-0 drop-shadow-2xl z-30"
                 title="Start Level"
               >
-                <Image src="/Login.svg" alt="Start Level Login Button" fill className="object-contain" priority />
+                <Image src="/Quest.svg" alt="Start Level Quest Button" fill className="object-contain" priority />
               </motion.button>
             </div>
 

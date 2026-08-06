@@ -22,7 +22,7 @@ export default function Home() {
 
   const [characterName, setCharacterName] = useState('Monkey');
   const [equippedHat, setEquippedHat] = useState('knight_helmet');
-  const [totalXP, setTotalXP] = useState(450);
+  const [totalXP, setTotalXP] = useState(0);
 
   const [showSplash, setShowSplash] = useState(true);
 
@@ -34,9 +34,9 @@ export default function Home() {
     groupId: 1,
     groupName: 'Jungle Explorers Group A',
     avatar: '/monkey1.svg',
-    totalXP: 450,
-    totalScore: 1420,
-    totalStars: 3,
+    totalXP: 0,
+    totalScore: 0,
+    totalStars: 0,
   });
 
   const [showMapModal, setShowMapModal] = useState(false);
@@ -57,6 +57,7 @@ export default function Home() {
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [customWaypoints, setCustomWaypoints] = useState<PathWaypoint[] | null>(null);
   const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [lockedVibrateLevelIndex, setLockedVibrateLevelIndex] = useState<number | null>(null);
 
   const [adventureTitle, setAdventureTitle] = useState<string>(ADVENTURE_1.title);
   const [adventureStory, setAdventureStory] = useState<string>(ADVENTURE_1.story);
@@ -477,7 +478,7 @@ export default function Home() {
       });
       const data = await res.json();
       if (data && data.success && data.user) {
-        const userXp = data.user.total_xp ?? 450;
+        const userXp = data.user.total_xp ?? 0;
         setUserContext({
           id: data.user.id || 1,
           username: data.user.username || 'Explorer',
@@ -486,8 +487,8 @@ export default function Home() {
           groupName: data.user.group_name || 'Jungle Explorers Group A',
           avatar: data.user.avatar || '/monkey1.svg',
           totalXP: userXp,
-          totalScore: userContext.totalScore,
-          totalStars: data.user.total_stars ?? 3,
+          totalScore: 0,
+          totalStars: data.user.total_stars ?? 0,
         });
         setTotalXP(userXp);
         soundManager.playEquip();
@@ -517,10 +518,16 @@ export default function Home() {
 
         {/* Center Top Header Switcher: ABSOLUTELY DEAD CENTERED HORIZONTALLY */}
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-center -space-x-1.5 sm:-space-x-2.5 md:-space-x-3 pointer-events-auto z-30">
-          {/* 1. Quest / Studio Button */}
-          <ActionTooltip label="Quest / Tabletop Studio" position="bottom">
+          {/* 1. Quest / Studio Button: Resumes Last Uncompleted Level Automatically */}
+          <ActionTooltip label="Quest / Tabletop Studio (Resume Adventure)" position="bottom">
             <button
-              onClick={() => { soundManager.playClick(); setActiveTab('studio'); }}
+              onClick={() => {
+                soundManager.playClick();
+                const uncompletedIdx = levelsProgress.findIndex((l) => !l.completed);
+                const targetIdx = uncompletedIdx !== -1 ? uncompletedIdx : 0;
+                handleSelectLevel(targetIdx);
+                setActiveTab('studio');
+              }}
               className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30 p-0 ${
                 activeTab === 'studio' 
                   ? 'opacity-100' 
@@ -757,6 +764,10 @@ export default function Home() {
                   const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
                   const lvlConfig = dbLevels[i] || PUZZLE_LEVELS[i] || ADVENTURE_1.levels[i];
                   const levelTitle = lvlConfig?.title || `Level ${levelNum}`;
+                  const lvlProg = levelsProgress[i];
+                  const isUnlocked = lvlProg?.unlocked || i === 0 || i <= currentLevelIndex;
+                  const isCompleted = lvlProg?.completed;
+                  const isVibrating = lockedVibrateLevelIndex === i;
 
                   return (
                     <motion.div
@@ -777,37 +788,67 @@ export default function Home() {
                         },
                       }}
                       onClick={() => {
-                        soundManager.playClick();
-                        handleSelectLevel(i);
-                        setActiveTab('studio');
+                        if (isUnlocked) {
+                          soundManager.playClick();
+                          handleSelectLevel(i);
+                          setActiveTab('studio');
+                        } else {
+                          soundManager.playError();
+                          setLockedVibrateLevelIndex(i);
+                          setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
+                        }
                       }}
                       className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group"
                     >
-                      {/* Image Container with Bottom-Right Status Badge */}
-                      <div className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 mb-1">
+                      {/* Image Container with Bottom-Right Status Badge (Vibrates monkey and zooms locked.svg 3x) */}
+                      <motion.div
+                        animate={isVibrating ? {
+                          x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                          rotate: [-6, 6, -4, 4, -2, 2, 0],
+                        } : {}}
+                        transition={{ duration: 0.6, ease: 'easeInOut' }}
+                        className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 mb-1"
+                      >
                         <Image 
                           src={monkeyImg} 
                           alt={`Level ${levelNum}: ${levelTitle}`} 
                           fill 
-                          className={`object-contain transition ${levelNum > 1 ? 'filter grayscale opacity-55' : ''}`} 
+                          className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-50'}`} 
                           priority 
                         />
                         
-                        {/* Doubled Status Badge in Bottom Right Corner */}
+                        {/* Status Badge: Finish flag or 3x Zooming Locked Icon */}
                         <div className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 z-10 filter drop-shadow-lg">
-                          <Image 
-                            src={levelNum === 1 ? '/maze_finish.svg' : '/locked.svg'} 
-                            alt={levelNum === 1 ? 'Finished' : 'Locked'} 
-                            fill 
-                            className="object-contain" 
-                          />
+                          {isUnlocked ? (
+                            <Image 
+                              src={isCompleted ? '/maze_finish.svg' : '/Quest.svg'} 
+                              alt={isCompleted ? 'Finished' : 'Ready'} 
+                              fill 
+                              className="object-contain" 
+                            />
+                          ) : (
+                            <motion.div
+                              className="relative w-full h-full"
+                              animate={isVibrating ? {
+                                scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                              } : {}}
+                              transition={{ duration: 0.9, ease: 'easeInOut' }}
+                            >
+                              <Image 
+                                src="/locked.svg" 
+                                alt="Locked Level" 
+                                fill 
+                                className="object-contain" 
+                              />
+                            </motion.div>
+                          )}
                         </div>
-                      </div>
+                      </motion.div>
 
                       {/* Title & Level Name under image */}
                       <div className="flex flex-col items-center text-center mt-1 max-w-[120px]">
                         <span className={`text-[11px] sm:text-xs font-black tracking-wide transition ${
-                          levelNum === 1 ? 'text-amber-300' : 'text-slate-200 group-hover:text-amber-200'
+                          isUnlocked ? (i === currentLevelIndex ? 'text-amber-300' : 'text-slate-200 group-hover:text-amber-200') : 'text-slate-500'
                         }`}>
                           Level {levelNum}
                         </span>

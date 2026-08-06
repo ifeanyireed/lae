@@ -310,7 +310,7 @@ func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 		res, err := h.DB.ExecContext(ctx, `
 			INSERT INTO users (username, access_code, role, group_id, avatar, total_xp, total_stars)
-			VALUES (?, ?, ?, 1, '/monkey1.svg', 250, 0)
+			VALUES (?, ?, ?, 1, '/monkey1.svg', 0, 0)
 		`, newUsername, formattedCode, role)
 
 		if err == nil {
@@ -322,7 +322,7 @@ func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
 			user.GroupID = 1
 			user.GroupName = "Jungle Explorers Group A"
 			user.Avatar = "/monkey1.svg"
-			user.TotalXP = 250
+			user.TotalXP = 0
 			user.TotalStars = 0
 		} else {
 			w.WriteHeader(http.StatusNotFound)

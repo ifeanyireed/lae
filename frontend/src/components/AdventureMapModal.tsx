@@ -34,6 +34,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   totalXP,
   groupName = 'Jungle Explorers Group A',
 }) => {
+  const [lockedVibrateIdx, setLockedVibrateIdx] = React.useState<number | null>(null);
+
   if (!isOpen) return null;
 
   return (
@@ -67,7 +69,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                   ADVENTURE MAP
                 </h2>
                 <p className="text-xs sm:text-sm font-bold text-amber-400">
-                  The Lost Monkey Explorer &bull; {groupName}
+                  PuzzlePro &bull; {groupName}
                 </p>
               </div>
             </div>
@@ -105,6 +107,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       onClose();
                     } else {
                       soundManager.playError();
+                      setLockedVibrateIdx(idx);
+                      setTimeout(() => setLockedVibrateIdx(null), 1200);
                     }
                   }}
                   className={`relative rounded-2xl p-4 flex flex-col items-center justify-between border-2 transition select-none ${
@@ -112,7 +116,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       ? isCurrent
                         ? 'bg-gradient-to-b from-amber-400 to-amber-500 border-amber-300 text-slate-950 ring-4 ring-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.8)] cursor-pointer'
                         : 'bg-amber-900/80 hover:bg-amber-800/90 border-amber-400/60 text-amber-100 cursor-pointer shadow-lg'
-                      : 'bg-slate-900/60 border-slate-700/60 text-slate-500 cursor-not-allowed filter grayscale'
+                      : 'bg-slate-900/60 border-slate-700/60 text-slate-500 cursor-pointer filter grayscale'
                   }`}
                 >
                   {/* Badge Level Indicator */}
@@ -128,28 +132,43 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                         {lvl.completed ? 'COMPLETED' : (isCurrent ? 'ACTIVE' : 'READY')}
                       </span>
                     ) : (
-                      <Lock className="w-4 h-4 text-slate-500" />
+                      <Lock className="w-4 h-4 text-amber-500/80 animate-pulse" />
                     )}
                   </div>
 
-                  {/* Icon Thumbnail */}
-                  <div className="w-14 h-14 sm:w-16 sm:h-16 relative my-2 flex items-center justify-center">
-                    {isUnlocked ? (
-                      <Image
-                        src={`/The Lost Monkey Explorer - Level ${lvl.levelNumber}.svg`}
-                        alt={lvl.title}
-                        fill
-                        className="object-contain filter drop-shadow-md rounded-lg"
-                      />
-                    ) : (
-                      <Image
-                        src="/locked.svg"
-                        alt="Locked Level"
-                        fill
-                        className="object-contain opacity-50"
-                      />
+                  {/* Icon Thumbnail: Monkey Sprite + Locked SVG overlay (vibrates monkey & 3x zooms locked.svg) */}
+                  <motion.div
+                    animate={lockedVibrateIdx === idx ? {
+                      x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                      rotate: [-6, 6, -4, 4, -2, 2, 0],
+                    } : {}}
+                    transition={{ duration: 0.6, ease: 'easeInOut' }}
+                    className="w-14 h-14 sm:w-16 sm:h-16 relative my-2 flex items-center justify-center"
+                  >
+                    <Image
+                      src={`/monkey${((lvl.levelNumber - 1) % 23) + 1}.svg`}
+                      alt={lvl.title}
+                      fill
+                      className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-40'}`}
+                    />
+
+                    {!isUnlocked && (
+                      <motion.div
+                        className="absolute inset-0 z-20"
+                        animate={lockedVibrateIdx === idx ? {
+                          scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                        } : {}}
+                        transition={{ duration: 0.9, ease: 'easeInOut' }}
+                      >
+                        <Image
+                          src="/locked.svg"
+                          alt="Locked Level"
+                          fill
+                          className="object-contain drop-shadow-xl"
+                        />
+                      </motion.div>
                     )}
-                  </div>
+                  </motion.div>
 
                   {/* Title & Stars */}
                   <div className="text-center w-full mt-1">
