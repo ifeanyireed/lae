@@ -508,7 +508,7 @@ export default function Home() {
 
           setIsGlobalLoading(true);
           setIsZoomingQuickly(true);
-          await new Promise(res => setTimeout(res, 1200));
+          await new Promise(res => setTimeout(res, 950));
           setIsZoomingQuickly(false);
           setIsGlobalLoading(false);
           setLoadingSpriteSrc('/monkey1.svg');
@@ -585,7 +585,7 @@ export default function Home() {
       setLoadingSpriteSrc('/monkey18.svg');
       setIsGlobalLoading(true);
       setIsZoomingQuickly(true);
-      await new Promise(res => setTimeout(res, 1200));
+      await new Promise(res => setTimeout(res, 950));
       setIsZoomingQuickly(false);
       setIsGlobalLoading(false);
       setLoadingSpriteSrc('/monkey1.svg');
