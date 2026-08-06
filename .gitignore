@@ -1,44 +1,38 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+node_modules/
+frontend/node_modules/
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Next.js
+.next/
+frontend/.next/
+frontend/out/
 
-# testing
-/coverage
+# Go / Backend binaries & build artifacts
+backend/bin/
+backend/tmp/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
 
-# next.js
-/.next/
-/out/
-
-# production
-/build
-
-# misc
+# Misc & OS files
 .DS_Store
 *.pem
-
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
-# vercel
-.vercel
-
-# typescript
+# TypeScript
 *.tsbuildinfo
 next-env.d.ts
+frontend/next-env.d.ts
 
-# Large archives
-Inter.zip
+# Logs
+*.log
+
+# Temporary archives & raw downloads
+*.tar.gz
+u560700323*
+badge_sample.jpg
