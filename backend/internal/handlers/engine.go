@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"strconv"
@@ -114,10 +115,76 @@ func (h *Handler) HandshakeHandler(w http.ResponseWriter, r *http.Request) {
 		_, _ = h.DB.ExecContext(ctx, "UPDATE users SET role = ?, group_id = ? WHERE id = ?", req.Role, groupID, user.ID)
 	}
 
+	progressList := h.getUserProgressList(ctx, user.ID)
+
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"user":    user,
+		"success":  true,
+		"user":     user,
+		"progress": progressList,
+	})
+}
+
+type LevelProgressResponse struct {
+	LevelNumber int  `json:"level_number"`
+	Stars       int  `json:"stars"`
+	Score       int  `json:"score"`
+	Completed   bool `json:"completed"`
+}
+
+func (h *Handler) getUserProgressList(ctx context.Context, userID int) []LevelProgressResponse {
+	list := make([]LevelProgressResponse, 0)
+	if h.DB == nil || userID <= 0 {
+		return list
+	}
+
+	rows, err := h.DB.QueryContext(ctx, "SELECT level_number, stars, score, completed FROM user_progress WHERE user_id = ? ORDER BY level_number ASC", userID)
+	if err != nil {
+		return list
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p LevelProgressResponse
+		if err := rows.Scan(&p.LevelNumber, &p.Stars, &p.Score, &p.Completed); err == nil {
+			list = append(list, p)
+		}
+	}
+	return list
+}
+
+// GetProgressHandler returns user progress directly from database
+func (h *Handler) GetProgressHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	userIDStr := r.URL.Query().Get("user_id")
+	userID, _ := strconv.Atoi(userIDStr)
+	if userID <= 0 {
+		userID = 1
+	}
+
+	if h.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
+	}
+
+	ctx := r.Context()
+	progress := h.getUserProgressList(ctx, userID)
+
+	var totalXP, totalStars int
+	_ = h.DB.QueryRowContext(ctx, "SELECT total_xp, total_stars FROM users WHERE id = ?", userID).Scan(&totalXP, &totalStars)
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":     true,
+		"user_id":     userID,
+		"total_xp":    totalXP,
+		"total_stars": totalStars,
+		"progress":    progress,
 	})
 }
 
@@ -157,6 +224,7 @@ func (h *Handler) EventHandler(w http.ResponseWriter, r *http.Request) {
 		ON DUPLICATE KEY UPDATE stars = GREATEST(stars, VALUES(stars)), score = GREATEST(score, VALUES(score)), completed = TRUE
 	`, req.UserID, req.LevelNumber, req.Stars, req.Score)
 
+	var currentXP int
 	if err == nil {
 		// Update User Total XP & Total Stars
 		_, _ = h.DB.ExecContext(ctx, `
@@ -165,12 +233,18 @@ func (h *Handler) EventHandler(w http.ResponseWriter, r *http.Request) {
 				total_stars = (SELECT COALESCE(SUM(stars), 0) FROM user_progress WHERE user_id = ?)
 			WHERE id = ?
 		`, req.XPEarned, req.UserID, req.UserID)
+
+		_ = h.DB.QueryRowContext(ctx, "SELECT total_xp FROM users WHERE id = ?", req.UserID).Scan(&currentXP)
 	}
+
+	progressList := h.getUserProgressList(ctx, req.UserID)
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"message": "Engine progress event recorded successfully",
+		"success":  true,
+		"total_xp": currentXP,
+		"progress": progressList,
+		"message":  "Engine progress event recorded successfully",
 	})
 }
 
@@ -334,9 +408,12 @@ func (h *Handler) CodeLoginHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	progressList := h.getUserProgressList(ctx, user.ID)
+
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
-		"success": true,
-		"user":    user,
+		"success":  true,
+		"user":     user,
+		"progress": progressList,
 	})
 }

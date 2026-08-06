@@ -63,7 +63,55 @@ export default function Home() {
   const [adventureStory, setAdventureStory] = useState<string>(ADVENTURE_1.story);
   const [dbLevels, setDbLevels] = useState<LevelConfig[]>(PUZZLE_LEVELS);
 
-  // Host Platform Auth Handshake & Sync Listener
+  // Database Progress Sync Helper
+  const syncProgressFromDB = (dbProgress: any[]) => {
+    if (!Array.isArray(dbProgress) || dbProgress.length === 0) return;
+    const completedSet = new Set<number>();
+    const starsMap = new Map<number, number>();
+    const scoreMap = new Map<number, number>();
+
+    dbProgress.forEach((p: any) => {
+      const lvlNum = p.level_number || p.levelNumber;
+      if (p.completed) completedSet.add(lvlNum);
+      if (p.stars) starsMap.set(lvlNum, p.stars);
+      if (p.score) scoreMap.set(lvlNum, p.score);
+    });
+
+    setLevelsProgress((prev) =>
+      prev.map((l, idx) => {
+        const lvlNum = l.levelNumber || idx + 1;
+        const isComp = completedSet.has(lvlNum);
+        const isPrevComp = idx === 0 || completedSet.has(idx); // previous level completed
+        return {
+          ...l,
+          completed: isComp,
+          unlocked: idx === 0 || isComp || isPrevComp,
+          stars: starsMap.get(lvlNum) ?? (isComp ? 3 : 0),
+          score: scoreMap.get(lvlNum) ?? 0,
+        };
+      })
+    );
+  };
+
+  const fetchUserProgressFromDB = (userID: number) => {
+    if (!userID || userID <= 0) return;
+    fetch(`${API_BASE_URL}/api/v1/engine/progress?user_id=${userID}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.success) {
+          if (data.total_xp !== undefined) {
+            setTotalXP(data.total_xp);
+            setUserContext((prev) => ({ ...prev, totalXP: data.total_xp }));
+          }
+          if (data.progress) {
+            syncProgressFromDB(data.progress);
+          }
+        }
+      })
+      .catch(() => {});
+  };
+
+  // Strategic Point 1: Handshake and Initial Load Sync from Database
   React.useEffect(() => {
     const handleHostMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'HOST_AUTH_HANDSHAKE') {
@@ -93,24 +141,29 @@ export default function Home() {
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.user) {
-          const userXp = data.user.total_xp ?? 450;
+          const userXp = data.user.total_xp ?? 0;
           setTotalXP(userXp);
           setUserContext((prev) => ({
             ...prev,
-            id: data.user.id || 1,
-            username: data.user.username || 'Admin_Explorer',
+            id: data.user.id || prev.id || 1,
+            username: data.user.username || prev.username,
             role: (data.user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
             groupId: data.user.group_id || 1,
             groupName: data.user.group_name || 'Jungle Explorers Group A',
             avatar: data.user.avatar || '/monkey1.svg',
             totalXP: userXp,
-            totalStars: data.user.total_stars ?? 3,
+            totalStars: data.user.total_stars ?? 0,
           }));
+          if (data.progress) {
+            syncProgressFromDB(data.progress);
+          }
         }
       })
       .catch(() => {});
 
-    return () => window.removeEventListener('message', handleHostMessage);
+    return () => {
+      window.removeEventListener('message', handleHostMessage);
+    };
   }, []);
 
   React.useEffect(() => {
@@ -394,30 +447,7 @@ export default function Home() {
             totalScore: prev.totalScore + earnedScore,
           }));
 
-          // Update Adventure Map Progress
-          setLevelsProgress(prev =>
-            prev.map((l, idx) => {
-              if (idx === currentLevelIndex) {
-                return { ...l, completed: true, stars: 3, score: earnedScore };
-              }
-              if (idx === currentLevelIndex + 1) {
-                return { ...l, unlocked: true };
-              }
-              return l;
-            })
-          );
-
-          // Dispatch Event Callback to Host Platform
-          if (typeof window !== 'undefined' && window.parent && window.parent !== window) {
-            window.parent.postMessage({
-              type: 'STAGE_COMPLETED',
-              levelNumber: currentLevel.levelNumber,
-              xpEarned: earnedXP,
-              score: earnedScore,
-              stars: 3,
-            }, '*');
-          }
-
+          // Strategic Point 2: Write Stage Completion Event to Database
           fetch(`${API_BASE_URL}/api/v1/engine/events`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -428,7 +458,20 @@ export default function Home() {
               score: earnedScore,
               xp_earned: earnedXP,
             }),
-          }).catch(() => {});
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              if (data && data.success) {
+                if (data.total_xp !== undefined) {
+                  setTotalXP(data.total_xp);
+                  setUserContext((prev) => ({ ...prev, totalXP: data.total_xp }));
+                }
+                if (data.progress) {
+                  syncProgressFromDB(data.progress);
+                }
+              }
+            })
+            .catch(() => {});
 
           setIsRunning(false);
           setActiveStepIndex(null);
@@ -469,6 +512,7 @@ export default function Home() {
     { id: 'exit', svg: '/Exit.svg', title: 'Exit' },
   ];
 
+  // Strategic Point 3: Fetch Progress on Code Login
   const handleCodeSubmit = async (code: string): Promise<boolean> => {
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/engine/code-login`, {
@@ -479,7 +523,7 @@ export default function Home() {
       const data = await res.json();
       if (data && data.success && data.user) {
         const userXp = data.user.total_xp ?? 0;
-        setUserContext({
+        const loggedUser = {
           id: data.user.id || 1,
           username: data.user.username || 'Explorer',
           role: (data.user.role === 'admin' ? 'admin' : 'user') as 'admin' | 'user',
@@ -489,8 +533,12 @@ export default function Home() {
           totalXP: userXp,
           totalScore: 0,
           totalStars: data.user.total_stars ?? 0,
-        });
+        };
+        setUserContext(loggedUser);
         setTotalXP(userXp);
+        if (data.progress) {
+          syncProgressFromDB(data.progress);
+        }
         soundManager.playEquip();
         return true;
       }
@@ -552,10 +600,14 @@ export default function Home() {
             </button>
           </ActionTooltip>
 
-          {/* 3. Map Button */}
+          {/* 3. Map Button: Strategic Point 4 - Fetch Latest Progress from DB on Opening Map */}
           <ActionTooltip label="Maze Treasure Map" position="bottom">
             <button
-              onClick={() => { soundManager.playClick(); setActiveTab('map'); }}
+              onClick={() => {
+                soundManager.playClick();
+                fetchUserProgressFromDB(userContext.id);
+                setActiveTab('map');
+              }}
               className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10 p-0 ${
                 activeTab === 'map' 
                   ? 'opacity-100' 
