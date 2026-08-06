@@ -445,6 +445,11 @@ export default function Home() {
         for (let i = 0; i < count; i++) {
           flatSteps.push({ action: 'move_forward', blockIndex: idx, distance: 1 });
         }
+      } else if (block.type === 'move_forward') {
+        const count = Math.max(1, Math.min(10, stepVal));
+        for (let i = 0; i < count; i++) {
+          flatSteps.push({ action: 'move_forward', blockIndex: idx, distance: 1 });
+        }
       } else if (block.type !== 'when_flag_clicked' && block.type !== 'when_space_pressed') {
         flatSteps.push({ action: block.type, blockIndex: idx, distance: stepVal > 5 ? 1 : stepVal });
       }
