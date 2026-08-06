@@ -474,52 +474,9 @@ export default function Home() {
           setCurrentWaypointIndex(pathIdx);
         }
 
-        // 4. Check Finish Pipe Goal
+        // 4. Check Finish Pipe Goal - Flag goal reached on current step
         if (currentWp.type === 'goal' || pathIdx === waypoints.length - 1) {
-          setSpeechBubble('MAZE CLEARED!');
-          soundManager.playEquip();
-          const earnedXP = 250;
-          const earnedScore = 1420;
-
-          setTotalXP(prev => prev + earnedXP);
-          setUserContext(prev => ({
-            ...prev,
-            totalXP: prev.totalXP + earnedXP,
-            totalScore: prev.totalScore + earnedScore,
-          }));
-
-          // Strategic Point 2: Write Stage Completion Event to Database
-          fetch(`${API_BASE_URL}/api/v1/engine/events`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              user_id: userContext.id,
-              level_number: currentLevel.levelNumber,
-              stars: 3,
-              score: earnedScore,
-              xp_earned: earnedXP,
-            }),
-          })
-            .then((res) => res.json())
-            .then((data) => {
-              if (data && data.success) {
-                if (data.total_xp !== undefined) {
-                  setTotalXP(data.total_xp);
-                  setUserContext((prev) => ({ ...prev, totalXP: data.total_xp }));
-                }
-                if (data.progress) {
-                  syncProgressFromDB(data.progress);
-                }
-              }
-            })
-            .catch(() => {});
-
-          setIsRunning(false);
-          setActiveStepIndex(null);
-          setTimeout(() => {
-            setShowVictoryModal(true);
-          }, 500);
-          return;
+          setSpeechBubble('Reached Goal Pipe!');
         }
 
         // Auto update facing segment if next step is not a turn block
@@ -546,9 +503,46 @@ export default function Home() {
 
     if (pathIdx === waypoints.length - 1) {
       setSpeechBubble('MAZE CLEARED!');
+      soundManager.playEquip();
+      const earnedXP = 250;
+      const earnedScore = 1420;
+
+      setTotalXP(prev => prev + earnedXP);
+      setUserContext(prev => ({
+        ...prev,
+        totalXP: prev.totalXP + earnedXP,
+        totalScore: prev.totalScore + earnedScore,
+      }));
+
+      // Strategic Point 2: Write Stage Completion Event to Database
+      fetch(`${API_BASE_URL}/api/v1/engine/events`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: userContext.id,
+          level_number: currentLevel.levelNumber,
+          stars: 3,
+          score: earnedScore,
+          xp_earned: earnedXP,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data && data.success) {
+            if (data.total_xp !== undefined) {
+              setTotalXP(data.total_xp);
+              setUserContext((prev) => ({ ...prev, totalXP: data.total_xp }));
+            }
+            if (data.progress) {
+              syncProgressFromDB(data.progress);
+            }
+          }
+        })
+        .catch(() => {});
+
       setShowVictoryModal(true);
     } else {
-      setSpeechBubble(`At Tile #${pathIdx + 1}! Add more move blocks to reach FINISH!`);
+      setSpeechBubble(`At Tile #${pathIdx + 1}! Need exact steps to reach FINISH!`);
     }
   };
 
