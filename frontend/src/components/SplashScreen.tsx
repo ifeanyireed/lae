@@ -7,7 +7,6 @@ import { soundManager } from '@/utils/sound';
 
 interface SplashScreenProps {
   onStartGame: () => void;
-  onOpenAuth: () => void;
   onCodeSubmit?: (code: string) => Promise<boolean>;
   username: string;
   role: string;
@@ -35,7 +34,6 @@ const CONFETTI_PARTICLES = Array.from({ length: 18 }, (_, i) => ({
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({
   onStartGame,
-  onOpenAuth,
   onCodeSubmit,
   username,
   role,
@@ -72,21 +70,16 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
     }
   };
 
-  const handleAuth = () => {
-    soundManager.playClick();
-    onOpenAuth();
-  };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0, scale: 1.05 }}
       transition={{ duration: 0.5 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0d0906] select-none font-varela overflow-hidden"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden font-varela select-none bg-[#0d0906]"
     >
-      {/* Background Image with High Transparency Blur Overlay */}
-      <div className="absolute inset-0 z-0 overflow-hidden">
+      {/* Blurred Full Maze Background Image */}
+      <div className="absolute inset-0 z-0">
         <Image
           src="/full_maze.jpeg"
           alt="Full Maze Background"
@@ -94,6 +87,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           className="object-cover object-center filter brightness-90 contrast-110 blur-xl scale-105 opacity-60"
           priority
         />
+        {/* Semi-transparent Dark Backdrop Overlay */}
         <div className="absolute inset-0 bg-slate-950/40 backdrop-blur-md" />
       </div>
 
@@ -156,23 +150,6 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
             priority
           />
         </div>
-
-        {/* Top Right Session Auth Button using locked.svg without circle */}
-        <button
-          type="button"
-          onClick={handleAuth}
-          className="absolute top-6 right-6 z-40 p-1 transition transform hover:scale-110 active:scale-95 cursor-pointer drop-shadow-lg"
-          title="Session Auth & Database Config"
-        >
-          <div className="relative w-10 h-10 sm:w-14 sm:h-14">
-            <Image
-              src="/locked.svg"
-              alt="Session Auth Lock"
-              fill
-              className="object-contain"
-            />
-          </div>
-        </button>
 
         {/* Content Overlay directly matching badge_sample.jpg / LevelWelcomeModal layout */}
         <div className="relative z-10 flex flex-col justify-between h-full pt-6 pb-8 px-8 sm:px-12">

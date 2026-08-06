@@ -11,7 +11,6 @@ import { ActionTooltip } from '@/components/ActionTooltip';
 import { LevelWelcomeModal, LevelInfo } from '@/components/LevelWelcomeModal';
 import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal';
 import { SplashScreen } from '@/components/SplashScreen';
-import { FallbackAuthModal } from '@/components/FallbackAuthModal';
 import { ADVENTURE_1, PUZZLE_LEVELS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
@@ -26,7 +25,6 @@ export default function Home() {
   const [totalXP, setTotalXP] = useState(450);
 
   const [showSplash, setShowSplash] = useState(true);
-  const [showFallbackAuth, setShowFallbackAuth] = useState(false);
 
   // Embeddable Engine User & Host Handshake Session Context
   const [userContext, setUserContext] = useState({
@@ -610,9 +608,9 @@ export default function Home() {
           </ActionTooltip>
 
           {/* 4. Profile / Auth Session Button */}
-          <ActionTooltip label={`Profile & Database Auth (${userContext.role.toUpperCase()})`} position="bottom">
+          <ActionTooltip label={`Explorer Profile (${userContext.role.toUpperCase()})`} position="bottom">
             <button
-              onClick={() => { soundManager.playClick(); setShowFallbackAuth(true); }}
+              onClick={() => { soundManager.playClick(); setShowSplash(true); }}
               className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
             >
               <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
@@ -1029,20 +1027,6 @@ export default function Home() {
         groupName={userContext.groupName}
       />
 
-      {/* Fallback Auth Screen Modal for Unrouted / Standalone Sessions */}
-      <FallbackAuthModal
-        isOpen={showFallbackAuth}
-        onClose={() => setShowFallbackAuth(false)}
-        userContext={userContext}
-        onUpdateUserContext={(updated) => {
-          setUserContext(updated);
-          setTotalXP(updated.totalXP);
-          setShowSplash(false);
-          setShowWelcomeModal(false);
-          setActiveTab('map');
-        }}
-      />
-
       {/* Game Application Launcher Splash Screen */}
       <AnimatePresence>
         {showSplash && (
@@ -1052,7 +1036,6 @@ export default function Home() {
               setShowWelcomeModal(false);
               setActiveTab('map');
             }}
-            onOpenAuth={() => setShowFallbackAuth(true)}
             onCodeSubmit={async (code) => {
               const ok = await handleCodeSubmit(code);
               if (ok) {
