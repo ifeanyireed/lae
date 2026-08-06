@@ -41,7 +41,7 @@ export default function Home() {
   });
 
   const [showMapModal, setShowMapModal] = useState(false);
-  const [selectedAdventureId, setSelectedAdventureId] = useState<number>(1);
+  const [selectedAdventureId, setSelectedAdventureId] = useState<number | null>(null);
   const [levelsProgress, setLevelsProgress] = useState<LevelProgress[]>(
     PUZZLE_LEVELS.map((l, idx) => ({
       levelNumber: l.levelNumber,
@@ -1050,7 +1050,7 @@ export default function Home() {
           )}
         </AnimatePresence>
 
-        {/* TREASURE MAP VIEW - STAGGERED RISING LEVEL IMAGES ANIMATION */}
+        {/* TREASURE MAP VIEW - 2-TIER ADVENTURES DIRECTORY & LEVEL SUB-PAGES */}
         <AnimatePresence>
           {activeTab === 'map' && (
             <motion.div
@@ -1058,203 +1058,298 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex flex-col items-center justify-center p-2 sm:p-3 bg-slate-950/50 backdrop-blur-sm pointer-events-auto overflow-y-auto"
+              className="fixed inset-0 z-50 flex flex-col items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md pointer-events-auto overflow-y-auto"
             >
-              {/* Back Button */}
+              {/* Top Control Buttons */}
+              <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-50">
+                {selectedAdventureId !== null && (
+                  <button
+                    onClick={() => {
+                      soundManager.playClick();
+                      setSelectedAdventureId(null);
+                    }}
+                    className="text-amber-200 hover:text-white font-black text-xs sm:text-sm bg-amber-900/80 hover:bg-amber-800 border border-amber-500/40 px-3.5 py-1.5 rounded-full transition cursor-pointer shadow-lg flex items-center space-x-1.5"
+                  >
+                    <span>←</span>
+                    <span>Adventures</span>
+                  </button>
+                )}
+              </div>
+
               <button
                 onClick={() => {
                   soundManager.playClick();
                   setActiveTab('studio');
                 }}
-                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-300 hover:text-white font-medium text-[10px] sm:text-xs bg-white/10 border border-white/20 px-2.5 py-1 rounded-full transition cursor-pointer"
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 text-slate-300 hover:text-white font-medium text-[10px] sm:text-xs bg-white/10 border border-white/20 px-3 py-1.5 rounded-full transition cursor-pointer z-50"
               >
                 ✕ Close Map
               </button>
 
-              {/* Map Title Header & Concept Badge */}
+              {/* Map Title Header */}
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center mt-6 mb-2 px-4"
+                className="text-center mt-8 sm:mt-6 mb-3 px-4"
               >
-                {(() => {
-                  const currAdv = ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
-                  return (
-                    <>
-                      <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 font-mono font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase mb-2">
-                        <span>{currAdv.icon}</span>
-                        <span>Adv {currAdv.id}: {currAdv.concept}</span>
-                      </div>
-                      <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-                        {currAdv.title}
-                      </h1>
-                      <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
-                        {currAdv.story}
-                      </p>
-                    </>
-                  );
-                })()}
+                {selectedAdventureId === null ? (
+                  <>
+                    <h1 className="text-3xl sm:text-4xl md:text-5xl font-black text-amber-200 tracking-tight drop-shadow-lg font-varela uppercase">
+                      ADVENTURES
+                    </h1>
+                    <p className="text-xs sm:text-sm font-semibold text-amber-400 mt-1 max-w-xl mx-auto drop-shadow-sm">
+                      Select an Adventure to explore its 12 coding missions!
+                    </p>
+                  </>
+                ) : (
+                  (() => {
+                    const currAdv = ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
+                    return (
+                      <>
+                        <div className="inline-flex items-center space-x-2 bg-amber-400/20 text-amber-300 font-mono font-black text-xs px-3 py-1 rounded-full border border-amber-500/30 uppercase mb-2">
+                          <span>{currAdv.icon}</span>
+                          <span>Adv {currAdv.id}: {currAdv.concept}</span>
+                        </div>
+                        <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
+                          {currAdv.title}
+                        </h1>
+                        <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
+                          {currAdv.story}
+                        </p>
+                      </>
+                    );
+                  })()
+                )}
               </motion.div>
 
-              {/* 5 Adventure Modules Selector Bar */}
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="flex items-center justify-center flex-wrap gap-2 my-2.5 z-20 max-w-5xl px-2"
-              >
-                {ALL_ADVENTURES.map((adv) => {
-                  const isSelected = selectedAdventureId === adv.id;
-                  return (
-                    <button
-                      key={`map-adv-tab-${adv.id}`}
-                      onClick={() => {
-                        soundManager.playClick();
-                        setSelectedAdventureId(adv.id);
-                        setAdventureTitle(adv.title);
-                        setAdventureStory(adv.story);
-                      }}
-                      className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-2xl font-black text-xs sm:text-sm flex items-center space-x-1.5 transition transform cursor-pointer border shadow-lg ${
-                        isSelected
-                          ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 scale-105 shadow-[0_0_20px_rgba(251,191,36,0.6)]'
-                          : 'bg-slate-900/80 text-amber-100 border-amber-500/40 hover:bg-amber-950/90 hover:text-white hover:border-amber-400'
-                      }`}
-                    >
-                      <span className="text-base sm:text-lg">{adv.icon}</span>
-                      <div className="flex flex-col text-left leading-tight">
-                        <span className="text-[9px] sm:text-[10px] uppercase font-mono font-bold tracking-wider opacity-80">
-                          Adv {adv.id}: {adv.concept}
-                        </span>
-                        <span className="font-extrabold line-clamp-1">{adv.title}</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </motion.div>
-
-              <motion.div
-                key="treasure-map-grid"
-                variants={{
-                  hidden: { opacity: 0 },
-                  visible: {
-                    opacity: 1,
-                    transition: {
-                      staggerChildren: 0.08,
-                      delayChildren: 0.05,
+              {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY PAGE (Monkeys & Padlocks styling) */}
+              {selectedAdventureId === null ? (
+                <motion.div
+                  key="adventures-directory-grid"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
                     },
-                  },
-                  exit: {
-                    opacity: 0,
-                    transition: {
-                      staggerChildren: 0.05,
-                      staggerDirection: -1,
-                    },
-                  },
-                }}
-                initial="hidden"
-                animate="visible"
-                exit="exit"
-                className="grid grid-cols-6 gap-3 sm:gap-5 max-w-5xl w-full py-4"
-              >
-                {(ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0]).levels.map((lvlConfig, i) => {
-                  const levelNum = i + 1;
-                  const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
-                  const levelTitle = lvlConfig?.title || `Level ${levelNum}`;
-                  const lvlProg = levelsProgress[i];
-                  const isUnlocked = selectedAdventureId === 1 ? (lvlProg?.unlocked || i === 0 || i <= currentLevelIndex) : true;
-                  const isCompleted = lvlProg?.completed;
-                  const isVibrating = lockedVibrateLevelIndex === i;
+                    exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                  }}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-5 gap-2 sm:gap-3 md:gap-4 max-w-6xl w-full py-4 z-20"
+                >
+                  {ALL_ADVENTURES.map((adv) => {
+                    const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
+                    const isAdvUnlocked = adv.id === 1;
+                    const isVibrating = lockedVibrateLevelIndex === adv.id;
 
-                  return (
-                    <motion.div
-                      key={`level-${levelNum}`}
-                      variants={{
-                        hidden: { opacity: 0, y: 50, scale: 0.8 },
-                        visible: {
-                          opacity: 1,
-                          y: 0,
-                          scale: 1,
-                          transition: { type: 'spring', stiffness: 350, damping: 22 },
-                        },
-                        exit: {
-                          opacity: 0,
-                          y: 40,
-                          scale: 0.8,
-                          transition: { duration: 0.15 },
-                        },
-                      }}
-                      onClick={() => {
-                        if (isUnlocked) {
-                          soundManager.playClick();
-                          handleSelectLevel(i);
-                          setActiveTab('studio');
-                        } else {
-                          soundManager.playError();
-                          setLockedVibrateLevelIndex(i);
-                          setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
-                        }
-                      }}
-                      className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group"
-                    >
-                      {/* Image Container with Bottom-Right Status Badge (Vibrates monkey and zooms locked.svg 3x) */}
+                    return (
                       <motion.div
-                        animate={isVibrating ? {
-                          x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
-                          rotate: [-6, 6, -4, 4, -2, 2, 0],
-                        } : {}}
-                        transition={{ duration: 0.6, ease: 'easeInOut' }}
-                        className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 mb-1"
+                        key={`adv-dir-card-${adv.id}`}
+                        variants={{
+                          hidden: { opacity: 0, y: 50, scale: 0.8 },
+                          visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 350, damping: 22 } },
+                          exit: { opacity: 0, y: 40, scale: 0.8, transition: { duration: 0.15 } },
+                        }}
+                        onClick={() => {
+                          if (isAdvUnlocked) {
+                            soundManager.playClick();
+                            setSelectedAdventureId(adv.id);
+                            setAdventureTitle(adv.title);
+                            setAdventureStory(adv.story);
+                          } else {
+                            soundManager.playError();
+                            setLockedVibrateLevelIndex(adv.id);
+                            setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
+                          }
+                        }}
+                        className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group select-none"
                       >
-                        <Image 
-                          src={monkeyImg} 
-                          alt={`Level ${levelNum}: ${levelTitle}`} 
-                          fill 
-                          className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-50'}`} 
-                          priority 
-                        />
-                        
-                        {/* Status Badge: Finish flag or 3x Zooming Locked Icon */}
-                        <div className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 z-10 filter drop-shadow-lg">
-                          {isUnlocked ? (
-                            <Image 
-                              src="/maze_finish.svg" 
-                              alt="Activated Level" 
-                              fill 
-                              className="object-contain" 
-                            />
-                          ) : (
-                            <motion.div
-                              className="relative w-full h-full"
-                              animate={isVibrating ? {
-                                scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
-                              } : {}}
-                              transition={{ duration: 0.9, ease: 'easeInOut' }}
-                            >
+                        {/* Image Container with Bottom-Right Status Badge */}
+                        <motion.div
+                          animate={isVibrating ? {
+                            x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                            rotate: [-6, 6, -4, 4, -2, 2, 0],
+                          } : {}}
+                          transition={{ duration: 0.6, ease: 'easeInOut' }}
+                          className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 relative flex-shrink-0 mb-1"
+                        >
+                          <Image 
+                            src={advMonkeyImg} 
+                            alt={`Adventure ${adv.id}: ${adv.title}`} 
+                            fill 
+                            className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'filter grayscale opacity-50'}`} 
+                            priority 
+                          />
+                          
+                          {/* Status Badge: Finish flag or 3x Zooming Locked Icon */}
+                          <div className="absolute -bottom-2 -right-2 w-12 h-12 sm:w-14 sm:h-14 z-10 filter drop-shadow-lg">
+                            {isAdvUnlocked ? (
                               <Image 
-                                src="/locked.svg" 
-                                alt="Locked Level" 
+                                src="/maze_finish.svg" 
+                                alt="Unlocked Adventure" 
                                 fill 
                                 className="object-contain" 
                               />
-                            </motion.div>
-                          )}
+                            ) : (
+                              <motion.div
+                                className="relative w-full h-full"
+                                animate={isVibrating ? {
+                                  scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                                } : {}}
+                                transition={{ duration: 0.9, ease: 'easeInOut' }}
+                              >
+                                <Image 
+                                  src="/locked.svg" 
+                                  alt="Locked Adventure" 
+                                  fill 
+                                  className="object-contain drop-shadow-xl" 
+                                />
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.div>
+
+                        {/* Title & Concept Name under image */}
+                        <div className="flex flex-col items-center text-center mt-1 max-w-[150px]">
+                          <span className={`text-xs sm:text-sm md:text-base font-black tracking-wide transition ${
+                            isAdvUnlocked ? 'text-amber-300 group-hover:text-amber-200' : 'text-slate-500'
+                          }`}>
+                            Adventure {adv.id}
+                          </span>
+                          <span className={`text-xs sm:text-sm font-bold transition leading-tight line-clamp-2 ${
+                            isAdvUnlocked ? 'text-slate-200 group-hover:text-white' : 'text-slate-500'
+                          }`}>
+                            {adv.title}
+                          </span>
+                          <span className={`text-[10px] sm:text-xs font-mono font-bold uppercase mt-0.5 ${
+                            isAdvUnlocked ? 'text-emerald-400' : 'text-slate-600'
+                          }`}>
+                            {adv.concept}
+                          </span>
                         </div>
                       </motion.div>
+                    );
+                  })}
+                </motion.div>
+              ) : (
+                /* TIER 2: SUB-LEVELS GRID FOR SELECTED ADVENTURE */
+                <motion.div
+                  key="treasure-map-grid"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+                    },
+                    exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                  }}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="grid grid-cols-6 gap-3 sm:gap-5 max-w-5xl w-full py-4 z-20"
+                >
+                  {(ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0]).levels.map((lvlConfig, i) => {
+                    const levelNum = i + 1;
+                    const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
+                    const levelTitle = lvlConfig?.title || `Level ${levelNum}`;
+                    const lvlProg = levelsProgress[i];
+                    const isUnlocked = selectedAdventureId === 1 ? (lvlProg?.unlocked || i === 0 || i <= currentLevelIndex) : true;
+                    const isVibrating = lockedVibrateLevelIndex === i;
 
-                      {/* Title & Level Name under image */}
-                      <div className="flex flex-col items-center text-center mt-1 max-w-[120px]">
-                        <span className={`text-[11px] sm:text-xs font-black tracking-wide transition ${
-                          isUnlocked ? (i === currentLevelIndex ? 'text-amber-300' : 'text-slate-200 group-hover:text-amber-200') : 'text-slate-500'
-                        }`}>
-                          Level {levelNum}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition leading-tight line-clamp-2">
-                          {levelTitle}
-                        </span>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
+                    return (
+                      <motion.div
+                        key={`level-${levelNum}`}
+                        variants={{
+                          hidden: { opacity: 0, y: 50, scale: 0.8 },
+                          visible: {
+                            opacity: 1,
+                            y: 0,
+                            scale: 1,
+                            transition: { type: 'spring', stiffness: 350, damping: 22 },
+                          },
+                          exit: {
+                            opacity: 0,
+                            y: 40,
+                            scale: 0.8,
+                            transition: { duration: 0.15 },
+                          },
+                        }}
+                        onClick={() => {
+                          if (isUnlocked) {
+                            soundManager.playClick();
+                            handleSelectLevel(i);
+                            setActiveTab('studio');
+                          } else {
+                            soundManager.playError();
+                            setLockedVibrateLevelIndex(i);
+                            setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
+                          }
+                        }}
+                        className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group"
+                      >
+                        {/* Image Container with Bottom-Right Status Badge */}
+                        <motion.div
+                          animate={isVibrating ? {
+                            x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                            rotate: [-6, 6, -4, 4, -2, 2, 0],
+                          } : {}}
+                          transition={{ duration: 0.6, ease: 'easeInOut' }}
+                          className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 mb-1"
+                        >
+                          <Image 
+                            src={monkeyImg} 
+                            alt={`Level ${levelNum}: ${levelTitle}`} 
+                            fill 
+                            className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-50'}`} 
+                            priority 
+                          />
+                          
+                          {/* Status Badge: Finish flag or Locked Icon */}
+                          <div className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 z-10 filter drop-shadow-lg">
+                            {isUnlocked ? (
+                              <Image 
+                                src="/maze_finish.svg" 
+                                alt="Activated Level" 
+                                fill 
+                                className="object-contain" 
+                              />
+                            ) : (
+                              <motion.div
+                                className="relative w-full h-full"
+                                animate={isVibrating ? {
+                                  scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                                } : {}}
+                                transition={{ duration: 0.9, ease: 'easeInOut' }}
+                              >
+                                <Image 
+                                  src="/locked.svg" 
+                                  alt="Locked Level" 
+                                  fill 
+                                  className="object-contain" 
+                                />
+                              </motion.div>
+                            )}
+                          </div>
+                        </motion.div>
+
+                        {/* Title & Level Name under image */}
+                        <div className="flex flex-col items-center text-center mt-1 max-w-[120px]">
+                          <span className={`text-[11px] sm:text-xs font-black tracking-wide transition ${
+                            isUnlocked ? (i === currentLevelIndex ? 'text-amber-300' : 'text-slate-200 group-hover:text-amber-200') : 'text-slate-500'
+                          }`}>
+                            Level {levelNum}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-300 group-hover:text-white transition leading-tight line-clamp-2">
+                            {levelTitle}
+                          </span>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </motion.div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

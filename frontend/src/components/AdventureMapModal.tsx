@@ -1,9 +1,9 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Lock, Star, Play } from 'lucide-react';
+import { X, Lock, Star, ArrowLeft } from 'lucide-react';
 import { soundManager } from '@/utils/sound';
 import { ALL_ADVENTURES } from '@/utils/levels';
 
@@ -35,13 +35,12 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   totalXP,
   groupName = 'Jungle Explorers Group A',
 }) => {
-  const [lockedVibrateIdx, setLockedVibrateIdx] = React.useState<number | null>(null);
-  const [selectedAdvId, setSelectedAdvId] = React.useState<number>(1);
+  const [lockedVibrateIdx, setLockedVibrateIdx] = useState<number | null>(null);
+  const [selectedAdvId, setSelectedAdvId] = useState<number | null>(null);
 
   if (!isOpen) return null;
 
-  const currentAdv = ALL_ADVENTURES.find(a => a.id === selectedAdvId) || ALL_ADVENTURES[0];
-  const activeLevels = currentAdv.levels;
+  const currentAdv = selectedAdvId ? (ALL_ADVENTURES.find(a => a.id === selectedAdvId) || ALL_ADVENTURES[0]) : null;
 
   return (
     <AnimatePresence>
@@ -66,17 +65,33 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
           {/* Top Header Bar */}
           <div className="flex items-center justify-between border-b border-amber-600/40 pb-4 mb-4 z-10 shrink-0">
             <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0">
-                <Image src="/Map.svg" alt="Map Icon" fill className="object-contain" />
-              </div>
+              {currentAdv ? (
+                <button
+                  onClick={() => {
+                    soundManager.playClick();
+                    setSelectedAdvId(null);
+                  }}
+                  className="px-3 py-1.5 rounded-full bg-amber-900/80 hover:bg-amber-800 text-amber-200 hover:text-white transition border border-amber-500/40 cursor-pointer shadow-md flex items-center space-x-1 text-xs font-black"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  <span>Adventures</span>
+                </button>
+              ) : (
+                <div className="w-10 h-10 sm:w-12 sm:h-12 relative flex-shrink-0">
+                  <Image src="/Map.svg" alt="Map Icon" fill className="object-contain" />
+                </div>
+              )}
+
               <div>
                 <h2 className="text-xl sm:text-3xl font-black font-varela text-amber-200 uppercase tracking-tight">
-                  {currentAdv.title}
+                  {currentAdv ? currentAdv.title : 'ADVENTURES'}
                 </h2>
                 <div className="flex items-center space-x-2 mt-0.5">
-                  <span className="bg-amber-400/20 text-amber-300 font-mono font-black text-[10px] sm:text-xs px-2 py-0.5 rounded-full border border-amber-500/30 uppercase">
-                    Concept: {currentAdv.concept}
-                  </span>
+                  {currentAdv ? (
+                    <span className="bg-amber-400/20 text-amber-300 font-mono font-black text-[10px] sm:text-xs px-2 py-0.5 rounded-full border border-amber-500/30 uppercase">
+                      Concept: {currentAdv.concept}
+                    </span>
+                  ) : null}
                   <p className="text-xs sm:text-sm font-bold text-amber-400">
                     PuzzlePro &bull; {groupName}
                   </p>
@@ -99,152 +114,228 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </div>
           </div>
 
-          {/* 5 Adventure Modules Selector Bar */}
-          <div className="flex items-center justify-center flex-wrap gap-2 pb-3 mb-3 border-b border-amber-600/30 z-10 shrink-0">
-            {ALL_ADVENTURES.map((adv) => {
-              const isSelected = selectedAdvId === adv.id;
-              return (
-                <button
-                  key={`modal-adv-tab-${adv.id}`}
-                  onClick={() => {
-                    soundManager.playClick();
-                    setSelectedAdvId(adv.id);
-                  }}
-                  className={`px-3 py-1.5 rounded-2xl font-black text-xs flex items-center space-x-1.5 transition transform cursor-pointer border shadow-sm ${
-                    isSelected
-                      ? 'bg-amber-400 text-slate-950 border-amber-300 ring-2 ring-amber-400 scale-105 shadow-[0_0_15px_rgba(251,191,36,0.5)]'
-                      : 'bg-amber-900/60 text-amber-100 border-amber-500/40 hover:bg-amber-800 hover:text-white'
-                  }`}
-                >
-                  <span className="text-sm sm:text-base">{adv.icon}</span>
-                  <div className="flex flex-col text-left leading-tight">
-                    <span className="text-[9px] uppercase font-mono font-bold tracking-wider opacity-80">
-                      Adv {adv.id}: {adv.concept}
-                    </span>
-                    <span className="font-extrabold line-clamp-1">{adv.title}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+          {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY VIEW (Monkeys & Padlocks styling) */}
+          {!currentAdv ? (
+            <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
+              {ALL_ADVENTURES.map((adv) => {
+                const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
+                const isAdvUnlocked = adv.id === 1;
+                const isVibrating = lockedVibrateIdx === adv.id;
 
-          {/* 12-Level Grid Path */}
-          <div className="overflow-y-auto flex-1 pr-2 py-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
-            {activeLevels.map((lvl, idx) => {
-              const lvlProg = levelsProgress[idx];
-              const isCurrent = currentLevelIndex === idx && selectedAdvId === 1;
-              const isUnlocked = selectedAdvId === 1 ? (lvlProg?.unlocked || idx === 0 || idx <= currentLevelIndex) : true;
-
-              return (
-                <motion.div
-                  key={`lvl-node-${lvl.levelNumber}`}
-                  whileHover={isUnlocked ? { scale: 1.05 } : {}}
-                  whileTap={isUnlocked ? { scale: 0.95 } : {}}
-                  onClick={() => {
-                    if (isUnlocked) {
-                      soundManager.playClick();
-                      onSelectLevel(idx);
-                      onClose();
-                    } else {
-                      soundManager.playError();
-                      setLockedVibrateIdx(idx);
-                      setTimeout(() => setLockedVibrateIdx(null), 1200);
-                    }
-                  }}
-                  className={`relative rounded-2xl p-4 flex flex-col items-center justify-between border-2 transition select-none ${
-                    isUnlocked
-                      ? isCurrent
-                        ? 'bg-gradient-to-b from-amber-400 to-amber-500 border-amber-300 text-slate-950 ring-4 ring-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.8)] cursor-pointer'
-                        : 'bg-amber-900/80 hover:bg-amber-800/90 border-amber-400/60 text-amber-100 cursor-pointer shadow-lg'
-                      : 'bg-slate-900/60 border-slate-700/60 text-slate-500 cursor-pointer filter grayscale'
-                  }`}
-                >
-                  {/* Badge Level Indicator */}
-                  <div className="w-full flex items-center justify-between mb-2">
-                    <span className={`text-xs font-black font-mono px-2 py-0.5 rounded-full ${
-                      isUnlocked ? (isCurrent ? 'bg-slate-950 text-amber-300' : 'bg-amber-950 text-amber-200') : 'bg-slate-800 text-slate-500'
-                    }`}>
-                      LEVEL {lvl.levelNumber}
-                    </span>
-
-                    {isUnlocked ? (
-                      <span className="text-[10px] font-black uppercase text-amber-300">
-                        {lvlProg?.completed ? 'COMPLETED' : (isCurrent ? 'ACTIVE' : 'READY')}
-                      </span>
-                    ) : (
-                      <Lock className="w-4 h-4 text-amber-500/80 animate-pulse" />
-                    )}
-                  </div>
-
-                  {/* Icon Thumbnail: Monkey Sprite + Locked SVG overlay (vibrates monkey & 3x zooms locked.svg) */}
+                return (
                   <motion.div
-                    animate={lockedVibrateIdx === idx ? {
-                      x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
-                      rotate: [-6, 6, -4, 4, -2, 2, 0],
-                    } : {}}
-                    transition={{ duration: 0.6, ease: 'easeInOut' }}
-                    className="w-14 h-14 sm:w-16 sm:h-16 relative my-2 flex items-center justify-center"
+                    key={`adv-node-${adv.id}`}
+                    whileHover={isAdvUnlocked ? { scale: 1.05 } : {}}
+                    whileTap={isAdvUnlocked ? { scale: 0.95 } : {}}
+                    onClick={() => {
+                      if (isAdvUnlocked) {
+                        soundManager.playClick();
+                        setSelectedAdvId(adv.id);
+                      } else {
+                        soundManager.playError();
+                        setLockedVibrateIdx(adv.id);
+                        setTimeout(() => setLockedVibrateIdx(null), 1200);
+                      }
+                    }}
+                    className={`relative rounded-2xl p-3 flex flex-col items-center justify-between border-2 transition select-none cursor-pointer group ${
+                      isAdvUnlocked
+                        ? 'border-amber-400/80 bg-amber-900/90 hover:bg-amber-800 text-amber-100 shadow-xl'
+                        : 'border-slate-700/60 bg-slate-900/70 text-slate-400 filter grayscale'
+                    }`}
                   >
-                    <Image
-                      src={`/monkey${((lvl.levelNumber - 1) % 23) + 1}.svg`}
-                      alt={lvl.title}
-                      fill
-                      className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-40'}`}
-                    />
-
-                    {isUnlocked ? (
-                      <div className="absolute -bottom-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 z-10 filter drop-shadow-md">
-                        <Image
-                          src="/maze_finish.svg"
-                          alt="Activated Level"
-                          fill
-                          className="object-contain"
-                        />
-                      </div>
-                    ) : (
-                      <motion.div
-                        className="absolute inset-0 z-20"
-                        animate={lockedVibrateIdx === idx ? {
-                          scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
-                        } : {}}
-                        transition={{ duration: 0.9, ease: 'easeInOut' }}
-                      >
-                        <Image
-                          src="/locked.svg"
-                          alt="Locked Level"
-                          fill
-                          className="object-contain drop-shadow-xl"
-                        />
-                      </motion.div>
-                    )}
-                  </motion.div>
-
-                  {/* Title & Stars */}
-                  <div className="text-center w-full mt-1">
-                    <h4 className={`text-xs sm:text-sm font-black uppercase tracking-tight line-clamp-1 ${
-                      isCurrent ? 'text-slate-950' : 'text-amber-100'
-                    }`}>
-                      {lvl.title}
-                    </h4>
-
-                    {/* Star Rating Display */}
-                    <div className="flex items-center justify-center space-x-1 mt-1">
-                      {[1, 2, 3].map((starIdx) => (
-                        <Star
-                          key={`star-${lvl.levelNumber}-${starIdx}`}
-                          className={`w-3.5 h-3.5 ${
-                            starIdx <= (lvlProg?.stars || (lvlProg?.completed ? 3 : 0))
-                              ? 'text-amber-400 fill-amber-400 drop-shadow'
-                              : 'text-slate-600 fill-slate-700'
-                          }`}
-                        />
-                      ))}
+                    {/* Badge Indicator */}
+                    <div className="w-full flex items-center justify-between mb-1">
+                      <span className={`text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-full ${
+                        isAdvUnlocked ? 'bg-amber-950 text-amber-300' : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        ADV {adv.id}
+                      </span>
+                      <span className={`text-[10px] sm:text-xs font-black uppercase font-mono ${
+                        isAdvUnlocked ? 'text-amber-300' : 'text-slate-500'
+                      }`}>
+                        {adv.concept}
+                      </span>
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+
+                    {/* Monkey Sprite Thumbnail + Finish / 3x Zooming Lock Badge */}
+                    <motion.div
+                      animate={isVibrating ? {
+                        x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                        rotate: [-6, 6, -4, 4, -2, 2, 0],
+                      } : {}}
+                      transition={{ duration: 0.6, ease: 'easeInOut' }}
+                      className="w-24 h-24 sm:w-28 sm:h-28 relative my-1 flex items-center justify-center flex-shrink-0"
+                    >
+                      <Image
+                        src={advMonkeyImg}
+                        alt={adv.title}
+                        fill
+                        className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'opacity-40'}`}
+                      />
+
+                      <div className="absolute -bottom-2 -right-2 w-8 h-8 sm:w-10 sm:h-10 z-10 filter drop-shadow-lg">
+                        {isAdvUnlocked ? (
+                          <Image
+                            src="/maze_finish.svg"
+                            alt="Adventure Unlocked"
+                            fill
+                            className="object-contain"
+                          />
+                        ) : (
+                          <motion.div
+                            className="relative w-full h-full"
+                            animate={isVibrating ? {
+                              scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                            } : {}}
+                            transition={{ duration: 0.9, ease: 'easeInOut' }}
+                          >
+                            <Image
+                              src="/locked.svg"
+                              alt="Locked Adventure"
+                              fill
+                              className="object-contain drop-shadow-xl"
+                            />
+                          </motion.div>
+                        )}
+                      </div>
+                    </motion.div>
+
+                    {/* Title & Concept Name */}
+                    <div className="text-center w-full mt-1">
+                      <h4 className={`text-xs sm:text-sm font-black uppercase tracking-tight line-clamp-1 transition ${
+                        isAdvUnlocked ? 'text-amber-100 group-hover:text-white' : 'text-slate-500'
+                      }`}>
+                        {adv.title}
+                      </h4>
+                      <span className={`text-xs font-black mt-0.5 block ${
+                        isAdvUnlocked ? 'text-emerald-400' : 'text-slate-600'
+                      }`}>
+                        12 Levels
+                      </span>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          ) : (
+            /* TIER 2: SELECTED ADVENTURE 12-LEVEL GRID VIEW */
+            <div className="overflow-y-auto flex-1 pr-2 py-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
+              {currentAdv.levels.map((lvl, idx) => {
+                const lvlProg = levelsProgress[idx];
+                const isCurrent = currentLevelIndex === idx && selectedAdvId === 1;
+                const isUnlocked = selectedAdvId === 1 ? (lvlProg?.unlocked || idx === 0 || idx <= currentLevelIndex) : true;
+
+                return (
+                  <motion.div
+                    key={`lvl-node-${lvl.levelNumber}`}
+                    whileHover={isUnlocked ? { scale: 1.05 } : {}}
+                    whileTap={isUnlocked ? { scale: 0.95 } : {}}
+                    onClick={() => {
+                      if (isUnlocked) {
+                        soundManager.playClick();
+                        onSelectLevel(idx);
+                        onClose();
+                      } else {
+                        soundManager.playError();
+                        setLockedVibrateIdx(idx);
+                        setTimeout(() => setLockedVibrateIdx(null), 1200);
+                      }
+                    }}
+                    className={`relative rounded-2xl p-4 flex flex-col items-center justify-between border-2 transition select-none ${
+                      isUnlocked
+                        ? isCurrent
+                          ? 'bg-gradient-to-b from-amber-400 to-amber-500 border-amber-300 text-slate-950 ring-4 ring-amber-400 shadow-[0_0_25px_rgba(251,191,36,0.8)] cursor-pointer'
+                          : 'bg-amber-900/80 hover:bg-amber-800/90 border-amber-400/60 text-amber-100 cursor-pointer shadow-lg'
+                        : 'bg-slate-900/60 border-slate-700/60 text-slate-500 cursor-pointer filter grayscale'
+                    }`}
+                  >
+                    {/* Badge Level Indicator */}
+                    <div className="w-full flex items-center justify-between mb-2">
+                      <span className={`text-xs font-black font-mono px-2 py-0.5 rounded-full ${
+                        isUnlocked ? (isCurrent ? 'bg-slate-950 text-amber-300' : 'bg-amber-950 text-amber-200') : 'bg-slate-800 text-slate-500'
+                      }`}>
+                        LEVEL {lvl.levelNumber}
+                      </span>
+
+                      {isUnlocked ? (
+                        <span className="text-[10px] font-black uppercase text-amber-300">
+                          {lvlProg?.completed ? 'COMPLETED' : (isCurrent ? 'ACTIVE' : 'READY')}
+                        </span>
+                      ) : (
+                        <Lock className="w-4 h-4 text-amber-500/80 animate-pulse" />
+                      )}
+                    </div>
+
+                    {/* Icon Thumbnail */}
+                    <motion.div
+                      animate={lockedVibrateIdx === idx ? {
+                        x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                        rotate: [-6, 6, -4, 4, -2, 2, 0],
+                      } : {}}
+                      transition={{ duration: 0.6, ease: 'easeInOut' }}
+                      className="w-14 h-14 sm:w-16 sm:h-16 relative my-2 flex items-center justify-center"
+                    >
+                      <Image
+                        src={`/monkey${((lvl.levelNumber - 1) % 23) + 1}.svg`}
+                        alt={lvl.title}
+                        fill
+                        className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-40'}`}
+                      />
+
+                      {isUnlocked ? (
+                        <div className="absolute -bottom-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 z-10 filter drop-shadow-md">
+                          <Image
+                            src="/maze_finish.svg"
+                            alt="Activated Level"
+                            fill
+                            className="object-contain"
+                          />
+                        </div>
+                      ) : (
+                        <motion.div
+                          className="absolute inset-0 z-20"
+                          animate={lockedVibrateIdx === idx ? {
+                            scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                          } : {}}
+                          transition={{ duration: 0.9, ease: 'easeInOut' }}
+                        >
+                          <Image
+                            src="/locked.svg"
+                            alt="Locked Level"
+                            fill
+                            className="object-contain drop-shadow-xl"
+                          />
+                        </motion.div>
+                      )}
+                    </motion.div>
+
+                    {/* Title & Stars */}
+                    <div className="text-center w-full mt-1">
+                      <h4 className={`text-xs sm:text-sm font-black uppercase tracking-tight line-clamp-1 ${
+                        isCurrent ? 'text-slate-950' : 'text-amber-100'
+                      }`}>
+                        {lvl.title}
+                      </h4>
+
+                      {/* Star Rating Display */}
+                      <div className="flex items-center justify-center space-x-1 mt-1">
+                        {[1, 2, 3].map((starIdx) => (
+                          <Star
+                            key={`star-${lvl.levelNumber}-${starIdx}`}
+                            className={`w-3.5 h-3.5 ${
+                              starIdx <= (lvlProg?.stars || (lvlProg?.completed ? 3 : 0))
+                                ? 'text-amber-400 fill-amber-400 drop-shadow'
+                                : 'text-slate-600 fill-slate-700'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
 
           {/* Maze Items Legend / Key Bar */}
           <div className="border-t border-amber-600/30 pt-3 mt-3 flex items-center justify-center sm:justify-between flex-wrap gap-2 z-10 shrink-0 bg-amber-900/40 px-3 py-2 rounded-2xl border border-amber-500/20">
