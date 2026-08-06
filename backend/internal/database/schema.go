@@ -19,14 +19,15 @@ type Adventure struct {
 }
 
 type LevelWaypoint struct {
-	ID            int     `json:"id,omitempty"`
-	LevelID       int     `json:"level_id,omitempty"`
-	WaypointIndex int     `json:"index"`
-	XPercent      float64 `json:"xPercent"`
-	YPercent      float64 `json:"yPercent"`
-	Type          string  `json:"type"`
-	Label         string  `json:"label,omitempty"`
-	Effect        string  `json:"effect,omitempty"`
+	ID             int     `json:"id,omitempty"`
+	LevelID        int     `json:"level_id,omitempty"`
+	WaypointIndex  int     `json:"index"`
+	XPercent       float64 `json:"xPercent"`
+	YPercent       float64 `json:"yPercent"`
+	Type           string  `json:"type"`
+	Label          string  `json:"label,omitempty"`
+	Effect         string  `json:"effect,omitempty"`
+	InitialHeading string  `json:"initialHeading,omitempty"`
 }
 
 type Level struct {
