@@ -99,29 +99,6 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </div>
           </div>
 
-          {/* Admin Temporary World Selector Bar */}
-          {isAdmin && !currentAdv && (
-            <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mb-3 z-30 shrink-0 overflow-x-auto">
-              <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
-              {ALL_WORLDS.map((w) => (
-                <button
-                  key={`adv-modal-world-${w.id}`}
-                  onClick={() => {
-                    soundManager.playClick();
-                    setSelectedWorldId(w.id);
-                  }}
-                  className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
-                    selectedWorldId === w.id
-                      ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
-                      : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
-                  }`}
-                >
-                  World {w.id}
-                </button>
-              ))}
-            </div>
-          )}
-
           {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY VIEW (Monkeys & Padlocks styling) */}
           {!currentAdv ? (
             <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
@@ -396,6 +373,29 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Admin Temporary World Selector Bar (Located at Bottom of Modal Window) */}
+          {isAdmin && !currentAdv && (
+            <div className="flex items-center space-x-2 bg-amber-950/90 p-2 rounded-2xl border border-amber-500/40 mt-2 z-30 shrink-0 overflow-x-auto shadow-xl">
+              <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
+              {ALL_WORLDS.map((w) => (
+                <button
+                  key={`adv-modal-world-${w.id}`}
+                  onClick={() => {
+                    soundManager.playClick();
+                    setSelectedWorldId(w.id);
+                  }}
+                  className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                    selectedWorldId === w.id
+                      ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
+                      : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
+                  }`}
+                >
+                  World {w.id}
+                </button>
+              ))}
+            </div>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>
