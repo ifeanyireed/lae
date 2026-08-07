@@ -251,10 +251,23 @@ export default function Home() {
             data.levels.map((l: any, idx: number) => {
               const lvlNum = l.level_number || idx + 1;
               const expectedWaypoints = defaultLevels[idx]?.waypoints || [];
-              let savedWps = null;
+              let savedWps: PathWaypoint[] | null = null;
 
-              if (l.waypoints && Array.isArray(l.waypoints) && l.waypoints.length > 0) {
+              if (typeof l.waypoints === 'string' && l.waypoints.trim().startsWith('[')) {
+                try {
+                  savedWps = JSON.parse(l.waypoints);
+                } catch (e) {}
+              } else if (Array.isArray(l.waypoints) && l.waypoints.length > 0) {
                 savedWps = l.waypoints;
+              }
+
+              if (!savedWps || savedWps.length === 0) {
+                try {
+                  const localWps = localStorage.getItem(`level_waypoints_adv${advId}_lvl${lvlNum}`) || localStorage.getItem(`level_waypoints_${lvlNum}`);
+                  if (localWps) {
+                    savedWps = JSON.parse(localWps);
+                  }
+                } catch (e) {}
               }
 
               return {
@@ -267,7 +280,7 @@ export default function Home() {
                 mechanic: l.mechanic || defaultLevels[idx]?.mechanic || '',
                 maxBlocks: l.max_blocks || l.maxBlocks || defaultLevels[idx]?.maxBlocks || 15,
                 availableBlocks: l.available_blocks || l.availableBlocks || defaultLevels[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
-                waypoints: savedWps || expectedWaypoints,
+                waypoints: (savedWps && savedWps.length > 0) ? savedWps : expectedWaypoints,
               };
             })
           );

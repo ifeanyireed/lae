@@ -304,6 +304,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     // 1. Save locally to browser storage for instant reload persistence
     try {
       if (typeof window !== 'undefined') {
+        const advId = level.adventureId || 1;
+        localStorage.setItem(`level_waypoints_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
         localStorage.setItem(`level_waypoints_${level.levelNumber}`, JSON.stringify(liveWaypoints));
       }
     } catch (e) {}
