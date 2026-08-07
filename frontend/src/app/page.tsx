@@ -12,7 +12,7 @@ import { LevelWelcomeModal, LevelInfo } from '@/components/LevelWelcomeModal';
 import { AdventureMapModal, LevelProgress } from '@/components/AdventureMapModal';
 import { SplashScreen } from '@/components/SplashScreen';
 import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
-import { ADVENTURE_1, PUZZLE_LEVELS, ALL_ADVENTURES } from '@/utils/levels';
+import { PUZZLE_LEVELS, ADVENTURE_1, ALL_ADVENTURES, ALL_WORLDS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
 import { API_BASE_URL } from '@/utils/api';
@@ -42,6 +42,7 @@ export default function Home() {
 
   const [showMapModal, setShowMapModal] = useState(false);
   const [selectedAdventureId, setSelectedAdventureId] = useState<number | null>(null);
+  const [selectedWorldId, setSelectedWorldId] = useState<number>(1);
   const [levelsProgress, setLevelsProgress] = useState<LevelProgress[]>(
     PUZZLE_LEVELS.map((l, idx) => ({
       levelNumber: l.levelNumber,
@@ -1082,7 +1083,7 @@ export default function Home() {
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center mt-8 sm:mt-6 mb-3 px-4"
+                className="text-center mt-8 sm:mt-6 mb-3 px-4 flex flex-col items-center"
               >
                 {selectedAdventureId === null ? (
                   <>
@@ -1092,6 +1093,29 @@ export default function Home() {
                     <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
                       Select an Adventure to explore its 12 coding missions!
                     </p>
+
+                    {/* Admin World Selector Toggle Bar */}
+                    {userContext.role === 'admin' && (
+                      <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mt-3 z-30 overflow-x-auto max-w-full">
+                        <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
+                        {ALL_WORLDS.map((w) => (
+                          <button
+                            key={`map-page-world-${w.id}`}
+                            onClick={() => {
+                              soundManager.playClick();
+                              setSelectedWorldId(w.id);
+                            }}
+                            className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                              selectedWorldId === w.id
+                                ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
+                                : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
+                            }`}
+                          >
+                            World {w.id}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 ) : (
                   (() => {
@@ -1129,7 +1153,7 @@ export default function Home() {
                 >
                   {ALL_ADVENTURES.map((adv) => {
                     const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
-                    const isAdvUnlocked = adv.id === 1;
+                    const isAdvUnlocked = adv.id === 1 || userContext.role === 'admin';
                     const isVibrating = lockedVibrateLevelIndex === adv.id;
 
                     return (
@@ -1547,6 +1571,7 @@ export default function Home() {
         levelsProgress={levelsProgress}
         totalXP={userContext.totalXP}
         groupName={userContext.groupName}
+        userRole={userContext.role}
       />
 
       {/* Game Application Launcher Splash Screen */}

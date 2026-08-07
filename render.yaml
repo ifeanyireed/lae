@@ -1,8 +1,28 @@
 services:
   - type: web
-    name: learn-backend-api
+    name: game-engine-service
     env: go
-    rootDir: backend
+    rootDir: game_engine
+    buildCommand: go build -o server main.go
+    startCommand: ./server
+    envVars:
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: DB_HOST
+        value: srv2113.hstgr.io
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        value: u721451974_lae
+      - key: DB_PASSWORD
+        value: "*Reedb4b4"
+      - key: DB_NAME
+        value: u721451974_lae_db
+
+  - type: web
+    name: player-service
+    env: go
+    rootDir: player_service
     buildCommand: go build -o server main.go
     startCommand: ./server
     envVars:

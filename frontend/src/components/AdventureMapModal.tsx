@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Star, ArrowLeft } from 'lucide-react';
 import { soundManager } from '@/utils/sound';
-import { ALL_ADVENTURES } from '@/utils/levels';
+import { ALL_ADVENTURES, ALL_WORLDS } from '@/utils/levels';
 
 export interface LevelProgress {
   levelNumber: number;
@@ -24,6 +24,7 @@ interface AdventureMapModalProps {
   levelsProgress: LevelProgress[];
   totalXP: number;
   groupName?: string;
+  userRole?: string;
 }
 
 export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
@@ -34,33 +35,25 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   levelsProgress,
   totalXP,
   groupName = 'Jungle Explorers Group A',
+  userRole = 'user',
 }) => {
   const [lockedVibrateIdx, setLockedVibrateIdx] = useState<number | null>(null);
   const [selectedAdvId, setSelectedAdvId] = useState<number | null>(null);
+  const [selectedWorldId, setSelectedWorldId] = useState<number>(1);
 
   if (!isOpen) return null;
 
-  const currentAdv = selectedAdvId ? (ALL_ADVENTURES.find(a => a.id === selectedAdvId) || ALL_ADVENTURES[0]) : null;
+  const isAdmin = userRole === 'admin';
+  const currentAdv = ALL_ADVENTURES.find((a) => a.id === selectedAdvId);
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-y-auto">
-        {/* Backdrop */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          onClick={onClose}
-          className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
-        />
-
-        {/* Map Container */}
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-slate-950/80 backdrop-blur-md">
         <motion.div
           initial={{ opacity: 0, scale: 0.9, y: 20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: 'spring', damping: 22, stiffness: 280 }}
-          className="relative w-full max-w-4xl bg-amber-950/95 border-2 border-amber-500/60 rounded-3xl p-6 sm:p-8 z-30 shadow-2xl overflow-hidden font-varela select-none max-h-[88vh] flex flex-col"
+          exit={{ opacity: 0, scale: 0.9, y: 20 }}
+          className="relative w-full max-w-5xl h-[85vh] bg-gradient-to-b from-amber-950 via-slate-900 to-slate-950 border-2 border-amber-500/40 rounded-3xl p-4 sm:p-6 flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Top Header Bar */}
           <div className="flex items-center justify-between border-b border-amber-600/40 pb-4 mb-4 z-10 shrink-0">
@@ -86,7 +79,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                   {currentAdv ? currentAdv.title : 'Adventures'}
                 </h2>
                 <p className="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">
-                  PuzzlePro &bull; {groupName}
+                  PuzzlePro &bull; {groupName} {isAdmin && <span className="text-emerald-400 font-mono ml-2">(Admin Access Activated)</span>}
                 </p>
               </div>
             </div>
@@ -106,12 +99,35 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </div>
           </div>
 
+          {/* Admin Temporary World Selector Bar */}
+          {isAdmin && !currentAdv && (
+            <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mb-3 z-30 shrink-0 overflow-x-auto">
+              <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
+              {ALL_WORLDS.map((w) => (
+                <button
+                  key={`adv-modal-world-${w.id}`}
+                  onClick={() => {
+                    soundManager.playClick();
+                    setSelectedWorldId(w.id);
+                  }}
+                  className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                    selectedWorldId === w.id
+                      ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
+                      : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
+                  }`}
+                >
+                  World {w.id}
+                </button>
+              ))}
+            </div>
+          )}
+
           {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY VIEW (Monkeys & Padlocks styling) */}
           {!currentAdv ? (
             <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
               {ALL_ADVENTURES.map((adv) => {
                 const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
-                const isAdvUnlocked = adv.id === 1;
+                const isAdvUnlocked = adv.id === 1 || isAdmin;
                 const isVibrating = lockedVibrateIdx === adv.id;
 
                 return (

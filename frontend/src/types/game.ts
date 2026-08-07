@@ -51,6 +51,7 @@ export interface LevelConfig {
 
 export interface AdventureConfig {
   id: number;
+  worldId?: number;
   slug: string;
   title: string;
   concept: string;
@@ -59,4 +60,12 @@ export interface AdventureConfig {
   learningObjective: string;
   totalLevels: number;
   levels: LevelConfig[];
+}
+
+export interface WorldConfig {
+  id: number;
+  slug: string;
+  name: string;
+  description: string;
+  adventures: AdventureConfig[];
 }

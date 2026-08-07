@@ -1,4 +1,4 @@
-import { LevelConfig, PathWaypoint, AdventureConfig } from '@/types/game';
+import { LevelConfig, PathWaypoint, AdventureConfig, WorldConfig } from '@/types/game';
 
 // Level 1 specific track waypoints (4-tile straight vertical axis in center of Level 1 SVG, FINISH on tile 4)
 export const LEVEL_1_WAYPOINTS: PathWaypoint[] = [
@@ -456,6 +456,54 @@ export const ALL_ADVENTURES: AdventureConfig[] = [
   ADVENTURE_3,
   ADVENTURE_4,
   ADVENTURE_5,
+];
+
+export const WORLD_1: WorldConfig = {
+  id: 1,
+  slug: 'world-1',
+  name: 'World 1 — Foundation',
+  description: 'Learn to give instructions in the correct order.',
+  adventures: [ADVENTURE_1],
+};
+
+export const WORLD_2: WorldConfig = {
+  id: 2,
+  slug: 'world-2',
+  name: 'World 2 — Crystal Realm',
+  description: 'Repeat instructions efficiently with loops.',
+  adventures: [ADVENTURE_2],
+};
+
+export const WORLD_3: WorldConfig = {
+  id: 3,
+  slug: 'world-3',
+  name: 'World 3 — Enchanted Wilderness',
+  description: 'Make smart decisions using If / Else logic.',
+  adventures: [ADVENTURE_3],
+};
+
+export const WORLD_4: WorldConfig = {
+  id: 4,
+  slug: 'world-4',
+  name: 'World 4 — Island Archipelago',
+  description: 'Store and update resources with variables.',
+  adventures: [ADVENTURE_4],
+};
+
+export const WORLD_5: WorldConfig = {
+  id: 5,
+  slug: 'world-5',
+  name: 'World 5 — Inventors Hub',
+  description: 'Create reusable groups of instructions with functions.',
+  adventures: [ADVENTURE_5],
+};
+
+export const ALL_WORLDS: WorldConfig[] = [
+  WORLD_1,
+  WORLD_2,
+  WORLD_3,
+  WORLD_4,
+  WORLD_5,
 ];
 
 export const PUZZLE_LEVELS: LevelConfig[] = ADVENTURE_1.levels;
