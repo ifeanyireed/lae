@@ -8,7 +8,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
-import { API_BASE_URL } from '@/utils/api';
+import { PLAYER_SERVICE_API_URL } from '@/utils/api';
 
 interface CustomizerLeaderboardProps {
   onClose: () => void;
@@ -24,7 +24,7 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
   const [leaderboards, setLeaderboards] = React.useState<Array<{ rank: number; name: string; score: number; avatar: string; badge: string }>>([]);
 
   React.useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/leaderboard?group_id=${groupId}`)
+    fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/leaderboard?group_id=${groupId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && Array.isArray(data.members) && data.members.length > 0) {

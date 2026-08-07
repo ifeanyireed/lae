@@ -15,7 +15,7 @@ import { GlobalLoadingOverlay } from '@/components/GlobalLoadingOverlay';
 import { PUZZLE_LEVELS, ADVENTURE_1, ALL_ADVENTURES, ALL_WORLDS } from '@/utils/levels';
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
-import { API_BASE_URL } from '@/utils/api';
+import { GAME_ENGINE_API_URL, PLAYER_SERVICE_API_URL } from '@/utils/api';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('studio');
@@ -154,7 +154,7 @@ export default function Home() {
     if (!userID || userID <= 0) return;
     setIsGlobalLoading(true);
     setLoadingMessage('Fetching Adventure Map Progress...');
-    fetch(`${API_BASE_URL}/api/v1/engine/progress?user_id=${userID}`)
+    fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/progress?user_id=${userID}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success) {
@@ -190,7 +190,7 @@ export default function Home() {
     };
     window.addEventListener('message', handleHostMessage);
 
-    fetch(`${API_BASE_URL}/api/v1/engine/handshake`, {
+    fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/handshake`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -229,7 +229,7 @@ export default function Home() {
   }, []);
 
   React.useEffect(() => {
-    fetch(`${API_BASE_URL}/api/v1/adventures`)
+    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/adventures`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.adventures && data.adventures.length > 0) {
@@ -240,7 +240,7 @@ export default function Home() {
       })
       .catch(() => {});
 
-    fetch(`${API_BASE_URL}/api/v1/levels`)
+    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.levels && data.levels.length > 0) {
@@ -280,7 +280,7 @@ export default function Home() {
     if (savedCode) {
       setIsGlobalLoading(true);
       setLoadingMessage('Restoring Session...');
-      fetch(`${API_BASE_URL}/api/v1/engine/verify-session?code=${encodeURIComponent(savedCode)}`)
+      fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?code=${encodeURIComponent(savedCode)}`)
         .then((res) => res.json())
         .then((data) => {
           if (data && data.success && data.user) {
@@ -764,7 +764,7 @@ export default function Home() {
       );
 
       // Strategic Point 2: Write Stage Completion Event to Database
-      fetch(`${API_BASE_URL}/api/v1/engine/events`, {
+      fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -810,7 +810,7 @@ export default function Home() {
   // Strategic Point 3: Fetch Progress on Code Login
   const handleCodeSubmit = async (code: string): Promise<boolean> => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/engine/code-login`, {
+      const res = await fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/code-login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
