@@ -805,6 +805,7 @@ export default function Home() {
     { id: 'events', svg: '/Events.svg', title: 'Events' },
     { id: 'controls', svg: '/Controls.svg', title: 'Controls' },
     { id: 'vars', svg: '/Vars.svg', title: 'Variables' },
+    { id: 'html', svg: '/Setup.svg', title: 'HTML Tags' },
     { id: 'setup', svg: '/Setup.svg', title: 'Setup' },
     { id: 'exit', svg: '/Exit.svg', title: 'Exit' },
   ];

@@ -20,7 +20,17 @@ import {
   IconRotate,
   IconMessage,
   IconBell,
-  IconRepeat
+  IconRepeat,
+  IconFileCode,
+  IconCode,
+  IconBrain,
+  IconTag,
+  IconHome,
+  IconHeading,
+  IconTypography,
+  IconList,
+  IconLink,
+  IconPhoto
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
 import { animateBlockSnap, animateButtonPress } from '@/utils/gsapAnimations';
@@ -29,18 +39,28 @@ export interface CodeBlock {
   instanceId: string;
   type: string;
   label: string;
-  category: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars';
+  category: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html';
   blockClass: string;
   stepValue?: number;
   repeatCount?: number;
   icon?: React.ReactNode;
 }
 
+export interface CharacterItem {
+  id: string;
+  name: string;
+  avatar: string;
+  badge: string;
+  description: string;
+  unlocked: boolean;
+  requiredXP: number;
+}
+
 interface BlocklyEditorProps {
-  availableBlocks: string[];
-  maxBlocks: number;
-  onRunCode: (program: CodeBlock[], speed: number) => void;
-  onReset: () => void;
+  availableBlocks?: string[];
+  maxBlocks?: number;
+  onRunCode?: (program: CodeBlock[], speed?: number) => void;
+  onReset?: () => void;
   onReturnToStart?: () => void;
   isRunning: boolean;
   activeStepIndex: number | null;
@@ -87,17 +107,17 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'set_variable', label: 'set variable to 1', category: 'vars', blockClass: 'block-vars', stepValue: 1, icon: <IconPuzzle className="w-3.5 h-3.5" /> },
   { type: 'change_variable', label: 'change variable by 1', category: 'vars', blockClass: 'block-vars', stepValue: 1, icon: <IconPuzzle className="w-3.5 h-3.5" /> },
 
-  // WORLD 2: HTML PROGRAMMING BLOCKS
-  { type: 'doctype', label: '📜 DOCTYPE', category: 'motion', blockClass: 'bg-purple-600 text-white border-purple-800 font-bold', icon: <span className="text-xs">📜</span> },
-  { type: 'html_tag', label: '🌍 HTML', category: 'motion', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold', icon: <span className="text-xs">🌍</span> },
-  { type: 'head_tag', label: '🧠 HEAD', category: 'looks', blockClass: 'bg-emerald-600 text-white border-emerald-800 font-bold', icon: <span className="text-xs">🧠</span> },
-  { type: 'title_tag', label: '🏷️ TITLE', category: 'looks', blockClass: 'bg-amber-500 text-slate-950 border-amber-700 font-bold', icon: <span className="text-xs">🏷️</span> },
-  { type: 'body_tag', label: '🏠 BODY', category: 'looks', blockClass: 'bg-orange-600 text-white border-orange-800 font-bold', icon: <span className="text-xs">🏠</span> },
-  { type: 'h1_tag', label: '📝 H1', category: 'sound', blockClass: 'bg-rose-600 text-white border-rose-800 font-bold', icon: <span className="text-xs">📝</span> },
-  { type: 'p_tag', label: '📄 P', category: 'sound', blockClass: 'bg-green-600 text-white border-green-800 font-bold', icon: <span className="text-xs">📄</span> },
-  { type: 'list_tag', label: '📋 LIST', category: 'events', blockClass: 'bg-cyan-600 text-white border-cyan-800 font-bold', icon: <span className="text-xs">📋</span> },
-  { type: 'link_tag', label: '🔗 LINK', category: 'events', blockClass: 'bg-sky-600 text-white border-sky-800 font-bold', icon: <span className="text-xs">🔗</span> },
-  { type: 'img_tag', label: '🖼️ IMAGE', category: 'vars', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <span className="text-xs">🖼️</span> },
+  // WORLD 2: HTML PROGRAMMING BLOCKS (Separate Category: 'html', Tabler Icons)
+  { type: 'doctype', label: 'DOCTYPE', category: 'html', blockClass: 'bg-purple-600 text-white border-purple-800 font-bold', icon: <IconFileCode className="w-3.5 h-3.5" /> },
+  { type: 'html_tag', label: 'HTML', category: 'html', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold', icon: <IconCode className="w-3.5 h-3.5" /> },
+  { type: 'head_tag', label: 'HEAD', category: 'html', blockClass: 'bg-emerald-600 text-white border-emerald-800 font-bold', icon: <IconBrain className="w-3.5 h-3.5" /> },
+  { type: 'title_tag', label: 'TITLE', category: 'html', blockClass: 'bg-amber-500 text-slate-950 border-amber-700 font-bold', icon: <IconTag className="w-3.5 h-3.5" /> },
+  { type: 'body_tag', label: 'BODY', category: 'html', blockClass: 'bg-orange-600 text-white border-orange-800 font-bold', icon: <IconHome className="w-3.5 h-3.5" /> },
+  { type: 'h1_tag', label: 'H1', category: 'html', blockClass: 'bg-rose-600 text-white border-rose-800 font-bold', icon: <IconHeading className="w-3.5 h-3.5" /> },
+  { type: 'p_tag', label: 'P', category: 'html', blockClass: 'bg-green-600 text-white border-green-800 font-bold', icon: <IconTypography className="w-3.5 h-3.5" /> },
+  { type: 'list_tag', label: 'LIST', category: 'html', blockClass: 'bg-cyan-600 text-white border-cyan-800 font-bold', icon: <IconList className="w-3.5 h-3.5" /> },
+  { type: 'link_tag', label: 'LINK', category: 'html', blockClass: 'bg-sky-600 text-white border-sky-800 font-bold', icon: <IconLink className="w-3.5 h-3.5" /> },
+  { type: 'img_tag', label: 'IMAGE', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconPhoto className="w-3.5 h-3.5" /> },
 ];
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
@@ -151,6 +171,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
     { id: 'events', label: 'EVENTS', color: 'bg-amber-500 text-slate-950' },
     { id: 'control', label: 'CONTROL', color: 'bg-amber-600 text-white' },
     { id: 'vars', label: 'VARS', color: 'bg-emerald-600 text-white' },
+    { id: 'html', label: 'HTML', color: 'bg-purple-700 text-white font-black' },
   ];
 
   // Filter Palette based strictly on Active Category
@@ -238,7 +259,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   };
 
   const handleAddBlock = (blockDef: Omit<CodeBlock, 'instanceId'>, e: React.MouseEvent<HTMLButtonElement>) => {
-    if (program.length >= maxBlocks) {
+    if (program.length >= (maxBlocks ?? 15)) {
       soundManager.playError();
       return;
     }
