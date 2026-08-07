@@ -578,14 +578,26 @@ export default function Home() {
 
         const currentWpNew = waypoints[pathIdx];
         if (currentWpNew.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
-          coinsCollectedSoFar.push(pathIdx);
-          setCollectedCoins([...coinsCollectedSoFar]);
-          soundManager.playCoin();
-          setSpeechBubble('Landed on a Coin!');
+          setSpeechBubble('Standing on a Coin! Use "collect coin" block to collect it!');
         }
 
         await new Promise(res => setTimeout(res, stepDelay));
         setIsJumping(false);
+      } else if (step.action === 'collect_coin') {
+        const currentWp = waypoints[pathIdx];
+        if (currentWp.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
+          coinsCollectedSoFar.push(pathIdx);
+          setCollectedCoins([...coinsCollectedSoFar]);
+          soundManager.playCoin();
+          setSpeechBubble('Collected Gold Coin! 🪙');
+        } else if (coinsCollectedSoFar.includes(pathIdx)) {
+          soundManager.playClick();
+          setSpeechBubble('Already collected this coin!');
+        } else {
+          soundManager.playError();
+          setSpeechBubble('No coin here to collect!');
+        }
+        await new Promise(res => setTimeout(res, stepDelay));
       } else if (step.action === 'move_forward') {
         const currentWp = waypoints[pathIdx];
         const nextWp = findNextWaypointInHeading(currentWp, heading, waypoints);
@@ -622,12 +634,9 @@ export default function Home() {
 
         const currentWpNew = waypoints[pathIdx];
 
-        // 1. Check Coin Tile Logic
+        // 1. Check Coin Tile (Non-automatic coin hint)
         if (currentWpNew.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
-          coinsCollectedSoFar.push(pathIdx);
-          setCollectedCoins([...coinsCollectedSoFar]);
-          soundManager.playCoin();
-          setSpeechBubble('Got a Coin!');
+          setSpeechBubble('Standing on a Coin! Use "collect coin" block to collect it!');
         }
 
         // 2. Check Super Star Tile Logic (Advance 3 spaces)

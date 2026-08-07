@@ -21,6 +21,7 @@ import {
   IconMessage,
   IconBell,
   IconRepeat,
+  IconCoins,
   IconFileCode,
   IconCode,
   IconBrain,
@@ -79,6 +80,7 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'turn_right', label: 'turn right', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconArrowForwardUp className="w-3.5 h-3.5" /> },
   { type: 'turn_around', label: 'turn around', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconRotate className="w-3.5 h-3.5" /> },
   { type: 'jump', label: 'jump', category: 'motion', blockClass: 'block-motion', stepValue: 1, icon: <IconCornerUpRight className="w-3.5 h-3.5" /> },
+  { type: 'collect_coin', label: 'collect coin', category: 'motion', blockClass: 'block-motion', icon: <IconCoins className="w-3.5 h-3.5" /> },
   { type: 'go_to_start', label: 'go to start', category: 'motion', blockClass: 'block-motion', icon: <IconArrowBackUp className="w-3.5 h-3.5" /> },
 
   // LOOKS (Purple) - Default step values = 1
