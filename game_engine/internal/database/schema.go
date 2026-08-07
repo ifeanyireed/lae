@@ -175,10 +175,10 @@ func (db *DB) SeedWorldsAndAdventures() error {
 		LearningObjective string
 	}{
 		{1, 1, "the-lost-monkey-explorer", "The Lost Monkey Explorer", "Sequencing", "🐵", "A friendly little monkey has crash-landed in the Whispering Forest. Its navigation system is broken, and only by giving it the correct instructions can it find its way home.", "Follow and create simple sequences."},
-		{2, 2, "the-crystal-cave", "The Crystal Cave", "Loops", "💎", "The Monkey enters a magical cave filled with glowing crystals. Many paths repeat, and doing the same action over and over is too slow. The Monkey discovers the power of Repeat.", "Repeat instructions efficiently."},
-		{3, 3, "the-enchanted-jungle", "The Enchanted Jungle", "Conditionals", "🌿", "The jungle is alive. Bridges appear and disappear, gates open with keys, and animals react differently depending on what the Monkey finds. The Monkey must learn to make decisions.", "Make decisions based on situations."},
-		{4, 4, "monkeys-treasure-island", "Monkey's Treasure Island", "Variables", "🏝️", "The Monkey lands on an island where bananas, coins, gems, and hearts are collected and counted. Progress depends on keeping track of resources.", "Store and update information."},
-		{5, 5, "the-monkey-inventors-workshop", "The Monkey Inventor's Workshop", "Functions", "⚙️", "The Monkey becomes an inventor. Instead of repeating long instruction sequences, it creates reusable Monkey Moves that can be used again and again.", "Reuse groups of instructions."},
+		{2, 1, "the-crystal-cave", "The Crystal Cave", "Loops", "💎", "The Monkey enters a magical cave filled with glowing crystals. Many paths repeat, and doing the same action over and over is too slow. The Monkey discovers the power of Repeat.", "Repeat instructions efficiently."},
+		{3, 1, "the-enchanted-jungle", "The Enchanted Jungle", "Conditionals", "🌿", "The jungle is alive. Bridges appear and disappear, gates open with keys, and animals react differently depending on what the Monkey finds. The Monkey must learn to make decisions.", "Make decisions based on situations."},
+		{4, 1, "monkeys-treasure-island", "Monkey's Treasure Island", "Variables", "🏝️", "The Monkey lands on an island where bananas, coins, gems, and hearts are collected and counted. Progress depends on keeping track of resources.", "Store and update information."},
+		{5, 1, "the-monkey-inventors-workshop", "The Monkey Inventor's Workshop", "Functions", "⚙️", "The Monkey becomes an inventor. Instead of repeating long instruction sequences, it creates reusable Monkey Moves that can be used again and again.", "Reuse groups of instructions."},
 	}
 
 	for _, a := range adventures {
@@ -204,28 +204,28 @@ func (db *DB) SeedWorldsAndAdventures() error {
 				title = titles[lvlNum-1]
 			}
 
-			var worldBlocks []string
-			switch a.WorldID {
+			var advBlocks []string
+			switch a.ID {
 			case 1:
 				if lvlNum <= 2 {
-					worldBlocks = []string{"move_forward"}
+					advBlocks = []string{"move_forward"}
 				} else {
-					worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
+					advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
 				}
 			case 2:
-				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat"}
+				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat"}
 			case 3:
-				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "if_path"}
+				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "if_path"}
 			case 4:
-				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "set_var"}
+				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "set_var"}
 			case 5:
-				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "my_function"}
+				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "my_function"}
 			default:
-				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
+				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
 			}
 
 			svgPath := fmt.Sprintf("/The Lost Monkey Explorer - Level %d.svg", lvlNum)
-			blocksJSON, _ := json.Marshal(worldBlocks)
+			blocksJSON, _ := json.Marshal(advBlocks)
 			wpsJSON, _ := json.Marshal(level1Waypoints)
 
 			_, _ = db.ExecContext(ctx, `

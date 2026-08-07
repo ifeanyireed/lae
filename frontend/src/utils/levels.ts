@@ -461,17 +461,17 @@ export const ALL_ADVENTURES: AdventureConfig[] = [
 export const WORLD_1: WorldConfig = {
   id: 1,
   slug: 'world-1',
-  name: 'World 1 — Foundation',
-  description: 'Learn to give instructions in the correct order.',
-  adventures: [ADVENTURE_1],
+  name: 'World 1 — Monkey Explorers',
+  description: 'Master Sequencing, Loops, Conditionals, Variables, and Functions.',
+  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const WORLD_2: WorldConfig = {
   id: 2,
   slug: 'world-2',
   name: 'World 2 — Crystal Realm',
-  description: 'Repeat instructions efficiently with loops.',
-  adventures: [ADVENTURE_2],
+  description: 'Explore advanced algorithms and complex problem solving.',
+  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const WORLD_3: WorldConfig = {
@@ -479,7 +479,7 @@ export const WORLD_3: WorldConfig = {
   slug: 'world-3',
   name: 'World 3 — Enchanted Wilderness',
   description: 'Make smart decisions using If / Else logic.',
-  adventures: [ADVENTURE_3],
+  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const WORLD_4: WorldConfig = {
@@ -487,7 +487,7 @@ export const WORLD_4: WorldConfig = {
   slug: 'world-4',
   name: 'World 4 — Island Archipelago',
   description: 'Store and update resources with variables.',
-  adventures: [ADVENTURE_4],
+  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const WORLD_5: WorldConfig = {
@@ -495,7 +495,7 @@ export const WORLD_5: WorldConfig = {
   slug: 'world-5',
   name: 'World 5 — Inventors Hub',
   description: 'Create reusable groups of instructions with functions.',
-  adventures: [ADVENTURE_5],
+  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const ALL_WORLDS: WorldConfig[] = [
