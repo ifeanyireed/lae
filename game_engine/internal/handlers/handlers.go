@@ -5,16 +5,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"time"
 
 	"game_engine/internal/database"
 )
 
 type GameEngineHandler struct {
-	DB *database.DB
+	DB    *database.DB
+	Cache *database.Cache
 }
 
-func New(db *database.DB) *GameEngineHandler {
-	return &GameEngineHandler{DB: db}
+func New(db *database.DB, cache *database.Cache) *GameEngineHandler {
+	return &GameEngineHandler{DB: db, Cache: cache}
 }
 
 type LevelResponse struct {
@@ -68,9 +70,21 @@ func (g *GameEngineHandler) GetWorldsHandler(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// GetAdventuresHandler returns adventures from game_engine tables
+// GetAdventuresHandler returns adventures from game_engine tables (cached in Redis)
 func (g *GameEngineHandler) GetAdventuresHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+
+	worldIDStr := r.URL.Query().Get("world_id")
+	cacheKey := "game:adventures:all"
+	if worldIDStr != "" {
+		cacheKey = "game:adventures:world:" + worldIDStr
+	}
+
+	if cachedJSON, ok := g.Cache.Get(r.Context(), cacheKey); ok {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(cachedJSON))
+		return
+	}
 
 	if g.DB == nil {
 		w.WriteHeader(http.StatusOK)
@@ -78,7 +92,6 @@ func (g *GameEngineHandler) GetAdventuresHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	worldIDStr := r.URL.Query().Get("world_id")
 	var rows *sql.Rows
 	var err error
 
@@ -104,19 +117,34 @@ func (g *GameEngineHandler) GetAdventuresHandler(w http.ResponseWriter, r *http.
 		}
 	}
 
-	w.WriteHeader(http.StatusOK)
-	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+	respObj := map[string]interface{}{
 		"success":    true,
 		"adventures": adventures,
-	})
+	}
+	respBytes, _ := json.Marshal(respObj)
+	g.Cache.Set(r.Context(), cacheKey, string(respBytes), 1*time.Hour)
+
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(respBytes)
 }
 
-// GetLevelsHandler returns levels & waypoints from game_engine tables
+// GetLevelsHandler returns levels & waypoints from game_engine tables (cached in Redis)
 func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	adventureIDStr := r.URL.Query().Get("adventure_id")
+	cacheKey := "game:levels:all"
+	if adventureIDStr != "" {
+		cacheKey = "game:levels:adv:" + adventureIDStr
+	}
+
+	if cachedJSON, ok := g.Cache.Get(r.Context(), cacheKey); ok {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(cachedJSON))
+		return
+	}
+
 	if g.DB != nil {
-		adventureIDStr := r.URL.Query().Get("adventure_id")
 		var rows *sql.Rows
 		var err error
 
@@ -145,12 +173,16 @@ func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Requ
 				}
 			}
 			if len(levels) > 0 {
-				w.WriteHeader(http.StatusOK)
-				_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				respObj := map[string]interface{}{
 					"success": true,
 					"source":  "database",
 					"levels":  levels,
-				})
+				}
+				respBytes, _ := json.Marshal(respObj)
+				g.Cache.Set(r.Context(), cacheKey, string(respBytes), 1*time.Hour)
+
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write(respBytes)
 				return
 			}
 		}
@@ -164,7 +196,7 @@ func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Requ
 	})
 }
 
-// SaveWaypointsHandler updates waypoints JSON in game_engine levels table
+// SaveWaypointsHandler updates waypoints JSON in game_engine levels table and invalidates Redis cache
 func (g *GameEngineHandler) SaveWaypointsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -206,6 +238,9 @@ func (g *GameEngineHandler) SaveWaypointsHandler(w http.ResponseWriter, r *http.
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 		return
 	}
+
+	// Invalidate Redis cache for levels
+	g.Cache.Del(r.Context(), "game:levels:all", "game:levels:adv:"+strconv.Itoa(req.AdventureID))
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{

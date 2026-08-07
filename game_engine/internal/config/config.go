@@ -14,6 +14,7 @@ type Config struct {
 	DBUser      string
 	DBPassword  string
 	DBName      string
+	RedisURL    string
 }
 
 func Load() *Config {
@@ -57,6 +58,8 @@ func Load() *Config {
 		dbName = "u721451974_lae_db"
 	}
 
+	redisURL := os.Getenv("REDIS_URL")
+
 	return &Config{
 		Port:        port,
 		Environment: env,
@@ -66,6 +69,7 @@ func Load() *Config {
 		DBUser:      dbUser,
 		DBPassword:  dbPassword,
 		DBName:      dbName,
+		RedisURL:    redisURL,
 	}
 }
 

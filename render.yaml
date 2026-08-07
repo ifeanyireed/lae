@@ -1,4 +1,9 @@
 services:
+  - type: redis
+    name: game-redis-cache
+    ipAllowList: []
+    plan: free
+
   - type: web
     name: game-engine-service
     env: go
@@ -19,6 +24,11 @@ services:
         value: "*Reedb4b4"
       - key: DB_NAME
         value: u721451974_lae_db
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: game-redis-cache
+          property: connectionString
 
   - type: web
     name: player-service

@@ -26,7 +26,9 @@ func main() {
 		}
 	}
 
-	h := handlers.New(db)
+	cache := database.ConnectRedis(cfg.RedisURL)
+
+	h := handlers.New(db, cache)
 	mux := http.NewServeMux()
 
 	// Microservice 1: game_engine API routes
