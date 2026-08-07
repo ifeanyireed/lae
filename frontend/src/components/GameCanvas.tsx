@@ -315,6 +315,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          adventure_id: level.adventureId || 1,
           level_number: level.levelNumber,
           waypoints: liveWaypoints,
         }),

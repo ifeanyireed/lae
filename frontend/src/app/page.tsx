@@ -272,20 +272,34 @@ export default function Home() {
       .catch(() => {});
 
     // Session Auto Re-authenticate on Refresh from Database using JWT/Session API
+    let savedToken: string | null = null;
     let savedCode: string | null = null;
     try {
       if (typeof window !== 'undefined') {
-        savedCode = sessionStorage.getItem('puzzlepro_session_code') || localStorage.getItem('puzzlepro_session_code');
+        savedToken = localStorage.getItem('puzzlepro_session_token') || sessionStorage.getItem('puzzlepro_session_token');
+        savedCode = localStorage.getItem('puzzlepro_session_code') || sessionStorage.getItem('puzzlepro_session_code');
       }
     } catch (e) {}
 
-    if (savedCode) {
+    if (savedToken || savedCode) {
       setIsGlobalLoading(true);
       setLoadingMessage('Restoring Session...');
-      fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?code=${encodeURIComponent(savedCode)}`)
+      const verifyUrl = savedToken
+        ? `${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?token=${encodeURIComponent(savedToken)}`
+        : `${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?code=${encodeURIComponent(savedCode || '')}`;
+
+      fetch(verifyUrl, {
+        headers: savedToken ? { Authorization: `Bearer ${savedToken}` } : {},
+      })
         .then((res) => res.json())
         .then((data) => {
-          if (data && data.success && data.user) {
+          if (data && data.success && data.valid && data.user) {
+            if (data.token) {
+              try {
+                localStorage.setItem('puzzlepro_session_token', data.token);
+                sessionStorage.setItem('puzzlepro_session_token', data.token);
+              } catch (e) {}
+            }
             const userXp = data.user.total_xp ?? 0;
             setTotalXP(userXp);
             setUserContext({
@@ -829,6 +843,16 @@ export default function Home() {
       });
       const data = await res.json();
       if (data && data.success && data.user) {
+        if (data.token) {
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('puzzlepro_session_token', data.token);
+              sessionStorage.setItem('puzzlepro_session_token', data.token);
+              localStorage.setItem('puzzlepro_session_code', code);
+              sessionStorage.setItem('puzzlepro_session_code', code);
+            }
+          } catch (e) {}
+        }
         const userXp = data.user.total_xp ?? 0;
         const loggedUser = {
           id: data.user.id || 1,

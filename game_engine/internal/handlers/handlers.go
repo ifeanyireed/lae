@@ -30,6 +30,7 @@ type LevelResponse struct {
 }
 
 type UpdateWaypointsRequest struct {
+	AdventureID int                      `json:"adventure_id"`
 	LevelNumber int                      `json:"level_number"`
 	Waypoints   []database.LevelWaypoint `json:"waypoints"`
 }
@@ -195,7 +196,11 @@ func (g *GameEngineHandler) SaveWaypointsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
-	err := g.DB.SaveLevelWaypoints(r.Context(), req.LevelNumber, req.Waypoints)
+	if req.AdventureID <= 0 {
+		req.AdventureID = 1
+	}
+
+	err := g.DB.SaveLevelWaypoints(r.Context(), req.AdventureID, req.LevelNumber, req.Waypoints)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})

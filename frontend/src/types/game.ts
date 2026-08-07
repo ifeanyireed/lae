@@ -31,6 +31,7 @@ export interface PathWaypoint {
 
 export interface LevelConfig {
   id: number;
+  adventureId?: number;
   levelNumber: number;
   title: string;
   subtitle?: string;

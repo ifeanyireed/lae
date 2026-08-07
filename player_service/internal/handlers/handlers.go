@@ -3,10 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
 
+	"player_service/internal/auth"
 	"player_service/internal/database"
 )
 
@@ -180,23 +182,37 @@ func (p *PlayerServiceHandler) CodeLoginHandler(w http.ResponseWriter, r *http.R
 	user.GroupName = groupName
 
 	progressList := p.getUserProgressList(ctx, user.ID)
+	token, _ := auth.GenerateToken(user.ID, user.Username, user.Role, user.AccessCode)
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
+		"token":    token,
 		"user":     user,
 		"progress": progressList,
 	})
 }
 
-// VerifySessionHandler verifies active player session
+// VerifySessionHandler verifies active player session using JWT token or Access Code
 func (p *PlayerServiceHandler) VerifySessionHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	userIDStr := r.URL.Query().Get("user_id")
-	userID, _ := strconv.Atoi(userIDStr)
-	if userID <= 0 {
-		userID = 1
+	tokenStr := r.URL.Query().Get("token")
+	codeStr := r.URL.Query().Get("code")
+
+	if tokenStr == "" {
+		authHeader := r.Header.Get("Authorization")
+		if strings.HasPrefix(authHeader, "Bearer ") {
+			tokenStr = strings.TrimPrefix(authHeader, "Bearer ")
+		}
+	}
+
+	var userID int
+	if tokenStr != "" {
+		claims, err := auth.VerifyToken(tokenStr)
+		if err == nil && claims != nil {
+			userID = claims.UserID
+		}
 	}
 
 	if p.DB == nil {
@@ -205,22 +221,46 @@ func (p *PlayerServiceHandler) VerifySessionHandler(w http.ResponseWriter, r *ht
 		return
 	}
 
+	ctx := r.Context()
 	var user database.User
-	err := p.DB.QueryRowContext(r.Context(), "SELECT id, username, role, group_id, avatar, total_xp, total_stars FROM users WHERE id = ?", userID).
-		Scan(&user.ID, &user.Username, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+	var err error
 
-	if err != nil {
+	if userID > 0 {
+		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE id = ?", userID).
+			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+	} else if codeStr != "" {
+		rawCode := strings.ReplaceAll(strings.ToUpper(strings.TrimSpace(codeStr)), "-", "")
+		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?", rawCode).
+			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+	} else {
+		userIDStr := r.URL.Query().Get("user_id")
+		uID, _ := strconv.Atoi(userIDStr)
+		if uID > 0 {
+			err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE id = ?", uID).
+				Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+		} else {
+			err = fmt.Errorf("no session identifier provided")
+		}
+	}
+
+	if err != nil || user.ID <= 0 {
 		w.WriteHeader(http.StatusOK)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "valid": false})
 		return
 	}
 
-	progressList := p.getUserProgressList(r.Context(), user.ID)
+	var groupName string
+	_ = p.DB.QueryRowContext(ctx, "SELECT name FROM groups WHERE id = ?", user.GroupID).Scan(&groupName)
+	user.GroupName = groupName
+
+	newToken, _ := auth.GenerateToken(user.ID, user.Username, user.Role, user.AccessCode)
+	progressList := p.getUserProgressList(ctx, user.ID)
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
 		"success":  true,
 		"valid":    true,
+		"token":    newToken,
 		"user":     user,
 		"progress": progressList,
 	})

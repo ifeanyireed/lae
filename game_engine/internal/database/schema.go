@@ -263,20 +263,33 @@ func (db *DB) SeedWorldsAndAdventures() error {
 }
 
 // SaveLevelWaypoints updates waypoints JSON in game_engine levels table
-func (db *DB) SaveLevelWaypoints(ctx context.Context, levelNumber int, waypoints []LevelWaypoint) error {
+func (db *DB) SaveLevelWaypoints(ctx context.Context, adventureID int, levelNumber int, waypoints []LevelWaypoint) error {
 	waypointsJSON, err := json.Marshal(waypoints)
 	if err != nil {
 		return fmt.Errorf("failed to marshal waypoints: %w", err)
 	}
 
-	_, err = db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE level_number = ?", string(waypointsJSON), levelNumber)
+	if adventureID <= 0 {
+		adventureID = 1
+	}
+
+	res, err := db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE adventure_id = ? AND level_number = ?", string(waypointsJSON), adventureID, levelNumber)
 	if err != nil {
 		return fmt.Errorf("failed to update levels waypoints: %w", err)
 	}
 
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		_, _ = db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE level_number = ?", string(waypointsJSON), levelNumber)
+	}
+
 	var levelID int
-	err = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE level_number = ?", levelNumber).Scan(&levelID)
-	if err == nil {
+	err = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE adventure_id = ? AND level_number = ?", adventureID, levelNumber).Scan(&levelID)
+	if err != nil {
+		_ = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE level_number = ? LIMIT 1", levelNumber).Scan(&levelID)
+	}
+
+	if levelID > 0 {
 		_, _ = db.ExecContext(ctx, "DELETE FROM level_waypoints WHERE level_id = ?", levelID)
 		for _, wp := range waypoints {
 			_, _ = db.ExecContext(ctx, `
