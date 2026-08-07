@@ -30,16 +30,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// Microservice 1: game_engine API routes
-	mux.HandleFunc("GET /api/v1/game/worlds", h.GetWorldsHandler)
-	mux.HandleFunc("GET /api/v1/game/adventures", h.GetAdventuresHandler)
-	mux.HandleFunc("GET /api/v1/game/levels", h.GetLevelsHandler)
-	mux.HandleFunc("POST /api/v1/game/admin/levels/waypoints", h.SaveWaypointsHandler)
+	mux.HandleFunc("/api/v1/game/worlds", h.GetWorldsHandler)
+	mux.HandleFunc("/api/v1/game/adventures", h.GetAdventuresHandler)
+	mux.HandleFunc("/api/v1/game/levels", h.GetLevelsHandler)
+	mux.HandleFunc("/api/v1/game/admin/levels/waypoints", h.SaveWaypointsHandler)
 
 	// Legacy aliases
-	mux.HandleFunc("GET /api/v1/adventures", h.GetAdventuresHandler)
-	mux.HandleFunc("GET /api/v1/levels", h.GetLevelsHandler)
-	mux.HandleFunc("POST /api/v1/levels/{id}/waypoints", h.SaveWaypointsHandler)
-	mux.HandleFunc("POST /api/v1/levels/waypoints", h.SaveWaypointsHandler)
+	mux.HandleFunc("/api/v1/adventures", h.GetAdventuresHandler)
+	mux.HandleFunc("/api/v1/levels", h.GetLevelsHandler)
+	mux.HandleFunc("/api/v1/levels/{id}/waypoints", h.SaveWaypointsHandler)
+	mux.HandleFunc("/api/v1/levels/waypoints", h.SaveWaypointsHandler)
 
 	corsMiddleware := middleware.CORS(cfg.AllowedCORS)
 	handler := corsMiddleware(mux)
