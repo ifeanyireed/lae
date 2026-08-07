@@ -203,14 +203,35 @@ func (db *DB) SeedWorldsAndAdventures() error {
 				titles := []string{"Power Up!", "First Steps", "Around the Tree", "Energy Crystal", "Treasure Trail", "Danger Ahead", "Watch Your Step!", "Hidden Rewards", "Treasure Hunt", "Choose Wisely", "Explorer's Trial", "Journey Home"}
 				title = titles[lvlNum-1]
 			}
+
+			var worldBlocks []string
+			switch a.WorldID {
+			case 1:
+				if lvlNum <= 2 {
+					worldBlocks = []string{"move_forward"}
+				} else {
+					worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
+				}
+			case 2:
+				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat"}
+			case 3:
+				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "if_path"}
+			case 4:
+				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "set_var"}
+			case 5:
+				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "my_function"}
+			default:
+				worldBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
+			}
+
 			svgPath := fmt.Sprintf("/The Lost Monkey Explorer - Level %d.svg", lvlNum)
-			blocksJSON, _ := json.Marshal([]string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat"})
+			blocksJSON, _ := json.Marshal(worldBlocks)
 			wpsJSON, _ := json.Marshal(level1Waypoints)
 
 			_, _ = db.ExecContext(ctx, `
 				INSERT INTO levels (adventure_id, level_number, title, objective, mechanic, svg_map, max_blocks, available_blocks, waypoints)
 				VALUES (?, ?, ?, 'Complete mission goal.', 'Sequential Execution', ?, 15, ?, ?)
-				ON DUPLICATE KEY UPDATE title=VALUES(title), svg_map=VALUES(svg_map)
+				ON DUPLICATE KEY UPDATE title=VALUES(title), svg_map=VALUES(svg_map), max_blocks=VALUES(max_blocks), available_blocks=VALUES(available_blocks)
 			`, a.ID, lvlNum, title, svgPath, string(blocksJSON), string(wpsJSON))
 		}
 	}

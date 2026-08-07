@@ -18,13 +18,15 @@ func New(db *database.DB) *GameEngineHandler {
 }
 
 type LevelResponse struct {
-	ID          int                      `json:"id"`
-	AdventureID int                      `json:"adventure_id"`
-	LevelNumber int                      `json:"level_number"`
-	Title       string                   `json:"title"`
-	Objective   string                   `json:"objective"`
-	Mechanic    string                   `json:"mechanic"`
-	Waypoints   []database.LevelWaypoint `json:"waypoints,omitempty"`
+	ID              int                      `json:"id"`
+	AdventureID     int                      `json:"adventure_id"`
+	LevelNumber     int                      `json:"level_number"`
+	Title           string                   `json:"title"`
+	Objective       string                   `json:"objective"`
+	Mechanic        string                   `json:"mechanic"`
+	MaxBlocks       int                      `json:"max_blocks"`
+	AvailableBlocks []string                 `json:"available_blocks"`
+	Waypoints       []database.LevelWaypoint `json:"waypoints,omitempty"`
 }
 
 type UpdateWaypointsRequest struct {
@@ -119,9 +121,9 @@ func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Requ
 
 		if adventureIDStr != "" {
 			advID, _ := strconv.Atoi(adventureIDStr)
-			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, waypoints FROM levels WHERE adventure_id = ? ORDER BY level_number ASC", advID)
+			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, max_blocks, available_blocks, waypoints FROM levels WHERE adventure_id = ? ORDER BY level_number ASC", advID)
 		} else {
-			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, waypoints FROM levels ORDER BY level_number ASC")
+			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, max_blocks, available_blocks, waypoints FROM levels ORDER BY level_number ASC")
 		}
 
 		if err == nil {
@@ -129,8 +131,12 @@ func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Requ
 			var levels []LevelResponse
 			for rows.Next() {
 				var lvl LevelResponse
+				var blocksRaw []byte
 				var waypointsRaw []byte
-				if err := rows.Scan(&lvl.ID, &lvl.AdventureID, &lvl.LevelNumber, &lvl.Title, &lvl.Objective, &lvl.Mechanic, &waypointsRaw); err == nil {
+				if err := rows.Scan(&lvl.ID, &lvl.AdventureID, &lvl.LevelNumber, &lvl.Title, &lvl.Objective, &lvl.Mechanic, &lvl.MaxBlocks, &blocksRaw, &waypointsRaw); err == nil {
+					if len(blocksRaw) > 0 {
+						_ = json.Unmarshal(blocksRaw, &lvl.AvailableBlocks)
+					}
 					if len(waypointsRaw) > 0 {
 						_ = json.Unmarshal(waypointsRaw, &lvl.Waypoints)
 					}

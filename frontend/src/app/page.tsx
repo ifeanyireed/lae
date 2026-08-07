@@ -261,6 +261,8 @@ export default function Home() {
                 title: l.title || prev[idx]?.title || `Level ${lvlNum}`,
                 objective: l.objective || prev[idx]?.objective || '',
                 mechanic: l.mechanic || prev[idx]?.mechanic || '',
+                maxBlocks: l.max_blocks || l.maxBlocks || prev[idx]?.maxBlocks || 15,
+                availableBlocks: l.available_blocks || l.availableBlocks || prev[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
                 waypoints: savedWps || expectedWaypoints,
               };
             })
@@ -1093,6 +1095,29 @@ export default function Home() {
                     <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
                       Select an Adventure to explore its 12 coding missions!
                     </p>
+
+                    {/* Admin World Selector Toggle Bar */}
+                    {userContext.role === 'admin' && (
+                      <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mt-3 z-30 overflow-x-auto max-w-full">
+                        <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
+                        {ALL_WORLDS.map((w) => (
+                          <button
+                            key={`map-page-world-${w.id}`}
+                            onClick={() => {
+                              soundManager.playClick();
+                              setSelectedWorldId(w.id);
+                            }}
+                            className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                              selectedWorldId === w.id
+                                ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
+                                : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
+                            }`}
+                          >
+                            World {w.id}
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </>
                 ) : (
                   (() => {
@@ -1338,29 +1363,6 @@ export default function Home() {
                     );
                   })}
                 </motion.div>
-              )}
-
-              {/* Admin World Selector Toggle Bar (Located at Bottom of Map View) */}
-              {userContext.role === 'admin' && selectedAdventureId === null && (
-                <div className="mt-auto mb-2 flex items-center space-x-2 bg-amber-950/90 p-2 rounded-2xl border border-amber-500/40 z-30 overflow-x-auto max-w-full shadow-2xl shrink-0">
-                  <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
-                  {ALL_WORLDS.map((w) => (
-                    <button
-                      key={`map-page-world-${w.id}`}
-                      onClick={() => {
-                        soundManager.playClick();
-                        setSelectedWorldId(w.id);
-                      }}
-                      className={`px-3.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
-                        selectedWorldId === w.id
-                          ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
-                          : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
-                      }`}
-                    >
-                      World {w.id}
-                    </button>
-                  ))}
-                </div>
               )}
             </motion.div>
           )}
