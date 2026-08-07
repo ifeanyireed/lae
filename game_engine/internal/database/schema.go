@@ -149,8 +149,8 @@ func (db *DB) SeedWorldsAndAdventures() error {
 		Name        string
 		Description string
 	}{
-		{1, "world-1", "World 1 — Foundation", "Learn to give instructions in the correct order."},
-		{2, "world-2", "World 2 — Crystal Realm", "Repeat instructions efficiently with loops."},
+		{1, "world-1", "World 1 — Monkey Explorers", "Master Sequencing, Loops, Conditionals, Variables, and Functions."},
+		{2, "world-2", "World 2 — HTML Kingdom", "Build web pages using DOCTYPE, HTML, HEAD, TITLE, BODY, H1, P, LIST, LINK, and IMAGE tags."},
 		{3, "world-3", "World 3 — Enchanted Wilderness", "Make smart decisions using If / Else logic."},
 		{4, "world-4", "World 4 — Island Archipelago", "Store and update resources with variables."},
 		{5, "world-5", "World 5 — Inventors Hub", "Create reusable groups of instructions with functions."},
@@ -174,11 +174,19 @@ func (db *DB) SeedWorldsAndAdventures() error {
 		Story             string
 		LearningObjective string
 	}{
+		// World 1 Adventures (1-5)
 		{1, 1, "the-lost-monkey-explorer", "The Lost Monkey Explorer", "Sequencing", "🐵", "A friendly little monkey has crash-landed in the Whispering Forest. Its navigation system is broken, and only by giving it the correct instructions can it find its way home.", "Follow and create simple sequences."},
 		{2, 1, "the-crystal-cave", "The Crystal Cave", "Loops", "💎", "The Monkey enters a magical cave filled with glowing crystals. Many paths repeat, and doing the same action over and over is too slow. The Monkey discovers the power of Repeat.", "Repeat instructions efficiently."},
 		{3, 1, "the-enchanted-jungle", "The Enchanted Jungle", "Conditionals", "🌿", "The jungle is alive. Bridges appear and disappear, gates open with keys, and animals react differently depending on what the Monkey finds. The Monkey must learn to make decisions.", "Make decisions based on situations."},
 		{4, 1, "monkeys-treasure-island", "Monkey's Treasure Island", "Variables", "🏝️", "The Monkey lands on an island where bananas, coins, gems, and hearts are collected and counted. Progress depends on keeping track of resources.", "Store and update information."},
 		{5, 1, "the-monkey-inventors-workshop", "The Monkey Inventor's Workshop", "Functions", "⚙️", "The Monkey becomes an inventor. Instead of repeating long instruction sequences, it creates reusable Monkey Moves that can be used again and again.", "Reuse groups of instructions."},
+
+		// World 2 HTML Adventures (6-10)
+		{6, 2, "html-architect", "The HTML Architect", "HTML Skeleton", "📜", "Enter the Web Kingdom! Learn how DOCTYPE, HTML, HEAD, TITLE, and BODY form the foundation of every web page.", "Understand HTML page structure."},
+		{7, 2, "headings-and-paragraphs", "Headings & Paragraphs", "Text Elements", "📝", "Bring stories to life on the web using H1 headers and P paragraph text blocks.", "Use HTML text tags."},
+		{8, 2, "lists-and-hyperlinks", "Lists & Hyperlinks", "Navigation", "🔗", "Connect web pages together using LINK and organize content using LIST blocks.", "Create lists and hyperlinks."},
+		{9, 2, "media-and-images", "Media & Images", "Visual Media", "🖼️", "Style your website with vibrant visual content using IMAGE blocks.", "Embed images in HTML."},
+		{10, 2, "master-web-developer", "Master Web Developer", "Web Design", "🌍", "Combine all HTML blocks (DOCTYPE, HTML, HEAD, TITLE, BODY, H1, P, LIST, LINK, IMAGE) to build complete web applications!", "Master full HTML page design."},
 	}
 
 	for _, a := range adventures {
@@ -206,6 +214,7 @@ func (db *DB) SeedWorldsAndAdventures() error {
 
 			var advBlocks []string
 			switch a.ID {
+			// World 1 Blocks
 			case 1:
 				if lvlNum <= 2 {
 					advBlocks = []string{"move_forward"}
@@ -220,6 +229,19 @@ func (db *DB) SeedWorldsAndAdventures() error {
 				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "set_var"}
 			case 5:
 				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around", "repeat", "my_function"}
+
+			// World 2 HTML Blocks
+			case 6:
+				advBlocks = []string{"doctype", "html_tag", "head_tag", "title_tag", "body_tag"}
+			case 7:
+				advBlocks = []string{"doctype", "html_tag", "body_tag", "h1_tag", "p_tag"}
+			case 8:
+				advBlocks = []string{"doctype", "html_tag", "body_tag", "list_tag", "link_tag"}
+			case 9:
+				advBlocks = []string{"doctype", "html_tag", "body_tag", "img_tag"}
+			case 10:
+				advBlocks = []string{"doctype", "html_tag", "head_tag", "title_tag", "body_tag", "h1_tag", "p_tag", "list_tag", "link_tag", "img_tag"}
+
 			default:
 				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
 			}

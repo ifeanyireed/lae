@@ -86,6 +86,18 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   // VARIABLES (Emerald/Teal) - Default values = 1
   { type: 'set_variable', label: 'set variable to 1', category: 'vars', blockClass: 'block-vars', stepValue: 1, icon: <IconPuzzle className="w-3.5 h-3.5" /> },
   { type: 'change_variable', label: 'change variable by 1', category: 'vars', blockClass: 'block-vars', stepValue: 1, icon: <IconPuzzle className="w-3.5 h-3.5" /> },
+
+  // WORLD 2: HTML PROGRAMMING BLOCKS
+  { type: 'doctype', label: '📜 DOCTYPE', category: 'motion', blockClass: 'bg-purple-600 text-white border-purple-800 font-bold', icon: <span className="text-xs">📜</span> },
+  { type: 'html_tag', label: '🌍 HTML', category: 'motion', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold', icon: <span className="text-xs">🌍</span> },
+  { type: 'head_tag', label: '🧠 HEAD', category: 'looks', blockClass: 'bg-emerald-600 text-white border-emerald-800 font-bold', icon: <span className="text-xs">🧠</span> },
+  { type: 'title_tag', label: '🏷️ TITLE', category: 'looks', blockClass: 'bg-amber-500 text-slate-950 border-amber-700 font-bold', icon: <span className="text-xs">🏷️</span> },
+  { type: 'body_tag', label: '🏠 BODY', category: 'looks', blockClass: 'bg-orange-600 text-white border-orange-800 font-bold', icon: <span className="text-xs">🏠</span> },
+  { type: 'h1_tag', label: '📝 H1', category: 'sound', blockClass: 'bg-rose-600 text-white border-rose-800 font-bold', icon: <span className="text-xs">📝</span> },
+  { type: 'p_tag', label: '📄 P', category: 'sound', blockClass: 'bg-green-600 text-white border-green-800 font-bold', icon: <span className="text-xs">📄</span> },
+  { type: 'list_tag', label: '📋 LIST', category: 'events', blockClass: 'bg-cyan-600 text-white border-cyan-800 font-bold', icon: <span className="text-xs">📋</span> },
+  { type: 'link_tag', label: '🔗 LINK', category: 'events', blockClass: 'bg-sky-600 text-white border-sky-800 font-bold', icon: <span className="text-xs">🔗</span> },
+  { type: 'img_tag', label: '🖼️ IMAGE', category: 'vars', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <span className="text-xs">🖼️</span> },
 ];
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
