@@ -230,8 +230,9 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             <div className="overflow-y-auto flex-1 pr-2 py-2 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6">
               {currentAdv.levels.map((lvl, idx) => {
                 const lvlProg = levelsProgress[idx];
-                const isCurrent = currentLevelIndex === idx && selectedAdvId === 1;
-                const isUnlocked = selectedAdvId === 1 ? (lvlProg?.unlocked || idx === 0 || idx <= currentLevelIndex) : true;
+                const isCurrent = currentLevelIndex === idx && selectedAdvId === (currentAdv.id || 1);
+                const isAdmin = userRole === 'admin';
+                const isUnlocked = isAdmin || (lvlProg?.unlocked || lvlProg?.completed || idx === 0);
 
                 return (
                   <motion.div

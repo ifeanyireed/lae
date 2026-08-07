@@ -1322,7 +1322,8 @@ export default function Home() {
                     const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
                     const levelTitle = lvlConfig?.title || `Level ${levelNum}`;
                     const lvlProg = levelsProgress[i];
-                    const isUnlocked = selectedAdventureId === 1 ? (lvlProg?.unlocked || i === 0 || i <= currentLevelIndex) : true;
+                    const isAdmin = userContext.role === 'admin';
+                    const isUnlocked = isAdmin || (lvlProg?.unlocked || lvlProg?.completed || i === 0);
                     const isVibrating = lockedVibrateLevelIndex === i;
 
                     return (
