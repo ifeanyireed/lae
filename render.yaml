@@ -5,6 +5,7 @@ services:
     rootDir: game_engine
     buildCommand: go build -o server main.go
     startCommand: ./server
+    healthCheckPath: /api/v1/game/adventures
     envVars:
       - key: ALLOWED_ORIGINS
         value: "*"
@@ -25,6 +26,7 @@ services:
     rootDir: player_service
     buildCommand: go build -o server main.go
     startCommand: ./server
+    healthCheckPath: /api/v1/player/groups
     envVars:
       - key: ALLOWED_ORIGINS
         value: "*"
