@@ -159,10 +159,11 @@ func (p *PlayerServiceHandler) CodeLoginHandler(w http.ResponseWriter, r *http.R
 	}
 
 	ctx := r.Context()
+	rawCode := strings.ReplaceAll(strings.ToUpper(cleanCode), "-", "")
 	var user database.User
 	err := p.DB.QueryRowContext(ctx,
-		"SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE access_code = ?",
-		cleanCode,
+		"SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?",
+		rawCode,
 	).Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
 
 	if err != nil {
