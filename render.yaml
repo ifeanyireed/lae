@@ -1,5 +1,5 @@
 services:
-  - type: redis
+  - type: keyvalue
     name: game-redis-cache
     ipAllowList: []
     plan: free
@@ -26,7 +26,7 @@ services:
         value: u721451974_lae_db
       - key: REDIS_URL
         fromService:
-          type: redis
+          type: keyvalue
           name: game-redis-cache
           property: connectionString
 
