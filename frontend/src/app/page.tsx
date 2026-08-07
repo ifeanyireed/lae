@@ -240,14 +240,17 @@ export default function Home() {
       })
       .catch(() => {});
 
-    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels`)
+    const advId = selectedAdventureId || 1;
+    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels?adventure_id=${advId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.levels && data.levels.length > 0) {
-          setDbLevels((prev) =>
+          const currentAdv = ALL_ADVENTURES.find((a) => a.id === advId) || ALL_ADVENTURES[0];
+          const defaultLevels = currentAdv.levels;
+          setDbLevels(
             data.levels.map((l: any, idx: number) => {
               const lvlNum = l.level_number || idx + 1;
-              const expectedWaypoints = PUZZLE_LEVELS[idx]?.waypoints || [];
+              const expectedWaypoints = defaultLevels[idx]?.waypoints || [];
               let savedWps = null;
 
               if (l.waypoints && Array.isArray(l.waypoints) && l.waypoints.length > 0) {
@@ -255,14 +258,15 @@ export default function Home() {
               }
 
               return {
-                ...(prev[idx] || {}),
+                ...(defaultLevels[idx] || {}),
                 id: l.id || idx + 1,
+                adventureId: advId,
                 levelNumber: lvlNum,
-                title: l.title || prev[idx]?.title || `Level ${lvlNum}`,
-                objective: l.objective || prev[idx]?.objective || '',
-                mechanic: l.mechanic || prev[idx]?.mechanic || '',
-                maxBlocks: l.max_blocks || l.maxBlocks || prev[idx]?.maxBlocks || 15,
-                availableBlocks: l.available_blocks || l.availableBlocks || prev[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
+                title: l.title || defaultLevels[idx]?.title || `Level ${lvlNum}`,
+                objective: l.objective || defaultLevels[idx]?.objective || '',
+                mechanic: l.mechanic || defaultLevels[idx]?.mechanic || '',
+                maxBlocks: l.max_blocks || l.maxBlocks || defaultLevels[idx]?.maxBlocks || 15,
+                availableBlocks: l.available_blocks || l.availableBlocks || defaultLevels[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
                 waypoints: savedWps || expectedWaypoints,
               };
             })
@@ -334,20 +338,22 @@ export default function Home() {
     }
   }, [currentLevelIndex, customWaypoints, dbLevels]);
 
-  const currentLevel = dbLevels[currentLevelIndex] || PUZZLE_LEVELS[currentLevelIndex] || ADVENTURE_1.levels[0];
+  const currentAdv = ALL_ADVENTURES.find((a) => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
+  const activeAdventureLevels = currentAdv?.levels || PUZZLE_LEVELS;
+  const currentLevel = dbLevels[currentLevelIndex] || activeAdventureLevels[currentLevelIndex] || activeAdventureLevels[0];
   const waypoints = customWaypoints || currentLevel.waypoints || [];
 
   const levelInfo: LevelInfo = {
     id: currentLevel.id,
     levelNumber: currentLevel.levelNumber || currentLevelIndex + 1,
     title: currentLevel.title,
-    objective: currentLevel.objective || currentLevel.description,
+    objective: currentLevel.objective || currentLevel.description || 'Complete mission goal.',
     mechanic: currentLevel.mechanic || 'Sequential Execution',
     svgMap: currentLevel.bgImage || `/The Lost Monkey Explorer - Level ${currentLevelIndex + 1}.svg`,
     maxBlocks: currentLevel.maxBlocks,
-    totalLevels: ADVENTURE_1.totalLevels,
-    adventureTitle: adventureTitle || ADVENTURE_1.title,
-    story: adventureStory || ADVENTURE_1.story,
+    totalLevels: currentAdv.totalLevels || 12,
+    adventureTitle: currentAdv.title || adventureTitle || ADVENTURE_1.title,
+    story: currentAdv.story || adventureStory || ADVENTURE_1.story,
   };
 
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState<number>(0);

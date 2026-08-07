@@ -156,10 +156,10 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
                 {levelInfo.title}
               </h1>
 
-              {/* LOWER WOODEN RIBBON AREA: "BASIC MOVEMENT" */}
+              {/* LOWER WOODEN RIBBON AREA: Dynamic Level Mechanic */}
               <div className="pt-1">
                 <span className="font-black font-varela uppercase tracking-tighter text-white text-xs sm:text-sm md:text-base drop-shadow-md">
-                  BASIC MOVEMENT
+                  {levelInfo.mechanic || 'BASIC MOVEMENT'}
                 </span>
               </div>
             </div>
