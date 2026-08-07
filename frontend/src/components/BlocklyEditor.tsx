@@ -276,6 +276,10 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
     setProgram(prev => prev.map(b => b.instanceId === instanceId ? { ...b, stepValue: value } : b));
   };
 
+  const handleUpdateRepeatCount = (instanceId: string, value: number) => {
+    setProgram(prev => prev.map(b => b.instanceId === instanceId ? { ...b, repeatCount: Math.max(1, value) } : b));
+  };
+
   const handleRemoveBlock = (index: number) => {
     soundManager.playClick();
     setProgram(prev => prev.filter((_, i) => i !== index));
@@ -513,6 +517,72 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                           <IconTrash className="w-3.5 h-3.5" />
                         </button>
                       )}
+                    </motion.div>
+                  );
+                }
+
+                // C-BLOCK EXPANDABLE BRACKETS FOR REPEAT & CONTROL LOOPS
+                if (block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then') {
+                  return (
+                    <motion.div
+                      key={block.instanceId}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      ref={(el) => { if (el) animateBlockSnap(el); }}
+                      className={`w-full flex flex-col rounded-2xl overflow-hidden shadow-lg border-2 border-amber-600/80 bg-amber-950/40 transition group select-none ${
+                        isActive ? 'ring-4 ring-amber-400 scale-102 z-20 shadow-[0_0_30px_rgba(251,191,36,0.9)]' : ''
+                      }`}
+                    >
+                      {/* Top C-Block Header Bar */}
+                      <div className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 text-white font-black text-xs flex items-center justify-between shadow-sm border-b border-amber-400/30">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-[10px] bg-black/40 px-2 py-0.2 rounded-full font-mono text-white">
+                            #{index + 1}
+                          </span>
+                          <IconRepeat className="w-4 h-4 text-amber-200" />
+                          <span>{block.type === 'repeat' ? 'REPEAT' : block.type === 'forever' ? 'FOREVER' : 'IF PATH'}</span>
+                          {block.type === 'repeat' && (
+                            <div className="flex items-center space-x-1">
+                              <input
+                                type="number"
+                                min={1}
+                                max={99}
+                                value={block.repeatCount ?? 2}
+                                onChange={(e) => handleUpdateRepeatCount(block.instanceId, parseInt(e.target.value) || 1)}
+                                className="w-10 px-1 py-0.2 rounded-full bg-black/50 text-amber-300 font-mono text-center border border-amber-300/50 font-black text-xs outline-none focus:ring-2 focus:ring-amber-400"
+                              />
+                              <span className="text-[10px] text-amber-100 font-bold uppercase">TIMES</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex items-center space-x-2">
+                          <button
+                            onClick={() => handleRemoveBlock(index)}
+                            className="opacity-80 group-hover:opacity-100 hover:text-red-300 transition"
+                            title="Remove block"
+                          >
+                            <IconTrash className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Expandable Inner Bracket Spine & Container Area */}
+                      <div className="border-l-8 border-amber-600/90 pl-3 pr-2 py-2.5 bg-amber-500/10 min-h-[48px] flex flex-col justify-center space-y-1.5 relative">
+                        <div className="text-[10px] font-extrabold text-amber-200/90 tracking-wide flex items-center space-x-1.5 bg-amber-900/40 px-2.5 py-1 rounded-lg border border-amber-500/30 w-fit">
+                          <IconCornerUpRight className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                          <span>Nested Action Bracket (Enclosed steps repeat {block.repeatCount ?? 2}x)</span>
+                        </div>
+                      </div>
+
+                      {/* Bottom C-Block Bracket Footer */}
+                      <div className="px-3.5 py-1 bg-amber-800/90 text-amber-100 font-black text-[10px] uppercase tracking-wider flex items-center justify-between border-t border-amber-500/30">
+                        <span className="flex items-center space-x-1">
+                          <span>┗ END LOOP BRACKET</span>
+                        </span>
+                        <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm animate-pulse" />
+                      </div>
                     </motion.div>
                   );
                 }
