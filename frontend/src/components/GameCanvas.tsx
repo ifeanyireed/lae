@@ -447,7 +447,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           {/* Dynamic Level-Specific SVG / JPEG Background Artwork */}
           <Image 
-            src={level.bgImage || `/The Lost Monkey Explorer - Level ${level.levelNumber || level.id || 1}.svg`} 
+            src={level.bgImage || `/Adventure ${level.adventureId || 1} - Level ${level.levelNumber || level.id || 1}.svg`} 
             alt={level.title || "Level Maze Artwork"} 
             fill 
             unoptimized

@@ -246,7 +246,7 @@ func (db *DB) SeedWorldsAndAdventures() error {
 				advBlocks = []string{"move_forward", "turn_left", "turn_right", "turn_around"}
 			}
 
-			svgPath := fmt.Sprintf("/The Lost Monkey Explorer - Level %d.svg", lvlNum)
+			svgPath := fmt.Sprintf("/Adventure %d - Level %d.svg", a.ID, lvlNum)
 			blocksJSON, _ := json.Marshal(advBlocks)
 			wpsJSON, _ := json.Marshal(level1Waypoints)
 
