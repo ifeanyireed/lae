@@ -35,6 +35,7 @@ import {
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
 import { animateBlockSnap, animateButtonPress } from '@/utils/gsapAnimations';
+import { ScratchBlockComponent } from './ScratchBlockComponent';
 
 export interface CodeBlock {
   instanceId: string;
@@ -455,29 +456,21 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-start content-start gap-1.5 p-2 bg-white/50 rounded-2xl border border-slate-300/80 h-full overflow-y-auto w-full shadow-inner">
+              <div className="flex flex-wrap items-start content-start gap-2 p-2.5 bg-white/50 rounded-2xl border border-slate-300/80 h-full overflow-y-auto w-full shadow-inner">
                 {filteredPalette.map((block) => (
-                  <button
+                  <div
                     key={block.type}
                     draggable={true}
                     onDragStart={(e) => {
                       e.dataTransfer.setData('application/json', JSON.stringify(block));
                       e.dataTransfer.effectAllowed = 'copy';
                     }}
-                    onClick={(e) => handleAddBlock(block, e)}
-                    className={`px-3 py-1 h-7 max-h-7 shrink-0 w-fit max-w-fit self-start rounded-full ${block.blockClass} text-white font-black text-[11px] shadow flex items-center space-x-1 hover:scale-105 transition cursor-grab active:cursor-grabbing border border-white/30`}
+                    onClick={(e) => handleAddBlock(block, e as any)}
+                    className="cursor-grab active:cursor-grabbing hover:scale-105 transition shrink-0"
                     title="Click or drag to drop in code stack"
                   >
-                    <IconGripVertical className="w-3 h-3 text-white/80 shrink-0" />
-                    {block.icon}
-                    <span>{block.label}</span>
-                    {block.stepValue !== undefined && (
-                      <span className="w-6 py-0.2 bg-black/40 rounded-full font-mono text-amber-300 text-center border border-white/20 text-[10px] font-black inline-block">
-                        {block.stepValue}
-                      </span>
-                    )}
-                    <IconPlus className="w-3 h-3" />
-                  </button>
+                    <ScratchBlockComponent block={block} index={0} isPalette={true} />
+                  </div>
                 ))}
               </div>
             </div>
@@ -634,6 +627,8 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                     );
                   }
 
+                  const isLastBlock = index === program.length - 1;
+
                   return (
                     <Reorder.Item key={block.instanceId} value={block} className="w-full flex items-center">
                       <motion.div
@@ -641,39 +636,18 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.9 }}
                         ref={(el) => { if (el) animateBlockSnap(el); }}
-                        className={`px-3.5 py-1.5 h-8 max-h-8 shrink-0 w-fit max-w-fit self-start rounded-full ${block.blockClass} text-white font-black text-xs shadow flex items-center space-x-3 border border-white/30 transition group select-none ${
-                          isActive ? 'ring-4 ring-amber-400 scale-105 z-20 shadow-[0_0_30px_rgba(251,191,36,0.9)]' : ''
-                        }`}
+                        className="cursor-grab active:cursor-grabbing shrink-0"
                       >
-                        <div className="flex items-center space-x-2">
-                          <IconGripVertical className="w-3.5 h-3.5 text-white/70 cursor-grab active:cursor-grabbing shrink-0" />
-                          <span className="text-[10px] bg-black/40 px-2 py-0.2 rounded-full font-mono font-black text-white">
-                            #{index + 1}
-                          </span>
-                          <span className="drop-shadow-sm whitespace-nowrap">{block.label}</span>
-
-                          {block.stepValue !== undefined && (
-                            <div className="flex items-center space-x-1">
-                              <input
-                                type="number"
-                                value={block.stepValue}
-                                onChange={(e) => handleUpdateStepValue(block.instanceId, parseInt(e.target.value) || 1)}
-                                className="w-10 px-1 py-0.2 rounded-full bg-black/40 text-amber-300 font-mono text-center border border-white/40 font-black text-xs outline-none focus:ring-2 focus:ring-amber-400"
-                              />
-                              <span>steps</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <button
-                          onClick={() => handleRemoveBlock(index)}
-                          className="opacity-70 group-hover:opacity-100 hover:text-red-300 transition pl-1"
-                          title="Remove block"
-                        >
-                          <IconTrash className="w-3.5 h-3.5" />
-                        </button>
-
-                        <IconSparkles className="w-3.5 h-3.5 text-amber-300 opacity-70 animate-pulse" />
+                        <ScratchBlockComponent
+                          block={block}
+                          index={index}
+                          isLast={isLastBlock}
+                          isActive={isActive}
+                          isPalette={false}
+                          onRemove={() => handleRemoveBlock(index)}
+                          onStepValueChange={(val) => handleUpdateStepValue(block.instanceId, val)}
+                          onRepeatCountChange={(val) => handleUpdateRepeatCount(block.instanceId, val)}
+                        />
                       </motion.div>
                     </Reorder.Item>
                   );
