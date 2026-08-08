@@ -14,7 +14,7 @@ LOCAL_PUBLIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../f
 # Heavy background and stage assets to sync to CDN
 CDN_ASSETS = [
     f for f in os.listdir(LOCAL_PUBLIC_DIR)
-    if f.startswith("Adventure") or f.endswith(".svg") or f.endswith(".jpeg") or f.endswith(".png")
+    if f.startswith("1_") or f.startswith("Adventure") or f.endswith(".jpeg")
 ]
 
 print(f"🚀 Preparing to sync {len(CDN_ASSETS)} assets to CDN ({HOST}:{PORT} -> {REMOTE_PATH})...")

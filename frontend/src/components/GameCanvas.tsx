@@ -138,7 +138,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     preloadNextLevelImage(advId, currentNum + 1);
   }, [level.adventureId, level.levelNumber, level.id]);
 
-  const rawBgPath = level.bgImage || `/Adventure ${level.adventureId || 1} - Level ${level.levelNumber || level.id || 1}.svg`;
+  const rawBgPath = level.bgImage || `/1_${level.adventureId || 1}_${level.levelNumber || level.id || 1}.svg`;
   const bgCdnUrl = getCdnUrl(rawBgPath);
 
   // Detached Floating Figma Track Mapper Modal State

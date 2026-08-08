@@ -17,7 +17,7 @@ export function getCdnUrl(assetPath: string): string {
  */
 export function preloadNextLevelImage(adventureId: number, nextLevelNumber: number): void {
   if (typeof window === 'undefined') return;
-  const nextLevelPath = getCdnUrl(`/Adventure ${adventureId} - Level ${nextLevelNumber}.svg`);
+  const nextLevelPath = getCdnUrl(`/1_${adventureId}_${nextLevelNumber}.svg`);
   
   // 1. Browser Image Object Preload
   const img = new window.Image();

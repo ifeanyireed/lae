@@ -388,7 +388,7 @@ export default function Home() {
     title: currentLevel.title,
     objective: currentLevel.objective || currentLevel.description || 'Complete mission goal.',
     mechanic: currentLevel.mechanic || 'Sequential Execution',
-    svgMap: currentLevel.bgImage || `/Adventure ${selectedAdventureId || 1} - Level ${currentLevelIndex + 1}.svg`,
+    svgMap: currentLevel.bgImage || `/1_${selectedAdventureId || 1}_${currentLevelIndex + 1}.svg`,
     maxBlocks: currentLevel.maxBlocks,
     totalLevels: currentAdv.totalLevels || 12,
     adventureTitle: currentAdv.title || adventureTitle || ADVENTURE_1.title,
