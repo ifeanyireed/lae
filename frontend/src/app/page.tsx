@@ -16,6 +16,7 @@ import { PUZZLE_LEVELS, ADVENTURE_1, ALL_ADVENTURES, ALL_WORLDS } from '@/utils/
 import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
 import { GAME_ENGINE_API_URL, PLAYER_SERVICE_API_URL } from '@/utils/api';
+import { getCdnUrl } from '@/utils/cdn';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('studio');
@@ -929,7 +930,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen bg-[#0d0906] text-slate-100 flex flex-col font-sans relative overflow-hidden">
+    <main className="min-h-screen text-slate-100 flex flex-col font-sans relative overflow-hidden bg-slate-900">
       
       {/* Background Image */}
       <div className="fixed inset-0 z-0 overflow-hidden">
@@ -937,10 +938,10 @@ export default function Home() {
           src="/full_maze.jpeg" 
           alt="Full Maze Background" 
           fill 
-          className="object-cover object-center filter brightness-90 contrast-110 blur-xl scale-105 opacity-65"
+          className="object-cover object-center filter brightness-95 contrast-105 blur-lg scale-105 opacity-80"
           priority
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0d0906]/60 via-[#0d0906]/35 to-[#0d0906]/50 backdrop-blur-md" />
+        <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-sm" />
       </div>
 
       {/* Top Application Header Bar */}
@@ -1275,7 +1276,7 @@ export default function Home() {
                           className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 relative flex-shrink-0 mb-1"
                         >
                           <Image 
-                            src={advMonkeyImg} 
+                            src={getCdnUrl(advMonkeyImg)} 
                             alt={`Adventure ${adv.id}: ${adv.title}`} 
                             fill 
                             className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'filter grayscale opacity-50'}`} 
@@ -1399,7 +1400,7 @@ export default function Home() {
                           className="w-20 h-20 sm:w-24 sm:h-24 relative flex-shrink-0 mb-1"
                         >
                           <Image 
-                            src={monkeyImg} 
+                            src={getCdnUrl(monkeyImg)} 
                             alt={`Level ${levelNum}: ${levelTitle}`} 
                             fill 
                             className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-50'}`} 

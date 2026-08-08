@@ -12,7 +12,12 @@ import {
   IconZoomOut, 
   IconGripHorizontal, 
   IconX,
-  IconHammer
+  IconHammer,
+  IconWorld,
+  IconBolt,
+  IconTrophy,
+  IconCoin,
+  IconFlag
 } from '@tabler/icons-react';
 import { LevelConfig, PathWaypoint } from '@/types/game';
 import { BoardCharacterSprite } from '@/components/BoardCharacterSprite';
@@ -345,72 +350,28 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   };
 
   return (
-    <div className="w-full h-full min-h-screen fixed inset-0 z-10 flex flex-col justify-between overflow-hidden font-sans bg-[#0d0906]">
+    <div className="w-full h-full min-h-screen fixed inset-0 z-10 flex flex-col justify-between overflow-hidden font-sans bg-transparent">
       
       {/* Top Floating Control Bar - Compact Sticky/Fixed to Top Left */}
       <div className="no-board-click fixed top-2 sm:top-3 left-2 sm:left-4 z-[9999] flex items-center space-x-1 sm:space-x-1.5 liquid-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.5px] border-white/20 shadow-md max-w-fit pointer-events-auto">
         
-        <div className="flex items-center space-x-0.5 sm:space-x-1 border-r border-slate-900/15 pr-1.5 sm:pr-2.5 mr-0.5">
-          {/* Zoom Out Button */}
-          <button
-            type="button"
-            onClick={() => { 
-              soundManager.playClick(); 
-              setZoomLevel(prev => Math.max(1.0, Math.round((prev - 0.1) * 10) / 10)); 
-            }}
-            className="w-6 h-6 sm:w-7.5 sm:h-7.5 rounded-full bg-white/90 border border-slate-300 flex items-center justify-center text-slate-800 hover:bg-amber-400 hover:text-slate-950 transition cursor-pointer shadow-sm pointer-events-auto shrink-0 select-none active:scale-90"
-            title="Zoom Out (Min 100% Fully Stretched)"
-          >
-            <IconZoomOut className="w-3 h-3 sm:w-3.5 sm:h-3.5 pointer-events-none" />
-          </button>
-          
-          <span className="text-[9px] sm:text-[11px] font-black text-slate-950 font-mono w-6 sm:w-8 text-center select-none pointer-events-none">
-            {Math.round(zoomLevel * 100)}%
+        {/* World, Adventure & Level Index Flag Badge */}
+        <div className="bg-amber-400 text-slate-950 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1.5 select-none" title="World . Adventure . Level Index">
+          <IconFlag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
+          <span className="font-mono font-black tracking-wide text-slate-950">
+            {level.worldId || 1} . {level.adventureId || 1} . {level.levelNumber || level.id || 1}
           </span>
-
-          {/* Zoom In Button */}
-          <button
-            type="button"
-            onClick={() => { 
-              soundManager.playClick(); 
-              setZoomLevel(prev => Math.min(3.0, Math.round((prev + 0.1) * 10) / 10)); 
-            }}
-            className="w-6 h-6 sm:w-7.5 sm:h-7.5 rounded-full bg-white/90 border border-slate-300 flex items-center justify-center text-slate-800 hover:bg-amber-400 hover:text-slate-950 transition cursor-pointer shadow-sm pointer-events-auto shrink-0 select-none active:scale-90"
-            title="Zoom In"
-          >
-            <IconZoomIn className="w-3 h-3 sm:w-3.5 sm:h-3.5 pointer-events-none" />
-          </button>
-
-          {/* Quick Zoom Presets */}
-          <div className="hidden xs:flex items-center space-x-0.5 pl-0.5">
-            <button
-              type="button"
-              onClick={() => { soundManager.playClick(); setZoomLevel(1.0); }}
-              className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/90 border border-slate-300 text-[9px] sm:text-[10px] font-black text-slate-800 hover:bg-amber-400 hover:text-slate-950 transition cursor-pointer shadow-sm pointer-events-auto select-none active:scale-95"
-              title="Reset Zoom to 100%"
-            >
-              100%
-            </button>
-            <button
-              type="button"
-              onClick={() => { soundManager.playClick(); setZoomLevel(1.5); }}
-              className="px-1.5 sm:px-2 py-0.5 rounded-full bg-white/90 border border-slate-300 text-[9px] sm:text-[10px] font-black text-slate-800 hover:bg-amber-400 hover:text-slate-950 transition cursor-pointer shadow-sm pointer-events-auto select-none active:scale-95"
-              title="Zoom to 150%"
-            >
-              150%
-            </button>
-          </div>
         </div>
 
         {/* User Total XP Badge */}
         <div className="bg-amber-400 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none">
-          <span className="text-amber-900">⚡</span>
+          <IconBolt className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
           <span>{totalXP} XP</span>
         </div>
 
         {/* Level Score Badge */}
         <div className="bg-emerald-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-emerald-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none">
-          <span>🏆</span>
+          <IconTrophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200 fill-amber-200 shrink-0 pointer-events-none" />
           <span>{levelScore} PTS</span>
         </div>
 
@@ -436,17 +397,47 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
         {/* Collected Coins Badge */}
         <div className="bg-amber-400 text-slate-950 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none pointer-events-none">
-          <div className="w-3 h-3 sm:w-3.5 sm:h-3.5 relative flex-shrink-0 pointer-events-none">
-            <Image src="/coin.svg" alt="Coin" fill className="object-contain pointer-events-none" />
-          </div>
+          <IconCoin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-amber-950 shrink-0 pointer-events-none" />
           <span>{collectedCoins.length}/{liveWaypoints.filter(w => w.type === 'coin').length}</span>
+        </div>
+      </div>
+
+      {/* Floating Canvas Board Zoom Controls at Bottom Right */}
+      <div className="fixed bottom-4 right-4 z-40 pointer-events-auto select-none">
+        <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2.5 py-1 rounded-full border border-slate-300 shadow-md">
+          <button
+            type="button"
+            onClick={() => { soundManager.playClick(); setZoomLevel(prev => Math.max(1.0, Math.round((prev - 0.1) * 10) / 10)); }}
+            disabled={zoomLevel <= 1.0}
+            className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+            title="Zoom Out Canvas (-10%)"
+          >
+            <IconZoomOut className="w-3.5 h-3.5 pointer-events-none" />
+          </button>
+          <button
+            type="button"
+            onClick={() => { soundManager.playClick(); setZoomLevel(1.0); }}
+            className="px-1 text-[10px] font-mono font-black text-slate-800 hover:text-amber-600 transition cursor-pointer"
+            title="Reset Canvas Zoom (100%)"
+          >
+            {Math.round(zoomLevel * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={() => { soundManager.playClick(); setZoomLevel(prev => Math.min(3.0, Math.round((prev + 0.1) * 10) / 10)); }}
+            disabled={zoomLevel >= 3.0}
+            className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+            title="Zoom In Canvas (+10%)"
+          >
+            <IconZoomIn className="w-3.5 h-3.5 pointer-events-none" />
+          </button>
         </div>
       </div>
 
       {/* Main FULL-SCREEN MAZE DISPLAY */}
       <div 
         onWheel={handleWheelZoom}
-        className="w-full h-full fixed inset-0 z-10 flex items-center justify-center overflow-hidden bg-[#0d0906]"
+        className="w-full h-full fixed inset-0 z-10 flex items-center justify-center overflow-hidden bg-transparent"
       >
         <div 
           ref={boardRef}

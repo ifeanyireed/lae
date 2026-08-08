@@ -9,7 +9,7 @@ export function getCdnUrl(assetPath: string): string {
     return assetPath;
   }
   const cleanPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
-  return `${CDN_BASE_URL}${cleanPath}`;
+  return `${CDN_BASE_URL}${encodeURI(cleanPath)}`;
 }
 
 /**
