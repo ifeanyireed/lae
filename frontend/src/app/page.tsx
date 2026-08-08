@@ -283,6 +283,7 @@ export default function Home() {
                 title: l.title || defaultLevels[idx]?.title || `Level ${lvlNum}`,
                 objective: l.objective || defaultLevels[idx]?.objective || '',
                 mechanic: l.mechanic || defaultLevels[idx]?.mechanic || '',
+                bgImage: defaultLevels[idx]?.bgImage || `/Adventure ${advId} - Level ${lvlNum}.svg`,
                 maxBlocks: l.max_blocks || l.maxBlocks || defaultLevels[idx]?.maxBlocks || 15,
                 availableBlocks: l.available_blocks || l.availableBlocks || defaultLevels[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
                 waypoints: (savedWps && savedWps.length > 0) ? savedWps : expectedWaypoints,

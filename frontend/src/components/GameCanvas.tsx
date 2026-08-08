@@ -356,22 +356,22 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
       <div className="no-board-click fixed top-2 sm:top-3 left-2 sm:left-4 z-[9999] flex items-center space-x-1 sm:space-x-1.5 liquid-glass px-2 sm:px-3 py-1 sm:py-1.5 rounded-full border-[0.5px] border-white/20 shadow-md max-w-fit pointer-events-auto">
         
         {/* World, Adventure & Level Index Flag Badge */}
-        <div className="bg-amber-400 text-slate-950 px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1.5 select-none" title="World . Adventure . Level Index">
-          <IconFlag className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
+        <div className="bg-white/90 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-slate-300 shadow-md font-black text-[9px] sm:text-[11px] flex items-center space-x-1 sm:space-x-1.5 select-none" title="World . Adventure . Level Index">
+          <IconFlag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
           <span className="font-mono font-black tracking-wide text-slate-950">
             {level.worldId || 1} . {level.adventureId || 1} . {level.levelNumber || level.id || 1}
           </span>
         </div>
 
         {/* User Total XP Badge */}
-        <div className="bg-amber-400 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none">
-          <IconBolt className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
+        <div className="bg-white/90 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-slate-300 shadow-md font-black text-[9px] sm:text-[11px] flex items-center space-x-1 sm:space-x-1.5 select-none">
+          <IconBolt className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-amber-500 shrink-0 pointer-events-none" />
           <span>{totalXP} XP</span>
         </div>
 
         {/* Level Score Badge */}
-        <div className="bg-emerald-500 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-emerald-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none">
-          <IconTrophy className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-200 fill-amber-200 shrink-0 pointer-events-none" />
+        <div className="bg-white/90 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-slate-300 shadow-md font-black text-[9px] sm:text-[11px] flex items-center space-x-1 sm:space-x-1.5 select-none">
+          <IconTrophy className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-amber-500 shrink-0 pointer-events-none" />
           <span>{levelScore} PTS</span>
         </div>
 
@@ -396,8 +396,8 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         )}
 
         {/* Collected Coins Badge */}
-        <div className="bg-amber-400 text-slate-950 px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded-full border border-amber-600 font-black text-[9px] sm:text-[11px] shadow-sm flex items-center space-x-1 select-none pointer-events-none">
-          <IconCoin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-slate-950 fill-amber-950 shrink-0 pointer-events-none" />
+        <div className="bg-white/90 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-slate-300 shadow-md font-black text-[9px] sm:text-[11px] flex items-center space-x-1 sm:space-x-1.5 select-none pointer-events-none">
+          <IconCoin className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-amber-500 shrink-0 pointer-events-none" />
           <span>{collectedCoins.length}/{liveWaypoints.filter(w => w.type === 'coin').length}</span>
         </div>
       </div>

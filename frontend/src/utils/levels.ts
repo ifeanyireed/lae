@@ -161,6 +161,8 @@ export const ADVENTURE_1: AdventureConfig = {
   levels: [
     {
       id: 1,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 1,
       title: 'Power Up!',
       description: 'Learn that a robot only acts when given instructions.',
@@ -173,6 +175,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 2,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 2,
       title: 'First Steps',
       description: 'Create a longer sequence of instructions.',
@@ -185,6 +189,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 3,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 3,
       title: 'Around the Tree',
       description: 'Navigate around an obstacle.',
@@ -197,6 +203,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 4,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 4,
       title: 'Energy Crystal',
       description: 'Collect your first item before reaching the goal.',
@@ -209,6 +217,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 5,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 5,
       title: 'Treasure Trail',
       description: 'Collect every energy crystal on the path.',
@@ -221,6 +231,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 6,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 6,
       title: 'Danger Ahead',
       description: 'Reach the finish without touching dangerous tiles.',
@@ -233,6 +245,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 7,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 7,
       title: 'Watch Your Step!',
       description: 'Find a safe route around a pit.',
@@ -245,6 +259,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 8,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 8,
       title: 'Hidden Rewards',
       description: 'Explore to collect optional stars before finishing.',
@@ -257,6 +273,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 9,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 9,
       title: 'Treasure Hunt',
       description: 'Collect all treasures and return safely to the finish.',
@@ -269,6 +287,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 10,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 10,
       title: 'Choose Wisely',
       description: 'Find the safest and smartest path through the maze.',
@@ -281,6 +301,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 11,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 11,
       title: 'Explorer\'s Trial',
       description: 'Combine everything you\'ve learned to solve a complex maze.',
@@ -293,6 +315,8 @@ export const ADVENTURE_1: AdventureConfig = {
     },
     {
       id: 12,
+      adventureId: 1,
+      worldId: 1,
       levelNumber: 12,
       title: 'Journey Home',
       description: 'Guide the robot through its final mission and help it return home.',
@@ -330,6 +354,8 @@ export const ADVENTURE_2: AdventureConfig = {
     'Crystal Guardian (Boss)'
   ].map((name, i) => ({
     id: 200 + i + 1,
+    adventureId: 2,
+    worldId: 1,
     levelNumber: i + 1,
     title: name,
     description: `Adventure 2: Master loops and repeats in ${name}.`,
@@ -366,6 +392,8 @@ export const ADVENTURE_3: AdventureConfig = {
     'Escape the Temple (Boss)'
   ].map((name, i) => ({
     id: 300 + i + 1,
+    adventureId: 3,
+    worldId: 1,
     levelNumber: i + 1,
     title: name,
     description: `Adventure 3: Make smart decisions in ${name}.`,
@@ -402,6 +430,8 @@ export const ADVENTURE_4: AdventureConfig = {
     'Island Champion (Boss)'
   ].map((name, i) => ({
     id: 400 + i + 1,
+    adventureId: 4,
+    worldId: 1,
     levelNumber: i + 1,
     title: name,
     description: `Adventure 4: Track variables and resources in ${name}.`,
@@ -438,6 +468,8 @@ export const ADVENTURE_5: AdventureConfig = {
     'Master Inventor (Boss)'
   ].map((name, i) => ({
     id: 500 + i + 1,
+    adventureId: 5,
+    worldId: 1,
     levelNumber: i + 1,
     title: name,
     description: `Adventure 5: Build modular functions in ${name}.`,
