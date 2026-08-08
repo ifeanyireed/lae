@@ -906,7 +906,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 }
               } catch (err) {}
             }}
-            className={`flex-1 min-h-[120px] overflow-y-auto flex flex-col space-y-2 p-3 rounded-2xl border transition-all w-full shadow-inner items-start ${
+            className={`relative flex-1 min-h-[120px] overflow-y-auto flex flex-col space-y-2 p-3 rounded-2xl border transition-all w-full shadow-inner items-start ${
               isDraggingOver 
                 ? 'bg-amber-400/20 border-2 border-dashed border-amber-400 ring-4 ring-amber-400/30' 
                 : 'bg-white/50 border-slate-300/80'
@@ -922,7 +922,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               className="transition-transform duration-150 ease-out flex-1 w-full flex flex-col space-y-3"
             >
               {isWorld2 ? (
-                <div className="w-full flex items-start space-x-10 overflow-x-auto pb-24 min-h-[220px]">
+                <div className="w-full flex items-start space-x-14 overflow-x-auto pb-24 min-h-[220px]">
                   {/* Left Stack: Events / Motion Blocks */}
                   <div className="flex flex-col items-start min-w-[200px] pb-24 min-h-[200px]">
                     <Reorder.Group 
@@ -942,7 +942,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   </div>
 
                   {/* Right Stack: HTML Hat & HTML Blocks */}
-                  <div className="flex flex-col items-start min-w-[200px] pl-6 border-l border-slate-300/60 pb-24 min-h-[200px]">
+                  <div className="flex flex-col items-start min-w-[200px] pl-6 border-l-2 border-dashed border-slate-300/80 pb-24 min-h-[200px]">
                     <Reorder.Group 
                       axis="y" 
                       values={htmlBlocks} 
@@ -980,8 +980,8 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               )}
             </div>
 
-            {/* Floating Code Stack Zoom Control Widget at bottom-right of stack dropzone */}
-            <div className="sticky bottom-0 right-0 ml-auto pt-1 z-30 pointer-events-auto shrink-0">
+            {/* Floating Code Stack Zoom Control Widget locked to bottom-right of stack dropzone */}
+            <div className="absolute bottom-3 right-3 z-50 pointer-events-auto shrink-0 shadow-lg">
               <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-slate-300 shadow-md">
                 <button
                   onClick={() => { soundManager.playClick(); setCodeStackZoomScale(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100)); }}

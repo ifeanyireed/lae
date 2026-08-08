@@ -566,8 +566,18 @@ export default function Home() {
     if (nextWp && nextWp.type && isHtmlBlockTile(nextWp.type)) {
       const hasBlock = isHtmlBlockInProgram(nextWp.type, program);
       if (!hasBlock) {
-        const label = getBlockLabel(nextWp.type);
-        setSpeechBubble(`💡 Guide: Next tile is ${label}! Add the ${label} block under the HTML stack!`);
+        if (nextWp.type === 'head' || nextWp.type === 'head_tag') {
+          setSpeechBubble(`💡 Guide: Nest the <head> tag inside the <html> tag!`);
+        } else if (nextWp.type === 'title' || nextWp.type === 'title_tag') {
+          setSpeechBubble(`💡 Guide: Nest the <title> tag inside the <head> tag!`);
+        } else if (nextWp.type === 'html' || nextWp.type === 'html_tag') {
+          setSpeechBubble(`💡 Guide: Add the <html> tag under <!doctype html>!`);
+        } else if (nextWp.type === 'doctype' || nextWp.type === 'doctype_html') {
+          setSpeechBubble(`💡 Guide: Add <!doctype html> at the top of the HTML stack!`);
+        } else {
+          const label = getBlockLabel(nextWp.type);
+          setSpeechBubble(`💡 Guide: Next tile is ${label}! Add the ${label} block under the HTML stack!`);
+        }
       }
     }
   }, [currentWaypointIndex, customWaypoints, currentLevel, program, currentHeading, isRunning]);
@@ -858,9 +868,15 @@ export default function Home() {
           const newFailCount = levelFailCount + 1;
           setLevelFailCount(newFailCount);
 
-          const label = getBlockLabel(nextWp.type);
           setLoadingSpriteSrc('/monkey17.svg');
-          setSpeechBubble(`Missing ${label} block on board! Returning to START!`);
+          if (nextWp.type === 'head' || nextWp.type === 'head_tag') {
+            setSpeechBubble(`Missing <head> block! Nest the <head> tag inside the <html> tag! Returning to START!`);
+          } else if (nextWp.type === 'title' || nextWp.type === 'title_tag') {
+            setSpeechBubble(`Missing <title> block! Nest the <title> tag inside the <head> tag! Returning to START!`);
+          } else {
+            const label = getBlockLabel(nextWp.type);
+            setSpeechBubble(`Missing ${label} block on board! Returning to START!`);
+          }
 
           setIsGlobalLoading(true);
           setIsZoomingQuickly(true);
