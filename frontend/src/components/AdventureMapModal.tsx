@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { X, Lock, Star, ArrowLeft } from 'lucide-react';
 import { soundManager } from '@/utils/sound';
 import { ALL_ADVENTURES, ALL_WORLDS } from '@/utils/levels';
+import { getCdnUrl } from '@/utils/cdn';
 
 export interface LevelProgress {
   levelNumber: number;
@@ -175,7 +176,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       className="w-24 h-24 sm:w-28 sm:h-28 relative my-1 flex items-center justify-center flex-shrink-0"
                     >
                       <Image
-                        src={advMonkeyImg}
+                        src={getCdnUrl(advMonkeyImg)}
                         alt={adv.title}
                         fill
                         className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'opacity-40'}`}
@@ -184,7 +185,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       <div className="absolute -bottom-2 -right-2 w-8 h-8 sm:w-10 sm:h-10 z-10 filter drop-shadow-lg">
                         {isAdvUnlocked ? (
                           <Image
-                            src="/maze_finish.svg"
+                            src={getCdnUrl("/maze_finish.svg")}
                             alt="Adventure Unlocked"
                             fill
                             className="object-contain"
@@ -198,7 +199,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                             transition={{ duration: 0.9, ease: 'easeInOut' }}
                           >
                             <Image
-                              src="/locked.svg"
+                              src={getCdnUrl("/locked.svg")}
                               alt="Locked Adventure"
                               fill
                               className="object-contain drop-shadow-xl"
@@ -285,7 +286,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       className="w-14 h-14 sm:w-16 sm:h-16 relative my-2 flex items-center justify-center"
                     >
                       <Image
-                        src={`/monkey${((lvl.levelNumber - 1) % 23) + 1}.svg`}
+                        src={getCdnUrl(`/monkey${((lvl.levelNumber - 1) % 23) + 1}.svg`)}
                         alt={lvl.title}
                         fill
                         className={`object-contain transition ${isUnlocked ? 'filter drop-shadow-md' : 'filter grayscale opacity-40'}`}
@@ -294,7 +295,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       {isUnlocked ? (
                         <div className="absolute -bottom-2 -right-2 w-7 h-7 sm:w-8 sm:h-8 z-10 filter drop-shadow-md">
                           <Image
-                            src="/maze_finish.svg"
+                            src={getCdnUrl("/maze_finish.svg")}
                             alt="Activated Level"
                             fill
                             className="object-contain"

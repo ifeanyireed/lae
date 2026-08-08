@@ -4,6 +4,8 @@ import React from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 
+import { getCdnUrl } from '@/utils/cdn';
+
 interface BoardCharacterSpriteProps {
   selectedCharacter?: string;
   className?: string;
@@ -42,7 +44,7 @@ export const BoardCharacterSprite: React.FC<BoardCharacterSpriteProps> = ({
       }}
     >
       <Image
-        src={spriteSrc}
+        src={getCdnUrl(spriteSrc)}
         alt="Monkey Character Sprite"
         fill
         className="object-contain drop-shadow-md"
