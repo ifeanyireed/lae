@@ -145,7 +145,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
           {!currentAdv ? (
             <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
               {currentWorld.adventures.map((adv) => {
-                const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
+                const monkeyNum = (((adv.id + 11) % 23) + 1);
+                const advMonkeyImg = `/monkey${monkeyNum}.svg`;
                 const isAdvUnlocked = adv.id === 1 || isAdmin;
                 const isVibrating = lockedVibrateIdx === adv.id;
 

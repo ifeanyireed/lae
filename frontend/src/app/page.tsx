@@ -1245,7 +1245,8 @@ export default function Home() {
                   className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl w-full py-6 px-4 z-20"
                 >
                   {currentWorld.adventures.map((adv) => {
-                    const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
+                    const monkeyNum = (((adv.id + 11) % 23) + 1);
+                    const advMonkeyImg = `/monkey${monkeyNum}.svg`;
                     const isAdvUnlocked = adv.id === 1 || userContext.role === 'admin';
                     const isVibrating = lockedVibrateLevelIndex === adv.id;
 
