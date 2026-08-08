@@ -59,7 +59,7 @@ export default function Home() {
 
   const [currentLevelIndex, setCurrentLevelIndex] = useState(0);
   const [customWaypoints, setCustomWaypoints] = useState<PathWaypoint[] | null>(null);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(true);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [lockedVibrateLevelIndex, setLockedVibrateLevelIndex] = useState<number | null>(null);
 
   const [adventureTitle, setAdventureTitle] = useState<string>(ADVENTURE_1.title);
@@ -317,6 +317,21 @@ export default function Home() {
                 sessionStorage.setItem('puzzlepro_session_token', data.token);
               } catch (e) {}
             }
+            try {
+              if (typeof window !== 'undefined') {
+                const savedAdv = localStorage.getItem('puzzlepro_active_adv');
+                const savedLvl = localStorage.getItem('puzzlepro_active_level');
+                if (savedAdv !== null) {
+                  const advId = parseInt(savedAdv, 10);
+                  if (!isNaN(advId) && advId > 0) setSelectedAdventureId(advId);
+                }
+                if (savedLvl !== null) {
+                  const lvlIdx = parseInt(savedLvl, 10);
+                  if (!isNaN(lvlIdx) && lvlIdx >= 0) setCurrentLevelIndex(lvlIdx);
+                }
+              }
+            } catch (e) {}
+
             const userXp = data.user.total_xp ?? 0;
             setTotalXP(userXp);
             setUserContext({
@@ -334,6 +349,7 @@ export default function Home() {
               syncProgressFromDB(data.progress);
             }
             setShowSplash(false);
+            setShowWelcomeModal(false);
           }
         })
         .catch(() => {})
@@ -450,6 +466,14 @@ export default function Home() {
   const handleSelectLevel = (index: number) => {
     soundManager.playClick();
     setCurrentLevelIndex(index);
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('puzzlepro_active_level', index.toString());
+        if (selectedAdventureId) {
+          localStorage.setItem('puzzlepro_active_adv', selectedAdventureId.toString());
+        }
+      }
+    } catch (e) {}
     setLevelsProgress((prev) =>
       prev.map((l, idx) => {
         if (idx === index || idx <= currentLevelIndex + 1) {
