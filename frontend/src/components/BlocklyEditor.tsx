@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence, useDragControls, Reorder } from 'framer-motion';
 import { 
@@ -31,11 +31,14 @@ import {
   IconTypography,
   IconList,
   IconLink,
-  IconPhoto
+  IconPhoto,
+  IconZoomIn,
+  IconZoomOut
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
 import { animateBlockSnap, animateButtonPress } from '@/utils/gsapAnimations';
-import { ScratchBlockComponent } from './ScratchBlockComponent';
+import { PureCSSBlock } from './PureCSSBlock';
+import { PureCSSLoopBlock } from './PureCSSLoopBlock';
 
 export interface CodeBlock {
   instanceId: string;
@@ -46,6 +49,7 @@ export interface CodeBlock {
   stepValue?: number;
   repeatCount?: number;
   icon?: React.ReactNode;
+  children?: CodeBlock[];
 }
 
 export interface CharacterItem {
@@ -85,7 +89,7 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'go_to_start', label: 'go to start', category: 'motion', blockClass: 'block-motion', icon: <IconArrowBackUp className="w-3.5 h-3.5" /> },
 
   // LOOKS (Purple) - Default step values = 1
-  { type: 'say_hello', label: 'say Hello!', category: 'looks', blockClass: 'block-looks', icon: <IconMessage className="w-3.5 h-3.5" /> },
+  { type: 'say_hello', label: 'say hello!', category: 'looks', blockClass: 'block-looks', icon: <IconMessage className="w-3.5 h-3.5" /> },
   { type: 'say_step', label: 'say 1 step', category: 'looks', blockClass: 'block-looks', stepValue: 1, icon: <IconMessage className="w-3.5 h-3.5" /> },
   { type: 'hide', label: 'hide character', category: 'looks', blockClass: 'block-looks', icon: <IconSparkles className="w-3.5 h-3.5" /> },
   { type: 'show', label: 'show character', category: 'looks', blockClass: 'block-looks', icon: <IconSparkles className="w-3.5 h-3.5" /> },
@@ -145,10 +149,10 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   const setActiveCategory = onSelectCategory || setInternalCategory;
 
   const [internalProgram, setInternalProgram] = useState<CodeBlock[]>([
+    { instanceId: 'default-when-clicked', type: 'when_flag_clicked', label: 'when play clicked', category: 'events', blockClass: 'block-events' },
     { instanceId: 'default-1', type: 'move_forward', label: 'move forward', category: 'motion', blockClass: 'block-motion', stepValue: 1 },
-    { instanceId: 'default-2', type: 'turn_right', label: 'if touching path', category: 'events', blockClass: 'block-events' },
-    { instanceId: 'default-3', type: 'say_hello', label: 'say 1 step', category: 'looks', blockClass: 'block-looks', stepValue: 1 },
-    { instanceId: 'default-4', type: 'repeat', label: 'repeat 1 time', category: 'control', blockClass: 'block-control', repeatCount: 1 },
+    { instanceId: 'default-2', type: 'say_hello', label: 'say 1 step', category: 'looks', blockClass: 'block-looks', stepValue: 1 },
+    { instanceId: 'default-3', type: 'repeat', label: 'repeat 1 time', category: 'control', blockClass: 'block-control', repeatCount: 1 },
   ]);
 
   const program = externalProgram || internalProgram;
@@ -156,7 +160,17 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
+  const [paletteZoomScale, setPaletteZoomScale] = useState<number>(1);
+  const [codeStackZoomScale, setCodeStackZoomScale] = useState<number>(1);
   const [modalSize, setModalSize] = useState({ width: 520, height: 520 });
+
+  // On load, default height fills screen up to slightly below score bar (~120px clearance offset)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const calculatedHeight = Math.max(340, window.innerHeight - 120);
+      setModalSize(prev => ({ ...prev, height: calculatedHeight }));
+    }
+  }, []);
   const [isDraggingOver, setIsDraggingOver] = useState(false);
 
   // Adjustable Dividing Point Percentages
@@ -289,6 +303,51 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
     setProgram(prev => prev.filter((_, i) => i !== index));
   };
 
+  const handleAddChildToLoop = (parentInstanceId: string, blockDef: any) => {
+    soundManager.playSnap();
+    const newChild: CodeBlock = {
+      ...blockDef,
+      instanceId: `nested-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    };
+    setProgram(prev => prev.map(b => {
+      if (b.instanceId === parentInstanceId) {
+        return { ...b, children: [...(b.children || []), newChild] };
+      }
+      return b;
+    }));
+  };
+
+  const handleRemoveChildFromLoop = (parentInstanceId: string, childIndex: number) => {
+    soundManager.playClick();
+    setProgram(prev => prev.map(b => {
+      if (b.instanceId === parentInstanceId) {
+        return { ...b, children: (b.children || []).filter((_, i) => i !== childIndex) };
+      }
+      return b;
+    }));
+  };
+
+  const handleReorderChildren = (parentInstanceId: string, newChildren: CodeBlock[]) => {
+    setProgram(prev => prev.map(b => {
+      if (b.instanceId === parentInstanceId) {
+        return { ...b, children: newChildren };
+      }
+      return b;
+    }));
+  };
+
+  const handleUpdateNestedStepValue = (parentInstanceId: string, childInstanceId: string, val: number) => {
+    setProgram(prev => prev.map(b => {
+      if (b.instanceId === parentInstanceId) {
+        return {
+          ...b,
+          children: (b.children || []).map(c => c.instanceId === childInstanceId ? { ...c, stepValue: val } : c)
+        };
+      }
+      return b;
+    }));
+  };
+
   return (
     <motion.div 
       drag
@@ -344,6 +403,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
         <div className="flex items-center space-x-1.5" onClick={(e) => isCollapsed && e.stopPropagation()}>
           {!isCollapsed && (
+            /* Speed Controls Pill */
             <div 
               onClick={(e) => e.stopPropagation()} 
               className="flex items-center space-x-1 bg-white/70 p-1 rounded-full border border-slate-300/80 shadow-sm"
@@ -391,87 +451,153 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             style={{ height: `${topSectionPercent}%` }} 
             className="w-full flex items-stretch gap-2 flex-shrink-0 min-h-[90px] relative"
           >
-            {/* Heroes Selector Column */}
+            {/* Heroes & Categories Selector Column */}
             <div 
               style={{ width: `${heroesPercent}%` }}
-              className="flex flex-col space-y-1.5 h-full overflow-y-auto pr-1 flex-shrink-0"
+              className="flex flex-col space-y-3 h-full overflow-y-auto pl-2 pr-1 flex-shrink-0"
             >
-              <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest px-1">HEROES</span>
-              {characterList.map((char) => {
-                const isSelected = selectedCharacter === char.id;
-                return (
-                  <div
-                    key={char.id}
-                    onClick={() => { soundManager.playClick(); onSelectCharacter(char.id); }}
-                    className="cursor-pointer transition flex items-center shrink-0 w-fit max-w-full self-start py-1 space-x-1.5"
-                  >
-                    <div className="w-6 h-6 relative flex-shrink-0">
-                      <Image src={char.avatar} alt={char.name} fill className="object-contain" />
-                    </div>
-                    <span className="text-[11px] font-semibold text-slate-900 truncate">{char.name}</span>
-                    {isSelected && (
-                      <div className="w-4 h-4 relative flex-shrink-0 ml-2">
-                        <Image src="/maze_finish.svg" alt="Selected" fill className="object-contain" />
+              {/* Heroes Sub-section */}
+              <div className="flex flex-col space-y-1.5">
+                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest px-1">HEROES</span>
+                {characterList.map((char) => {
+                  const isSelected = selectedCharacter === char.id;
+                  return (
+                    <div
+                      key={char.id}
+                      onClick={() => { soundManager.playClick(); onSelectCharacter(char.id); }}
+                      className="cursor-pointer transition flex items-center shrink-0 w-fit max-w-full self-start py-1 space-x-1.5"
+                    >
+                      <div className="w-6 h-6 relative flex-shrink-0">
+                        <Image src={char.avatar} alt={char.name} fill className="object-contain" />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      <span className="text-[11px] font-semibold text-slate-900 truncate">{char.name}</span>
+                      {isSelected && (
+                        <div className="w-4 h-4 relative flex-shrink-0 ml-2">
+                          <Image src="/maze_finish.svg" alt="Selected" fill className="object-contain" />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Categories Sub-section Under Heroes */}
+              <div className="flex flex-col space-y-1.5 pt-2 border-t border-slate-900/10 w-full">
+                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest px-1">CATEGORIES</span>
+                <div className="flex flex-wrap gap-1.5 w-full">
+                  {categoryTabs.map((tab) => {
+                    const isSelected = activeCategory === tab.id || (activeCategory === 'controls' && tab.id === 'control');
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => {
+                          soundManager.playClick();
+                          setActiveCategory(tab.id);
+                        }}
+                        className={`w-fit px-2.5 py-1 rounded-full text-[10px] font-black transition text-center whitespace-normal break-words leading-tight border shadow-sm ${
+                          isSelected
+                            ? 'ring-2 ring-amber-400 scale-105 border-white shadow-md'
+                            : 'opacity-75 hover:opacity-100 border-transparent'
+                        } ${tab.color}`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
 
             {/* Draggable Horizontal Splitter */}
             <div
               onPointerDown={handleHorizontalSplitPointerDown}
               className="w-2.5 h-full cursor-col-resize bg-slate-300/60 hover:bg-amber-400 rounded-full flex items-center justify-center transition flex-shrink-0 select-none shadow-sm"
-              title="Drag horizontally to adjust Heroes vs Palette split width"
+              title="Drag horizontally to adjust Heroes & Categories vs Palette split width"
             >
               <IconGripVertical className="w-3 h-3 text-slate-700 opacity-70 pointer-events-none" />
             </div>
 
-            {/* Block Palette Column with Category Filter Tabs */}
+            {/* Block Palette Column */}
             <div className="flex-1 flex flex-col space-y-1.5 h-full overflow-hidden">
               <div className="flex items-center justify-between px-1">
-                <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest">
-                  PALETTE ({activeCategory.toUpperCase()})
+                <span className="text-[10px] font-black text-slate-900 lowercase tracking-widest">
+                  palette ({activeCategory.toLowerCase()})
                 </span>
-
-                {/* Category Pill Filters */}
-                <div className="flex items-center space-x-1 overflow-x-auto no-scrollbar py-0.5">
-                  {categoryTabs.map((tab) => (
-                    <button
-                      key={tab.id}
-                      onClick={() => {
-                        soundManager.playClick();
-                        setActiveCategory(tab.id);
-                      }}
-                      className={`px-1.5 py-0.5 rounded-full text-[9px] font-black transition whitespace-nowrap border ${
-                        activeCategory === tab.id || (activeCategory === 'controls' && tab.id === 'control')
-                          ? 'ring-2 ring-amber-400 scale-105 border-white shadow-sm'
-                          : 'opacity-70 hover:opacity-100 border-transparent'
-                      } ${tab.color}`}
-                    >
-                      {tab.label}
-                    </button>
-                  ))}
-                </div>
               </div>
 
-              <div className="flex flex-wrap items-start content-start gap-2 p-2.5 bg-white/50 rounded-2xl border border-slate-300/80 h-full overflow-y-auto w-full shadow-inner">
-                {filteredPalette.map((block) => (
-                  <div
-                    key={block.type}
-                    draggable={true}
-                    onDragStart={(e) => {
-                      e.dataTransfer.setData('application/json', JSON.stringify(block));
-                      e.dataTransfer.effectAllowed = 'copy';
-                    }}
-                    onClick={(e) => handleAddBlock(block, e as any)}
-                    className="cursor-grab active:cursor-grabbing hover:scale-105 transition shrink-0"
-                    title="Click or drag to drop in code stack"
-                  >
-                    <ScratchBlockComponent block={block} index={0} isPalette={true} />
+              <div className="bg-white/50 rounded-2xl border border-slate-300/80 h-full overflow-y-auto w-full shadow-inner p-2 relative flex flex-col justify-between">
+                <div 
+                  style={{
+                    transform: `scale(${paletteZoomScale})`,
+                    transformOrigin: 'top left',
+                    width: `${100 / Math.max(0.1, paletteZoomScale)}%`,
+                  }}
+                  className="flex flex-wrap items-start content-start gap-2 transition-transform duration-150 ease-out"
+                >
+                  {filteredPalette.map((block) => {
+                    const isLoop = block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then';
+
+                    return (
+                      <div
+                        key={block.type}
+                        draggable={true}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData('application/json', JSON.stringify(block));
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                        onClick={(e) => handleAddBlock(block, e as any)}
+                        className="cursor-grab active:cursor-grabbing hover:brightness-105 transition-all shrink-0"
+                        title="Click or drag to drop in code stack"
+                      >
+                        {isLoop ? (
+                          <PureCSSLoopBlock 
+                            type={block.type}
+                            label={block.label}
+                            repeatCount={block.repeatCount ?? 1}
+                            isPalette={true}
+                          />
+                        ) : (
+                          <PureCSSBlock 
+                            category={block.category}
+                            type={block.type} 
+                            label={block.label} 
+                            stepValue={block.stepValue}
+                            isPalette={true} 
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Floating Palette Zoom Controls */}
+                <div className="sticky bottom-0 right-0 ml-auto pt-1 z-30 pointer-events-auto shrink-0">
+                  <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-slate-300 shadow-md">
+                    <button
+                      onClick={() => { soundManager.playClick(); setPaletteZoomScale(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100)); }}
+                      disabled={paletteZoomScale <= 0.5}
+                      className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+                      title="Zoom Out Palette (-15%)"
+                    >
+                      <IconZoomOut className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      onClick={() => { soundManager.playClick(); setPaletteZoomScale(1); }}
+                      className="px-1 text-[10px] font-mono font-black text-slate-800 hover:text-amber-600 transition cursor-pointer"
+                      title="Reset Palette Zoom (100%)"
+                    >
+                      {Math.round(paletteZoomScale * 100)}%
+                    </button>
+                    <button
+                      onClick={() => { soundManager.playClick(); setPaletteZoomScale(z => Math.min(1.75, Math.round((z + 0.15) * 100) / 100)); }}
+                      disabled={paletteZoomScale >= 1.75}
+                      className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+                      title="Zoom In Palette (+15%)"
+                    >
+                      <IconZoomIn className="w-3.5 h-3.5" />
+                    </button>
                   </div>
-                ))}
+                </div>
               </div>
             </div>
           </div>
@@ -520,140 +646,158 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             }`}
           >
             
-            {/* Reorderable Interlocking Code Blocks */}
-            <Reorder.Group axis="y" values={program} onReorder={setProgram} className="w-full flex flex-col space-y-2">
-              <AnimatePresence>
-                {program.map((block, index) => {
-                  const isActive = activeStepIndex === index;
+            {/* Zoomable Container Wrapper */}
+            <div
+              style={{
+                transform: `scale(${codeStackZoomScale})`,
+                transformOrigin: 'top left',
+                width: `${100 / Math.max(0.1, codeStackZoomScale)}%`,
+              }}
+              className="transition-transform duration-150 ease-out flex-1 w-full"
+            >
+              {/* Reorderable Code Blocks with 2px vertical spacing padding & left baseline anchoring */}
+              <Reorder.Group axis="y" values={program} onReorder={setProgram} className="w-full flex flex-col space-y-[2px] items-start">
+                <AnimatePresence>
+                  {program.map((block, index) => {
+                    const isActive = activeStepIndex === index;
 
-                  if (block.type === 'when_flag_clicked') {
-                    return (
-                      <Reorder.Item key={block.instanceId} value={block} className="w-full flex items-center">
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          ref={(el) => { if (el) animateBlockSnap(el); }}
-                          className={`px-3.5 py-1.5 h-8 max-h-8 shrink-0 w-fit max-w-fit self-start rounded-full block-events text-slate-950 font-black text-xs shadow flex items-center space-x-2 border border-amber-600/40 select-none group ${
-                            isActive ? 'ring-4 ring-amber-400 scale-105 z-20 shadow-[0_0_30px_rgba(251,191,36,0.9)]' : ''
-                          }`}
-                        >
-                          <IconGripVertical className="w-3.5 h-3.5 text-amber-900/60 cursor-grab active:cursor-grabbing" />
-                          <span>WHEN</span>
-                          <div className="w-7 h-7 relative flex items-center justify-center shrink-0 filter drop-shadow scale-110">
-                            <Image src="/play.svg" alt="play" fill className="object-contain" />
-                          </div>
-                          <span>CLICKED</span>
+                    if (block.type === 'when_flag_clicked') {
+                      return (
+                        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+                          <motion.div
+                            layout
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="cursor-grab active:cursor-grabbing shrink-0"
+                          >
+                            <PureCSSBlock 
+                              category="events"
+                              type={block.type}
+                              label={block.label}
+                              isActive={isActive}
+                              isPalette={false}
+                              onRemove={program.length > 1 ? () => handleRemoveBlock(index) : undefined}
+                            />
+                          </motion.div>
+                        </Reorder.Item>
+                      );
+                    }
 
-                          {program.length > 1 && (
-                            <button
-                              onClick={() => handleRemoveBlock(index)}
-                              className="opacity-70 group-hover:opacity-100 hover:text-red-600 transition pl-1"
-                              title="Remove block"
+                    // C-BLOCK EXPANDABLE BRACKETS FOR REPEAT & CONTROL LOOPS
+                    if (block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then') {
+                      return (
+                        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+                          <motion.div
+                            layout
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            className="cursor-grab active:cursor-grabbing shrink-0"
+                          >
+                            <PureCSSLoopBlock 
+                              type={block.type}
+                              label={block.label}
+                              repeatCount={block.repeatCount ?? 1}
+                              isActive={isActive}
+                              isPalette={false}
+                              onRemove={() => handleRemoveBlock(index)}
+                              onRepeatCountChange={(val) => handleUpdateRepeatCount(block.instanceId, val)}
+                              onAddChild={(blockDef) => handleAddChildToLoop(block.instanceId, blockDef)}
                             >
-                              <IconTrash className="w-3.5 h-3.5" />
-                            </button>
-                          )}
-                        </motion.div>
-                      </Reorder.Item>
-                    );
-                  }
-
-                  // C-BLOCK EXPANDABLE BRACKETS FOR REPEAT & CONTROL LOOPS
-                  if (block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then') {
-                    return (
-                      <Reorder.Item key={block.instanceId} value={block} className="w-full flex items-center">
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          ref={(el) => { if (el) animateBlockSnap(el); }}
-                          className={`w-full flex flex-col rounded-2xl overflow-hidden shadow-lg border-2 border-amber-600/80 bg-amber-950/40 transition group select-none ${
-                            isActive ? 'ring-4 ring-amber-400 scale-102 z-20 shadow-[0_0_30px_rgba(251,191,36,0.9)]' : ''
-                          }`}
-                        >
-                          {/* Top C-Block Header Bar */}
-                          <div className="px-3.5 py-1.5 bg-gradient-to-r from-amber-600 via-amber-600 to-amber-700 text-white font-black text-xs flex items-center justify-between shadow-sm border-b border-amber-400/30">
-                            <div className="flex items-center space-x-2">
-                              <IconGripVertical className="w-4 h-4 text-amber-200/80 cursor-grab active:cursor-grabbing shrink-0" />
-                              <span className="text-[10px] bg-black/40 px-2 py-0.2 rounded-full font-mono text-white">
-                                #{index + 1}
-                              </span>
-                              <IconRepeat className="w-4 h-4 text-amber-200" />
-                              <span>{block.type === 'repeat' ? 'REPEAT' : block.type === 'forever' ? 'FOREVER' : 'IF PATH'}</span>
-                              {block.type === 'repeat' && (
-                                <div className="flex items-center space-x-1">
-                                  <input
-                                    type="number"
-                                    min={1}
-                                    max={99}
-                                    value={block.repeatCount ?? 2}
-                                    onChange={(e) => handleUpdateRepeatCount(block.instanceId, parseInt(e.target.value) || 1)}
-                                    className="w-10 px-1 py-0.2 rounded-full bg-black/50 text-amber-300 font-mono text-center border border-amber-300/50 font-black text-xs outline-none focus:ring-2 focus:ring-amber-400"
-                                  />
-                                  <span className="text-[10px] text-amber-100 font-bold uppercase">TIMES</span>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center space-x-2">
-                              <button
-                                onClick={() => handleRemoveBlock(index)}
-                                className="opacity-80 group-hover:opacity-100 hover:text-red-300 transition"
-                                title="Remove block"
+                              <Reorder.Group 
+                                axis="y" 
+                                values={block.children || []} 
+                                onReorder={(newChildren) => handleReorderChildren(block.instanceId, newChildren)}
+                                className="w-full flex flex-col space-y-[2px] items-start"
                               >
-                                <IconTrash className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
-                          </div>
+                                <AnimatePresence>
+                                  {(block.children || []).map((child, childIdx) => (
+                                    <Reorder.Item key={child.instanceId} value={child} layout className="w-fit flex items-start">
+                                      <motion.div
+                                        layout
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        className="cursor-grab active:cursor-grabbing shrink-0"
+                                      >
+                                        <PureCSSBlock 
+                                          category={child.category}
+                                          type={child.type}
+                                          label={child.label}
+                                          stepValue={child.stepValue}
+                                          isActive={false}
+                                          isPalette={false}
+                                          onRemove={() => handleRemoveChildFromLoop(block.instanceId, childIdx)}
+                                          onStepValueChange={(val) => handleUpdateNestedStepValue(block.instanceId, child.instanceId, val)}
+                                        />
+                                      </motion.div>
+                                    </Reorder.Item>
+                                  ))}
+                                </AnimatePresence>
+                              </Reorder.Group>
+                            </PureCSSLoopBlock>
+                          </motion.div>
+                        </Reorder.Item>
+                      );
+                    }
 
-                          {/* Expandable Inner Bracket Spine & Container Area */}
-                          <div className="border-l-8 border-amber-600/90 pl-3 pr-2 py-2.5 bg-amber-500/10 min-h-[48px] flex flex-col justify-center space-y-1.5 relative">
-                            <div className="text-[10px] font-extrabold text-amber-200/90 tracking-wide flex items-center space-x-1.5 bg-amber-900/40 px-2.5 py-1 rounded-lg border border-amber-500/30 w-fit">
-                              <IconCornerUpRight className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                              <span>Nested Action Bracket (Enclosed steps repeat {block.repeatCount ?? 2}x)</span>
-                            </div>
-                          </div>
-
-                          {/* Bottom C-Block Bracket Footer */}
-                          <div className="px-3.5 py-1 bg-amber-800/90 text-amber-100 font-black text-[10px] uppercase tracking-wider flex items-center justify-between border-t border-amber-500/30">
-                            <span className="flex items-center space-x-1">
-                              <span>┗ END LOOP BRACKET</span>
-                            </span>
-                            <div className="w-2 h-2 rounded-full bg-amber-400 shadow-sm animate-pulse" />
-                          </div>
+                    // ALL OTHER INSTRUCTION BLOCKS (MOTION, LOOKS, SOUND, EVENTS, VARS, HTML)
+                    return (
+                      <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+                        <motion.div
+                          layout
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.9 }}
+                          className="cursor-grab active:cursor-grabbing shrink-0"
+                        >
+                          <PureCSSBlock 
+                            category={block.category}
+                            type={block.type}
+                            label={block.label}
+                            stepValue={block.stepValue}
+                            isActive={isActive}
+                            isPalette={false}
+                            onRemove={() => handleRemoveBlock(index)}
+                            onStepValueChange={(val) => handleUpdateStepValue(block.instanceId, val)}
+                          />
                         </motion.div>
                       </Reorder.Item>
                     );
-                  }
+                  })}
+                </AnimatePresence>
+              </Reorder.Group>
+            </div>
 
-                  const isLastBlock = index === program.length - 1;
-
-                  return (
-                    <Reorder.Item key={block.instanceId} value={block} className="w-full flex items-center">
-                      <motion.div
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.9 }}
-                        ref={(el) => { if (el) animateBlockSnap(el); }}
-                        className="cursor-grab active:cursor-grabbing shrink-0"
-                      >
-                        <ScratchBlockComponent
-                          block={block}
-                          index={index}
-                          isLast={isLastBlock}
-                          isActive={isActive}
-                          isPalette={false}
-                          onRemove={() => handleRemoveBlock(index)}
-                          onStepValueChange={(val) => handleUpdateStepValue(block.instanceId, val)}
-                          onRepeatCountChange={(val) => handleUpdateRepeatCount(block.instanceId, val)}
-                        />
-                      </motion.div>
-                    </Reorder.Item>
-                  );
-                })}
-              </AnimatePresence>
-            </Reorder.Group>
+            {/* Floating Code Stack Zoom Control Widget at bottom-right of stack dropzone */}
+            <div className="sticky bottom-0 right-0 ml-auto pt-1 z-30 pointer-events-auto shrink-0">
+              <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-slate-300 shadow-md">
+                <button
+                  onClick={() => { soundManager.playClick(); setCodeStackZoomScale(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100)); }}
+                  disabled={codeStackZoomScale <= 0.5}
+                  className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+                  title="Zoom Out Code Stack (-15%)"
+                >
+                  <IconZoomOut className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => { soundManager.playClick(); setCodeStackZoomScale(1); }}
+                  className="px-1 text-[10px] font-mono font-black text-slate-800 hover:text-amber-600 transition cursor-pointer"
+                  title="Reset Code Stack Zoom (100%)"
+                >
+                  {Math.round(codeStackZoomScale * 100)}%
+                </button>
+                <button
+                  onClick={() => { soundManager.playClick(); setCodeStackZoomScale(z => Math.min(1.75, Math.round((z + 0.15) * 100) / 100)); }}
+                  disabled={codeStackZoomScale >= 1.75}
+                  className="p-1 rounded-full text-slate-700 hover:text-slate-950 hover:bg-amber-400/50 disabled:opacity-30 transition cursor-pointer"
+                  title="Zoom In Code Stack (+15%)"
+                >
+                  <IconZoomIn className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
 
           </div>
 

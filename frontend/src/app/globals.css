@@ -38,6 +38,17 @@
 }
 
 @layer base {
+  /* Hide browser number input increment/decrement arrows */
+  input[type="number"]::-webkit-inner-spin-button,
+  input[type="number"]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type="number"] {
+    -moz-appearance: textfield;
+    appearance: textfield;
+  }
+
   :root {
     --bg-dark: #0d0906;
     --accent-red: #ff2a2a;
