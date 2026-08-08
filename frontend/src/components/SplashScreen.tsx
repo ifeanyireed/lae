@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { soundManager } from '@/utils/sound';
+import { getCdnUrl } from '@/utils/cdn';
 
 interface SplashScreenProps {
   onStartGame: () => void;
@@ -81,7 +82,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
       {/* Blurred Full Maze Background Image */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/full_maze.jpeg"
+          src={getCdnUrl('/full_maze.jpeg')}
           alt="Full Maze Background"
           fill
           className="object-cover object-center filter brightness-90 contrast-110 blur-xl scale-105 opacity-60"

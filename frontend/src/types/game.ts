@@ -60,6 +60,7 @@ export interface AdventureConfig {
   icon: string;
   story: string;
   learningObjective: string;
+  project?: string;
   totalLevels: number;
   levels: LevelConfig[];
 }
@@ -69,5 +70,7 @@ export interface WorldConfig {
   slug: string;
   name: string;
   description: string;
+  language?: string;
+  theme?: string;
   adventures: AdventureConfig[];
 }

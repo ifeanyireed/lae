@@ -937,7 +937,7 @@ export default function Home() {
       {/* Background Image */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         <Image 
-          src="/full_maze.jpeg" 
+          src={getCdnUrl('/full_maze.jpeg')} 
           alt="Full Maze Background" 
           fill 
           className="object-cover object-center filter brightness-95 contrast-105 blur-lg scale-105 opacity-80"
