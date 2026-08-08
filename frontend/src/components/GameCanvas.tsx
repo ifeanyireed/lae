@@ -18,6 +18,7 @@ import { LevelConfig, PathWaypoint } from '@/types/game';
 import { BoardCharacterSprite } from '@/components/BoardCharacterSprite';
 import { soundManager } from '@/utils/sound';
 import { GAME_ENGINE_API_URL } from '@/utils/api';
+import { getCdnUrl, preloadNextLevelImage } from '@/utils/cdn';
 
 interface GameCanvasProps {
   level: LevelConfig;
@@ -124,6 +125,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Interactive Zoom State: Clamped strictly between 1.0x (100% fully stretched) and 3.0x (300%)
   const [zoomLevel, setZoomLevel] = useState<number>(1.0);
+
+  // Preload next level stage background image in advance
+  React.useEffect(() => {
+    const advId = level.adventureId || 1;
+    const currentNum = level.levelNumber || level.id || 1;
+    preloadNextLevelImage(advId, currentNum + 1);
+  }, [level.adventureId, level.levelNumber, level.id]);
+
+  const rawBgPath = level.bgImage || `/Adventure ${level.adventureId || 1} - Level ${level.levelNumber || level.id || 1}.svg`;
+  const bgCdnUrl = getCdnUrl(rawBgPath);
 
   // Detached Floating Figma Track Mapper Modal State
   const [calibrationMode, setCalibrationMode] = useState(false);
@@ -447,7 +458,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         >
           {/* Dynamic Level-Specific SVG / JPEG Background Artwork */}
           <Image 
-            src={level.bgImage || `/Adventure ${level.adventureId || 1} - Level ${level.levelNumber || level.id || 1}.svg`} 
+            src={bgCdnUrl} 
             alt={level.title || "Level Maze Artwork"} 
             fill 
             unoptimized

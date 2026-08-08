@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cdn:deploy": "python3 ../scripts/upload_to_cdn.py"
   },
   "dependencies": {
     "@tabler/icons-react": "^3.46.0",
