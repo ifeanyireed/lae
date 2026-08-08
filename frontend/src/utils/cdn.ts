@@ -1,7 +1,7 @@
-export const CDN_BASE_URL = (process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.resultspro.ng/assets').replace(/\/+$/, '');
+export const CDN_BASE_URL = (process.env.NEXT_PUBLIC_CDN_URL || '').replace(/\/+$/, '');
 
 /**
- * Returns full URL for an asset, appending CDN_BASE_URL for background & heavy assets
+ * Returns full URL for an asset, appending CDN_BASE_URL if configured, or local path
  */
 export function getCdnUrl(assetPath: string): string {
   if (!assetPath) return '';
@@ -9,7 +9,7 @@ export function getCdnUrl(assetPath: string): string {
     return assetPath;
   }
   const cleanPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
-  return `${CDN_BASE_URL}${encodeURI(cleanPath)}`;
+  return CDN_BASE_URL ? `${CDN_BASE_URL}${encodeURI(cleanPath)}` : cleanPath;
 }
 
 /**
