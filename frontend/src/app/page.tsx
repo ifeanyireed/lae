@@ -1169,47 +1169,50 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Map Title Header */}
+              {/* Temporary Left Floating Vertical Sidebar: Admin World Selector */}
+              {userContext.role === 'admin' && selectedAdventureId === null && (
+                <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col space-y-2 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-slate-300 shadow-2xl items-center pointer-events-auto">
+                  <span className="text-[10px] font-black text-slate-950 px-1 font-mono uppercase tracking-wider text-center max-w-[80px] leading-tight">
+                    Admin Worlds
+                  </span>
+                  <div className="w-full h-px bg-slate-300 my-1" />
+                  {ALL_WORLDS.map((w) => (
+                    <button
+                      key={`map-page-world-${w.id}`}
+                      onClick={() => {
+                        soundManager.playClick();
+                        setSelectedWorldId(w.id);
+                      }}
+                      className={`w-full px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 shadow-sm text-center ${
+                        selectedWorldId === w.id
+                          ? 'bg-amber-400 text-slate-950 border border-amber-600 ring-2 ring-amber-500 scale-105'
+                          : 'bg-white/90 text-slate-950 border border-slate-300 hover:bg-amber-400'
+                      }`}
+                    >
+                      World {w.id}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Sticky Map Title Header */}
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center mt-8 sm:mt-6 mb-3 px-4 flex flex-col items-center"
+                className="sticky top-0 z-30 w-full text-center pt-16 sm:pt-24 pb-4 px-4 flex flex-col items-center bg-transparent"
               >
                 {selectedAdventureId === null ? (
                   <>
                     <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-                      Adventures
+                      {currentWorld.name}
                     </h1>
                     <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
-                      Select an Adventure to explore its 12 coding missions!
+                      {currentWorld.description}
                     </p>
-
-                    {/* Admin World Selector Toggle Bar */}
-                    {userContext.role === 'admin' && (
-                      <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mt-3 z-30 overflow-x-auto max-w-full">
-                        <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
-                        {ALL_WORLDS.map((w) => (
-                          <button
-                            key={`map-page-world-${w.id}`}
-                            onClick={() => {
-                              soundManager.playClick();
-                              setSelectedWorldId(w.id);
-                            }}
-                            className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
-                              selectedWorldId === w.id
-                                ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
-                                : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
-                            }`}
-                          >
-                            World {w.id}
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </>
                 ) : (
                   (() => {
-                    const currAdv = ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
+                    const currAdv = currentWorld.adventures.find(a => a.id === selectedAdventureId) || currentWorld.adventures[0];
                     return (
                       <>
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
@@ -1239,9 +1242,9 @@ export default function Home() {
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="grid grid-cols-5 gap-2 sm:gap-3 md:gap-4 max-w-6xl w-full py-4 z-20"
+                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl w-full py-6 px-4 z-20"
                 >
-                  {ALL_ADVENTURES.map((adv) => {
+                  {currentWorld.adventures.map((adv) => {
                     const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
                     const isAdvUnlocked = adv.id === 1 || userContext.role === 'admin';
                     const isVibrating = lockedVibrateLevelIndex === adv.id;

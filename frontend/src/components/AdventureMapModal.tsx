@@ -45,7 +45,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   if (!isOpen) return null;
 
   const isAdmin = userRole === 'admin';
-  const currentAdv = ALL_ADVENTURES.find((a) => a.id === selectedAdvId);
+  const currentWorld = ALL_WORLDS.find((w) => w.id === selectedWorldId) || ALL_WORLDS[0];
+  const currentAdv = currentWorld.adventures.find((a) => a.id === selectedAdvId);
 
   return (
     <AnimatePresence>
@@ -77,33 +78,50 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
 
               <div>
                 <h2 className="text-xl sm:text-3xl font-black font-varela text-amber-200 uppercase tracking-tight">
-                  {currentAdv ? currentAdv.title : 'Adventures'}
+                  {currentAdv ? currentAdv.title : currentWorld.name}
                 </h2>
                 <p className="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">
-                  PuzzlePro &bull; {groupName} {isAdmin && <span className="text-emerald-400 font-mono ml-2">(Admin Access Activated)</span>}
+                  {currentAdv ? currentAdv.story : currentWorld.description}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-3">
-              <div className="bg-amber-400 text-slate-950 px-3 py-1 rounded-full border border-amber-600 font-black text-xs shadow-sm flex items-center space-x-1">
-                <span className="text-amber-950">⚡</span>
-                <span>{totalXP} XP</span>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-amber-400 font-bold text-xs uppercase tracking-widest bg-amber-950 px-2.5 py-0.5 rounded-full border border-amber-600/50">
+                  {currentWorld.name}
+                </span>
+                <span className="text-xs text-amber-200 font-mono">
+                  {currentWorld.language} • {currentWorld.theme}
+                </span>
               </div>
-
-              <button
-                onClick={() => { soundManager.playClick(); onClose(); }}
-                className="p-2 rounded-full bg-amber-900/80 hover:bg-amber-800 text-amber-200 hover:text-white transition border border-amber-500/40 cursor-pointer shadow-md"
-              >
-                <X className="w-5 h-5" />
-              </button>
+              <h2 className="text-xl sm:text-2xl font-black text-amber-100 mt-1">
+                {currentAdv ? currentAdv.title : 'Select an Adventure'}
+              </h2>
             </div>
+            <button
+              onClick={() => {
+                soundManager.playClick();
+                if (currentAdv) {
+                  setSelectedAdvId(null);
+                } else {
+                  onClose();
+                }
+              }}
+              className="p-2 rounded-xl bg-amber-900/60 text-amber-200 hover:bg-amber-800 transition cursor-pointer border border-amber-500/40"
+              title="Close or Back"
+            >
+              <X className="w-5 h-5" />
+            </button>
           </div>
 
-          {/* Admin Temporary World Selector Bar */}
+          {/* Admin Temporary World Selector Bar (Left Vertical Sidebar) */}
           {isAdmin && !currentAdv && (
-            <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-500/40 mb-3 z-30 shrink-0 overflow-x-auto">
-              <span className="text-xs font-black text-amber-300 px-2 font-mono uppercase shrink-0">👑 Admin World Selector:</span>
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-40 flex flex-col space-y-2 bg-white/90 backdrop-blur-md p-2 rounded-2xl border border-slate-300 shadow-2xl items-center">
+              <span className="text-[10px] font-black text-slate-950 px-1 font-mono uppercase tracking-wider text-center max-w-[70px] leading-tight">
+                Admin Worlds
+              </span>
+              <div className="w-full h-px bg-slate-300 my-1" />
               {ALL_WORLDS.map((w) => (
                 <button
                   key={`adv-modal-world-${w.id}`}
@@ -111,10 +129,10 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                     soundManager.playClick();
                     setSelectedWorldId(w.id);
                   }}
-                  className={`px-3 py-1 rounded-xl text-xs font-black transition cursor-pointer shrink-0 ${
+                  className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 shadow-sm text-center ${
                     selectedWorldId === w.id
-                      ? 'bg-amber-400 text-slate-950 shadow-md scale-105'
-                      : 'bg-amber-900/60 text-amber-200 hover:bg-amber-800'
+                      ? 'bg-amber-400 text-slate-950 border border-amber-600 ring-2 ring-amber-500 scale-105'
+                      : 'bg-white/90 text-slate-950 border border-slate-300 hover:bg-amber-400'
                   }`}
                 >
                   World {w.id}
@@ -125,8 +143,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
 
           {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY VIEW (Monkeys & Padlocks styling) */}
           {!currentAdv ? (
-            <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-              {ALL_ADVENTURES.map((adv) => {
+            <div className="overflow-y-auto flex-1 pr-1 py-3 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
+              {currentWorld.adventures.map((adv) => {
                 const advMonkeyImg = `/monkey${12 + adv.id}.svg`;
                 const isAdvUnlocked = adv.id === 1 || isAdmin;
                 const isVibrating = lockedVibrateIdx === adv.id;
