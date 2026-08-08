@@ -17,6 +17,11 @@ export interface LevelInfo {
   totalLevels: number;
   adventureTitle: string;
   story: string;
+  worldId?: number;
+  adventureId?: number;
+  worldName?: string;
+  worldLanguage?: string;
+  worldTheme?: string;
 }
 
 interface LevelWelcomeModalProps {
@@ -145,26 +150,29 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
             
             {/* 1. TOP GREEN LEAF RIBBON: PUZZLEPRO */}
             <div className="text-center pt-8 sm:pt-10">
-              <span className="inline-block px-4 py-1 text-xs sm:text-sm font-black font-varela uppercase tracking-tighter text-white">
+              <span className="inline-block px-4 py-1 text-xs sm:text-sm font-black font-varela uppercase tracking-tighter text-white drop-shadow">
                 PUZZLEPRO
               </span>
             </div>
 
-            {/* 2. CENTER WOODEN BOARD: Level Title ("Power Up") & Mechanics */}
-            <div className="text-center my-auto pt-6 sm:pt-10 mt-2 sm:mt-3 space-y-2 max-w-[68%] sm:max-w-[62%] mx-auto flex flex-col items-center justify-center">
-              <h1 className="font-black font-varela uppercase tracking-tighter text-white text-2xl sm:text-3xl md:text-4xl leading-[0.88] drop-shadow-md break-words text-balance px-2 pt-3 sm:pt-5">
+            {/* 2. CENTER WOODEN BOARD: Level Title & Mechanics */}
+            <div className="text-center my-auto pt-4 sm:pt-6 space-y-1.5 max-w-[70%] sm:max-w-[65%] mx-auto flex flex-col items-center justify-center">
+              <h1 className="font-black font-varela uppercase tracking-tighter text-white text-xl sm:text-2xl md:text-3xl leading-[0.9] drop-shadow-md break-words text-balance px-2 pt-1 sm:pt-3">
                 {levelInfo.title}
               </h1>
 
-              {/* LOWER WOODEN RIBBON AREA: Dynamic Level Mechanic */}
-              <div className="pt-1">
-                <span className="font-black font-varela uppercase tracking-tighter text-white text-xs sm:text-sm md:text-base drop-shadow-md">
-                  {levelInfo.mechanic || 'BASIC MOVEMENT'}
+              {/* LOWER WOODEN RIBBON AREA: Dynamic Level Mechanic & Adventure Title */}
+              <div className="pt-1 flex flex-col items-center">
+                <span className="font-black font-varela uppercase tracking-tighter text-amber-200 text-[10px] sm:text-xs drop-shadow-md">
+                  {levelInfo.adventureTitle}
+                </span>
+                <span className="font-black font-varela uppercase tracking-tighter text-white text-xs sm:text-sm drop-shadow-md mt-0.5">
+                  {levelInfo.mechanic || 'INTERACTIVE MISSION'}
                 </span>
               </div>
             </div>
 
-            {/* 3. BOTTOM GRASS BASE: Zooming Map.svg Button */}
+            {/* 3. BOTTOM GRASS BASE: Zooming Quest Button */}
             <div className="pt-1 pb-2 text-center max-w-xs mx-auto w-full flex justify-center">
               <motion.button
                 animate={{
@@ -188,10 +196,10 @@ export const LevelWelcomeModal: React.FC<LevelWelcomeModalProps> = ({
 
           </div>
 
-          {/* LOCKED LOWER LEVEL 1 TEXT: Absolute fixed position sitting cleanly on lower ribbon */}
+          {/* LOWER LEVEL INDICATOR */}
           <div className="absolute bottom-[120px] sm:bottom-[136px] left-0 right-0 text-center z-20 pointer-events-none">
-            <span className="font-black font-varela uppercase tracking-tighter text-white text-sm sm:text-base drop-shadow-md">
-              LEVEL {levelInfo.levelNumber}
+            <span className="font-black font-varela uppercase tracking-tighter text-white text-xs sm:text-sm md:text-base drop-shadow-md">
+              {levelInfo.worldId || 1} . {levelInfo.adventureId || 1} . {levelInfo.levelNumber}
             </span>
           </div>
         </motion.div>

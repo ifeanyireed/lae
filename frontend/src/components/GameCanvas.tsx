@@ -25,8 +25,21 @@ import { soundManager } from '@/utils/sound';
 import { GAME_ENGINE_API_URL } from '@/utils/api';
 import { getCdnUrl, preloadNextLevelImage } from '@/utils/cdn';
 
+const HTML_BLOCK_CONFIGS: Record<string, { color: string; label: string; border: string }> = {
+  doctype: { color: '#7E22CE', label: '<!doctype html>', border: '#6B21A8' },
+  doctype_html: { color: '#7E22CE', label: '<!doctype html>', border: '#6B21A8' },
+  html: { color: '#2563EB', label: '<html>', border: '#1D4ED8' },
+  html_tag: { color: '#2563EB', label: '<html>', border: '#1D4ED8' },
+  head: { color: '#FF9100', label: '<head>', border: '#E65100' },
+  head_tag: { color: '#FF9100', label: '<head>', border: '#E65100' },
+  title: { color: '#E91E63', label: '<title>', border: '#C2185B' },
+  title_tag: { color: '#E91E63', label: '<title>', border: '#C2185B' },
+};
+
 interface GameCanvasProps {
   level: LevelConfig;
+  selectedWorldId?: number;
+  selectedAdventureId?: number;
   currentWaypointIndex: number;
   currentHeading?: 'N' | 'E' | 'S' | 'W';
   facingSegmentIndex?: number;
@@ -46,6 +59,8 @@ interface GameCanvasProps {
 
 export const GameCanvas: React.FC<GameCanvasProps> = ({
   level,
+  selectedWorldId,
+  selectedAdventureId,
   currentWaypointIndex,
   currentHeading,
   facingSegmentIndex,
@@ -133,12 +148,13 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   // Preload next level stage background image in advance
   React.useEffect(() => {
+    const worldId = level.worldId || 1;
     const advId = level.adventureId || 1;
     const currentNum = level.levelNumber || level.id || 1;
-    preloadNextLevelImage(advId, currentNum + 1);
-  }, [level.adventureId, level.levelNumber, level.id]);
+    preloadNextLevelImage(advId, currentNum + 1, worldId);
+  }, [level.worldId, level.adventureId, level.levelNumber, level.id]);
 
-  const rawBgPath = level.bgImage || `/1_${level.adventureId || 1}_${level.levelNumber || level.id || 1}.svg`;
+  const rawBgPath = level.bgImage || `/${level.worldId || 1}_${level.adventureId || 1}_${level.levelNumber || level.id || 1}.svg`;
   const bgCdnUrl = getCdnUrl(rawBgPath);
 
   // Detached Floating Figma Track Mapper Modal State
@@ -321,8 +337,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
     try {
       if (typeof window !== 'undefined') {
         const advId = level.adventureId || 1;
-        localStorage.setItem(`level_waypoints_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
-        localStorage.setItem(`level_waypoints_${level.levelNumber}`, JSON.stringify(liveWaypoints));
+        const worldId = level.worldId || selectedWorldId || 1;
+        localStorage.setItem(`level_waypoints_w${worldId}_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
+        localStorage.setItem(`level_waypoints_world${worldId}_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
       }
     } catch (e) {}
 
@@ -357,9 +374,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         
         {/* World, Adventure & Level Index Flag Badge */}
         <div className="bg-white/90 text-slate-950 px-2 sm:px-3 py-0.5 sm:py-1 rounded-full border border-slate-300 shadow-md font-black text-[9px] sm:text-[11px] flex items-center space-x-1 sm:space-x-1.5 select-none" title="World . Adventure . Level Index">
-          <IconFlag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-slate-950 fill-slate-950 shrink-0 pointer-events-none" />
-          <span className="font-mono font-black tracking-wide text-slate-950">
-            {level.worldId || 1} . {level.adventureId || 1} . {level.levelNumber || level.id || 1}
+          <IconFlag className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-amber-500 fill-amber-500 shrink-0 pointer-events-none" />
+          <span className="font-black font-varela tracking-tighter text-slate-950">
+            {level.worldId || selectedWorldId || 1} . {level.adventureId || selectedAdventureId || 1} . {level.levelNumber || level.id || 1}
           </span>
         </div>
 
@@ -542,7 +559,43 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   </div>
                 )}
 
-                {/* 6. Normal Path Badge - Only visible during Track Mapper calibration */}
+                {/* 7. HTML Block Tiles (doctype html, html, head, title) using /html.svg with assigned block color */}
+                {wp.type && HTML_BLOCK_CONFIGS[wp.type] && (
+                  <motion.div 
+                    animate={{ scale: [1, 1.08, 1] }}
+                    transition={{ repeat: Infinity, duration: 2, ease: 'easeInOut' }}
+                    className="relative flex flex-col items-center justify-center filter drop-shadow-md group"
+                    title={HTML_BLOCK_CONFIGS[wp.type].label}
+                  >
+                    <div className="w-8 h-8 relative flex items-center justify-center">
+                      <div 
+                        className="w-7 h-7 transition-transform group-hover:scale-115"
+                        style={{
+                          backgroundColor: HTML_BLOCK_CONFIGS[wp.type].color,
+                          WebkitMaskImage: 'url(/html.svg)',
+                          maskImage: 'url(/html.svg)',
+                          WebkitMaskSize: 'contain',
+                          maskSize: 'contain',
+                          WebkitMaskRepeat: 'no-repeat',
+                          maskRepeat: 'no-repeat',
+                          WebkitMaskPosition: 'center',
+                          maskPosition: 'center',
+                        }}
+                      />
+                    </div>
+                    <span 
+                      className="text-[8px] font-mono font-black text-white px-1.5 py-0.5 rounded-md shadow-md border whitespace-nowrap -mt-0.5"
+                      style={{ 
+                        backgroundColor: HTML_BLOCK_CONFIGS[wp.type].color, 
+                        borderColor: HTML_BLOCK_CONFIGS[wp.type].border 
+                      }}
+                    >
+                      {HTML_BLOCK_CONFIGS[wp.type].label}
+                    </span>
+                  </motion.div>
+                )}
+
+                {/* 8. Normal Path Badge - Only visible during Track Mapper calibration */}
                 {wp.type === 'normal' && calibrationMode && (
                   <div className="w-6 h-6 rounded-full bg-emerald-400 border-2 border-slate-950 text-slate-950 font-mono font-black text-[10px] flex items-center justify-center shadow-lg">
                     {wp.index + 1}
@@ -745,6 +798,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                         <option value="star">Super Star (Advance +3)</option>
                         <option value="shell">Danger Hazard (Go Back 2)</option>
                         <option value="pit">Maze Pit (Reset to Start)</option>
+                        <optgroup label="HTML Blocks">
+                          <option value="doctype">DOCTYPE HTML (&lt;!doctype html&gt;)</option>
+                          <option value="html_tag">HTML Tag (&lt;html&gt;)</option>
+                          <option value="head_tag">HEAD Tag (&lt;head&gt;)</option>
+                          <option value="title_tag">TITLE Tag (&lt;title&gt;)</option>
+                        </optgroup>
                         <option value="goal">Finish Pipe</option>
                       </select>
 

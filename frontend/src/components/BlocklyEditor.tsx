@@ -10,6 +10,8 @@ import {
   IconSparkles, 
   IconTrash, 
   IconChevronDown, 
+  IconChevronRight,
+  IconChevronLeft,
   IconMaximize, 
   IconGripHorizontal,
   IconGripVertical,
@@ -38,7 +40,7 @@ import {
 import { soundManager } from '@/utils/sound';
 import { animateBlockSnap, animateButtonPress } from '@/utils/gsapAnimations';
 import { PureCSSBlock } from './PureCSSBlock';
-import { PureCSSLoopBlock } from './PureCSSLoopBlock';
+import { PureCSSLoopBlock, isLoopBlockType } from './PureCSSLoopBlock';
 
 export interface CodeBlock {
   instanceId: string;
@@ -48,6 +50,7 @@ export interface CodeBlock {
   blockClass: string;
   stepValue?: number;
   repeatCount?: number;
+  textValue?: string;
   icon?: React.ReactNode;
   children?: CodeBlock[];
 }
@@ -76,6 +79,7 @@ interface BlocklyEditorProps {
   onSelectCategory?: (category: string) => void;
   program?: CodeBlock[];
   setProgram?: React.Dispatch<React.SetStateAction<CodeBlock[]>>;
+  isWorld2?: boolean;
 }
 
 export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
@@ -115,16 +119,17 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'change_variable', label: 'change variable by 1', category: 'vars', blockClass: 'block-vars', stepValue: 1, icon: <IconPuzzle className="w-3.5 h-3.5" /> },
 
   // WORLD 2: HTML PROGRAMMING BLOCKS (Separate Category: 'html', Tabler Icons)
-  { type: 'doctype', label: 'DOCTYPE', category: 'html', blockClass: 'bg-purple-600 text-white border-purple-800 font-bold', icon: <IconFileCode className="w-3.5 h-3.5" /> },
-  { type: 'html_tag', label: 'HTML', category: 'html', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold', icon: <IconCode className="w-3.5 h-3.5" /> },
-  { type: 'head_tag', label: 'HEAD', category: 'html', blockClass: 'bg-emerald-600 text-white border-emerald-800 font-bold', icon: <IconBrain className="w-3.5 h-3.5" /> },
-  { type: 'title_tag', label: 'TITLE', category: 'html', blockClass: 'bg-amber-500 text-slate-950 border-amber-700 font-bold', icon: <IconTag className="w-3.5 h-3.5" /> },
-  { type: 'body_tag', label: 'BODY', category: 'html', blockClass: 'bg-orange-600 text-white border-orange-800 font-bold', icon: <IconHome className="w-3.5 h-3.5" /> },
-  { type: 'h1_tag', label: 'H1', category: 'html', blockClass: 'bg-rose-600 text-white border-rose-800 font-bold', icon: <IconHeading className="w-3.5 h-3.5" /> },
-  { type: 'p_tag', label: 'P', category: 'html', blockClass: 'bg-green-600 text-white border-green-800 font-bold', icon: <IconTypography className="w-3.5 h-3.5" /> },
-  { type: 'list_tag', label: 'LIST', category: 'html', blockClass: 'bg-cyan-600 text-white border-cyan-800 font-bold', icon: <IconList className="w-3.5 h-3.5" /> },
-  { type: 'link_tag', label: 'LINK', category: 'html', blockClass: 'bg-sky-600 text-white border-sky-800 font-bold', icon: <IconLink className="w-3.5 h-3.5" /> },
-  { type: 'img_tag', label: 'IMAGE', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconPhoto className="w-3.5 h-3.5" /> },
+  { type: 'doctype', label: '<!doctype html>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconFileCode className="w-3.5 h-3.5" /> },
+  { type: 'html_tag', label: '<html>', category: 'html', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold', icon: <IconCode className="w-3.5 h-3.5" /> },
+  { type: 'head_tag', label: '<head>', category: 'html', blockClass: 'bg-[#FF9100] text-white border-[#E65100] font-bold', icon: <IconBrain className="w-3.5 h-3.5" /> },
+  { type: 'text_input', label: 'text', category: 'html', blockClass: 'bg-[#38BDF8] text-slate-950 border-[#0284C7] font-bold', textValue: 'Hello', icon: <IconTypography className="w-3.5 h-3.5" /> },
+  { type: 'title_tag', label: '<title>', category: 'html', blockClass: 'bg-[#E91E63] text-white border-[#C2185B] font-bold', icon: <IconTag className="w-3.5 h-3.5" /> },
+  { type: 'body_tag', label: '<body>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconHome className="w-3.5 h-3.5" /> },
+  { type: 'h1_tag', label: '<h1>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconHeading className="w-3.5 h-3.5" /> },
+  { type: 'p_tag', label: '<p>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconTypography className="w-3.5 h-3.5" /> },
+  { type: 'list_tag', label: '<ul>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconList className="w-3.5 h-3.5" /> },
+  { type: 'link_tag', label: '<a href="...">', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconLink className="w-3.5 h-3.5" /> },
+  { type: 'img_tag', label: '<img src="...">', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconPhoto className="w-3.5 h-3.5" /> },
 ];
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
@@ -141,6 +146,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   onSelectCategory,
   program: externalProgram,
   setProgram: externalSetProgram,
+  isWorld2 = false,
 }) => {
   const dragControls = useDragControls();
 
@@ -150,6 +156,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
   const [internalProgram, setInternalProgram] = useState<CodeBlock[]>([
     { instanceId: 'default-when-clicked', type: 'when_flag_clicked', label: 'when play clicked', category: 'events', blockClass: 'block-events' },
+    { instanceId: 'default-html-hat', type: 'when_html_started', label: 'HTML', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold' },
     { instanceId: 'default-1', type: 'move_forward', label: 'move forward', category: 'motion', blockClass: 'block-motion', stepValue: 1 },
     { instanceId: 'default-2', type: 'say_hello', label: 'say 1 step', category: 'looks', blockClass: 'block-looks', stepValue: 1 },
     { instanceId: 'default-3', type: 'repeat', label: 'repeat 1 time', category: 'control', blockClass: 'block-control', repeatCount: 1 },
@@ -159,10 +166,24 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   const setProgram = externalSetProgram || setInternalProgram;
 
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [speed, setSpeed] = useState<number>(1);
   const [paletteZoomScale, setPaletteZoomScale] = useState<number>(1);
   const [codeStackZoomScale, setCodeStackZoomScale] = useState<number>(1);
   const [modalSize, setModalSize] = useState({ width: 520, height: 520 });
+
+  const handleToggleExpand = () => {
+    soundManager.playClick();
+    setIsExpanded((prev) => {
+      const next = !prev;
+      if (next) {
+        setModalSize((s) => ({ ...s, width: Math.min(1080, typeof window !== 'undefined' ? window.innerWidth - 48 : 1080) }));
+      } else {
+        setModalSize((s) => ({ ...s, width: 520 }));
+      }
+      return next;
+    });
+  };
 
   // On load, default height fills screen up to slightly below score bar (~120px clearance offset)
   useEffect(() => {
@@ -309,43 +330,267 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
       ...blockDef,
       instanceId: `nested-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
     };
-    setProgram(prev => prev.map(b => {
-      if (b.instanceId === parentInstanceId) {
-        return { ...b, children: [...(b.children || []), newChild] };
-      }
-      return b;
-    }));
+    setProgram((prev) => {
+      const updateTree = (list: CodeBlock[]): CodeBlock[] => {
+        return list.map((b) => {
+          if (b.instanceId === parentInstanceId) {
+            return { ...b, children: [...(b.children || []), newChild] };
+          }
+          if (b.children && b.children.length > 0) {
+            return { ...b, children: updateTree(b.children) };
+          }
+          return b;
+        });
+      };
+      return updateTree(prev);
+    });
   };
 
-  const handleRemoveChildFromLoop = (parentInstanceId: string, childIndex: number) => {
+  const handleRemoveChildFromLoop = (targetInstanceId: string) => {
     soundManager.playClick();
-    setProgram(prev => prev.map(b => {
-      if (b.instanceId === parentInstanceId) {
-        return { ...b, children: (b.children || []).filter((_, i) => i !== childIndex) };
-      }
-      return b;
-    }));
+    setProgram((prev) => {
+      const removeFromTree = (list: CodeBlock[]): CodeBlock[] => {
+        return list
+          .filter((b) => b.instanceId !== targetInstanceId)
+          .map((b) => {
+            if (b.children && b.children.length > 0) {
+              return { ...b, children: removeFromTree(b.children) };
+            }
+            return b;
+          });
+      };
+      return removeFromTree(prev);
+    });
   };
 
   const handleReorderChildren = (parentInstanceId: string, newChildren: CodeBlock[]) => {
-    setProgram(prev => prev.map(b => {
-      if (b.instanceId === parentInstanceId) {
-        return { ...b, children: newChildren };
-      }
-      return b;
-    }));
+    setProgram((prev) => {
+      const updateTree = (list: CodeBlock[]): CodeBlock[] => {
+        return list.map((b) => {
+          if (b.instanceId === parentInstanceId) {
+            return { ...b, children: newChildren };
+          }
+          if (b.children && b.children.length > 0) {
+            return { ...b, children: updateTree(b.children) };
+          }
+          return b;
+        });
+      };
+      return updateTree(prev);
+    });
   };
 
-  const handleUpdateNestedStepValue = (parentInstanceId: string, childInstanceId: string, val: number) => {
-    setProgram(prev => prev.map(b => {
-      if (b.instanceId === parentInstanceId) {
-        return {
-          ...b,
-          children: (b.children || []).map(c => c.instanceId === childInstanceId ? { ...c, stepValue: val } : c)
-        };
-      }
-      return b;
-    }));
+  const handleUpdateNestedStepValue = (targetInstanceId: string, val: number) => {
+    setProgram((prev) => {
+      const updateTree = (list: CodeBlock[]): CodeBlock[] => {
+        return list.map((b) => {
+          if (b.instanceId === targetInstanceId) {
+            return { ...b, stepValue: val };
+          }
+          if (b.children && b.children.length > 0) {
+            return { ...b, children: updateTree(b.children) };
+          }
+          return b;
+        });
+      };
+      return updateTree(prev);
+    });
+  };
+
+  const handleUpdateNestedTextValue = (targetInstanceId: string, val: string) => {
+    setProgram((prev) => {
+      const updateTree = (list: CodeBlock[]): CodeBlock[] => {
+        return list.map((b) => {
+          if (b.instanceId === targetInstanceId) {
+            return { ...b, textValue: val };
+          }
+          if (b.children && b.children.length > 0) {
+            return { ...b, children: updateTree(b.children) };
+          }
+          return b;
+        });
+      };
+      return updateTree(prev);
+    });
+  };
+
+  const motionBlocks = program.filter((b) => b.category !== 'html' && b.type !== 'when_html_started');
+  const pureHtmlBlocks = program.filter((b) => b.category === 'html' && b.type !== 'when_html_started');
+  
+  const htmlHatBlock: CodeBlock = {
+    instanceId: 'default-html-hat',
+    type: 'when_html_started',
+    label: 'HTML',
+    category: 'html',
+    blockClass: 'bg-purple-700 text-white border-purple-900 font-bold',
+  };
+
+  const htmlBlocks = [htmlHatBlock, ...pureHtmlBlocks];
+
+  const setMotionBlocks = (newMotion: CodeBlock[]) => {
+    setProgram([...newMotion, ...pureHtmlBlocks]);
+  };
+
+  const setHtmlBlocks = (newHtml: CodeBlock[]) => {
+    const cleanHtml = newHtml.filter(b => b.type !== 'when_html_started');
+    setProgram([...motionBlocks, ...cleanHtml]);
+  };
+
+  const renderBlockNode = (block: CodeBlock, indexInProgram: number, isActive: boolean): React.ReactNode => {
+    if (block.type === 'when_flag_clicked' || block.type === 'when_html_started') {
+      return (
+        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+          <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="cursor-grab active:cursor-grabbing shrink-0"
+          >
+            <PureCSSBlock 
+              category={block.category || (block.type === 'when_html_started' ? 'html' : 'events')}
+              type={block.type}
+              label={block.label}
+              isActive={isActive}
+              isPalette={false}
+              onRemove={program.length > 1 ? () => handleRemoveBlock(indexInProgram) : undefined}
+            />
+          </motion.div>
+        </Reorder.Item>
+      );
+    }
+
+    const isCBlock = isLoopBlockType(block.type);
+
+    if (isCBlock) {
+      const renderNestedNode = (node: CodeBlock): React.ReactNode => {
+        const isNodeCBlock = isLoopBlockType(node.type);
+
+        if (isNodeCBlock) {
+          return (
+            <PureCSSLoopBlock
+              type={node.type}
+              label={node.label}
+              repeatCount={node.repeatCount ?? 1}
+              isActive={isActive}
+              isPalette={false}
+              onRemove={() => handleRemoveChildFromLoop(node.instanceId)}
+              onRepeatCountChange={(val) => handleUpdateRepeatCount(node.instanceId, val)}
+              onAddChild={(blockDef) => handleAddChildToLoop(node.instanceId, blockDef)}
+            >
+              <Reorder.Group
+                axis="y"
+                values={node.children || []}
+                onReorder={(newChildren) => handleReorderChildren(node.instanceId, newChildren)}
+                className="w-full flex flex-col space-y-[2px] items-start"
+              >
+                <AnimatePresence>
+                  {(node.children || []).map((child) => (
+                    <Reorder.Item key={child.instanceId} value={child} layout className="w-fit flex items-start">
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="cursor-grab active:cursor-grabbing shrink-0"
+                      >
+                        {renderNestedNode(child)}
+                      </motion.div>
+                    </Reorder.Item>
+                  ))}
+                </AnimatePresence>
+              </Reorder.Group>
+            </PureCSSLoopBlock>
+          );
+        }
+
+        return (
+          <PureCSSBlock
+            category={node.category}
+            type={node.type}
+            label={node.label}
+            stepValue={node.stepValue}
+            textValue={node.textValue}
+            isActive={false}
+            isPalette={false}
+            onRemove={() => handleRemoveChildFromLoop(node.instanceId)}
+            onStepValueChange={(val) => handleUpdateNestedStepValue(node.instanceId, val)}
+            onTextValueChange={(val) => handleUpdateNestedTextValue(node.instanceId, val)}
+          />
+        );
+      };
+
+      return (
+        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+          <motion.div
+            layout
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="cursor-grab active:cursor-grabbing shrink-0"
+          >
+            <PureCSSLoopBlock 
+              type={block.type}
+              label={block.label}
+              repeatCount={block.repeatCount ?? 1}
+              isActive={isActive}
+              isPalette={false}
+              onRemove={() => handleRemoveBlock(indexInProgram)}
+              onRepeatCountChange={(val) => handleUpdateRepeatCount(block.instanceId, val)}
+              onAddChild={(blockDef) => handleAddChildToLoop(block.instanceId, blockDef)}
+            >
+              <Reorder.Group 
+                axis="y" 
+                values={block.children || []} 
+                onReorder={(newChildren) => handleReorderChildren(block.instanceId, newChildren)}
+                className="w-full flex flex-col space-y-[2px] items-start"
+              >
+                <AnimatePresence>
+                  {(block.children || []).map((child) => (
+                    <Reorder.Item key={child.instanceId} value={child} layout className="w-fit flex items-start">
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.9 }}
+                        className="cursor-grab active:cursor-grabbing shrink-0"
+                      >
+                        {renderNestedNode(child)}
+                      </motion.div>
+                    </Reorder.Item>
+                  ))}
+                </AnimatePresence>
+              </Reorder.Group>
+            </PureCSSLoopBlock>
+          </motion.div>
+        </Reorder.Item>
+      );
+    }
+
+    return (
+      <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
+        <motion.div
+          layout
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          className="cursor-grab active:cursor-grabbing shrink-0"
+        >
+          <PureCSSBlock 
+            category={block.category}
+            type={block.type}
+            label={block.label}
+            stepValue={block.stepValue}
+            textValue={block.textValue}
+            isActive={isActive}
+            isPalette={false}
+            onRemove={() => handleRemoveBlock(indexInProgram)}
+            onStepValueChange={(val) => handleUpdateStepValue(block.instanceId, val)}
+            onTextValueChange={(val) => handleUpdateNestedTextValue(block.instanceId, val)}
+          />
+        </motion.div>
+      </Reorder.Item>
+    );
   };
 
   return (
@@ -364,26 +609,47 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
         }
       }}
       style={!isCollapsed ? { width: `${modalSize.width}px`, height: `${modalSize.height}px` } : {}}
-      className={`liquid-glass z-40 flex flex-col justify-center transition-all duration-100 relative ${
-        isCollapsed 
-          ? 'w-auto h-9 max-h-9 !min-h-0 px-3 py-0 rounded-full cursor-pointer border-[0.5px] border-white/20 shadow-xl max-w-fit overflow-hidden' 
-          : 'p-5 rounded-3xl min-w-[340px] min-h-[140px]'
-      }`}
+      className="z-40 transition-all duration-100 relative overflow-visible"
     >
-      <div className="glass-glint" />
+      {/* Inner Liquid Glass Panel (Strictly overflow-hidden so ::before radial reflection never leaks!) */}
+      <div className={`liquid-glass w-full h-full flex flex-col justify-center relative overflow-hidden ${
+        isCollapsed 
+          ? 'w-auto h-9 max-h-9 !min-h-0 px-3 py-0 rounded-full cursor-pointer border-[0.5px] border-white/20 shadow-xl max-w-fit' 
+          : 'p-5 rounded-3xl min-w-[340px] min-h-[140px]'
+      }`}>
+        <div className="glass-glint" />
 
-      {/* 4-Edge & 4-Corner Resizing Handles */}
+        {/* 4-Edge & 4-Corner Resizing Handles */}
+        {!isCollapsed && (
+          <>
+            <div onPointerDown={(e) => handleResizePointerDown('top', e)} className="absolute top-0 left-3 right-3 h-2 cursor-ns-resize z-50 hover:bg-amber-400/30 rounded-t-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('bottom', e)} className="absolute bottom-0 left-3 right-3 h-2 cursor-ns-resize z-50 hover:bg-amber-400/30 rounded-b-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('left', e)} className="absolute top-3 bottom-3 left-0 w-2 cursor-ew-resize z-50 hover:bg-amber-400/30 rounded-l-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('right', e)} className="absolute top-3 bottom-3 right-0 w-2 cursor-ew-resize z-50 hover:bg-amber-400/30 rounded-r-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('top-left', e)} className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize z-50 hover:bg-amber-400/60 rounded-tl-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('top-right', e)} className="absolute top-0 right-0 w-4 h-4 cursor-nesw-resize z-50 hover:bg-amber-400/60 rounded-tr-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('bottom-left', e)} className="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize z-50 hover:bg-amber-400/60 rounded-bl-xl transition" />
+            <div onPointerDown={(e) => handleResizePointerDown('bottom-right', e)} className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-50 hover:bg-amber-400/60 rounded-br-xl transition" />
+          </>
+        )}
+
+      {/* Caret Toggle Button on Right Edge (Center Height) */}
       {!isCollapsed && (
-        <>
-          <div onPointerDown={(e) => handleResizePointerDown('top', e)} className="absolute top-0 left-3 right-3 h-2 cursor-ns-resize z-50 hover:bg-amber-400/30 rounded-t-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('bottom', e)} className="absolute bottom-0 left-3 right-3 h-2 cursor-ns-resize z-50 hover:bg-amber-400/30 rounded-b-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('left', e)} className="absolute top-3 bottom-3 left-0 w-2 cursor-ew-resize z-50 hover:bg-amber-400/30 rounded-l-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('right', e)} className="absolute top-3 bottom-3 right-0 w-2 cursor-ew-resize z-50 hover:bg-amber-400/30 rounded-r-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('top-left', e)} className="absolute top-0 left-0 w-4 h-4 cursor-nwse-resize z-50 hover:bg-amber-400/60 rounded-tl-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('top-right', e)} className="absolute top-0 right-0 w-4 h-4 cursor-nesw-resize z-50 hover:bg-amber-400/60 rounded-tr-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('bottom-left', e)} className="absolute bottom-0 left-0 w-4 h-4 cursor-nesw-resize z-50 hover:bg-amber-400/60 rounded-bl-xl transition" />
-          <div onPointerDown={(e) => handleResizePointerDown('bottom-right', e)} className="absolute bottom-0 right-0 w-4 h-4 cursor-nwse-resize z-50 hover:bg-amber-400/60 rounded-br-xl transition" />
-        </>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleToggleExpand();
+          }}
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-[100] w-10 h-10 p-2.5 rounded-full bg-white/95 border border-slate-300 flex items-center justify-center text-slate-800 hover:bg-amber-400 hover:text-slate-950 transition-all cursor-pointer shadow-lg hover:scale-110 active:scale-95 select-none"
+          title={isExpanded ? 'Collapse Editor Width' : 'Expand Editor Width'}
+        >
+          {isExpanded ? (
+            <IconChevronLeft className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+          ) : (
+            <IconChevronRight className="w-5 h-5 text-slate-900 stroke-[2.5]" />
+          )}
+        </button>
       )}
 
       {/* Header Drag Handle */}
@@ -485,7 +751,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               <div className="flex flex-col space-y-1.5 pt-2 border-t border-slate-900/10 w-full">
                 <span className="text-[10px] font-black text-slate-900 uppercase tracking-widest px-1">CATEGORIES</span>
                 <div className="flex flex-wrap gap-1.5 w-full">
-                  {categoryTabs.map((tab) => {
+                  {categoryTabs.filter(tab => isWorld2 || tab.id !== 'html').map((tab) => {
                     const isSelected = activeCategory === tab.id || (activeCategory === 'controls' && tab.id === 'control');
                     return (
                       <button
@@ -535,7 +801,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   className="flex flex-wrap items-start content-start gap-2 transition-transform duration-150 ease-out"
                 >
                   {filteredPalette.map((block) => {
-                    const isLoop = block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then';
+                    const isLoop = isLoopBlockType(block.type);
 
                     return (
                       <div
@@ -562,6 +828,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                             type={block.type} 
                             label={block.label} 
                             stepValue={block.stepValue}
+                            textValue={block.textValue}
                             isPalette={true} 
                           />
                         )}
@@ -611,7 +878,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             <IconGripHorizontal className="w-4 h-4 text-slate-800 opacity-80 pointer-events-none" />
           </div>
 
-          {/* Interlocking Code Stack Dropzone */}
+          {/* Interlocking Code Stack Dropzone: Single Unified Reorderable Code Stack Column */}
           <div 
             onDragOver={(e) => {
               e.preventDefault();
@@ -626,7 +893,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 const json = e.dataTransfer.getData('application/json');
                 if (json) {
                   const blockDef = JSON.parse(json);
-                  if (program.length < (maxBlocks ?? 15)) {
+                  if (program.length < (maxBlocks ?? 25)) {
                     soundManager.playSnap();
                     const newBlock: CodeBlock = {
                       ...blockDef,
@@ -639,13 +906,12 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 }
               } catch (err) {}
             }}
-            className={`flex-1 min-h-[90px] overflow-y-auto flex flex-col space-y-2 p-3 rounded-2xl border transition-all w-full shadow-inner items-start ${
+            className={`flex-1 min-h-[120px] overflow-y-auto flex flex-col space-y-2 p-3 rounded-2xl border transition-all w-full shadow-inner items-start ${
               isDraggingOver 
                 ? 'bg-amber-400/20 border-2 border-dashed border-amber-400 ring-4 ring-amber-400/30' 
                 : 'bg-white/50 border-slate-300/80'
             }`}
           >
-            
             {/* Zoomable Container Wrapper */}
             <div
               style={{
@@ -653,121 +919,65 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 transformOrigin: 'top left',
                 width: `${100 / Math.max(0.1, codeStackZoomScale)}%`,
               }}
-              className="transition-transform duration-150 ease-out flex-1 w-full"
+              className="transition-transform duration-150 ease-out flex-1 w-full flex flex-col space-y-3"
             >
-              {/* Reorderable Code Blocks with 2px vertical spacing padding & left baseline anchoring */}
-              <Reorder.Group axis="y" values={program} onReorder={setProgram} className="w-full flex flex-col space-y-[2px] items-start">
-                <AnimatePresence>
-                  {program.map((block, index) => {
-                    const isActive = activeStepIndex === index;
+              {isWorld2 ? (
+                <div className="w-full flex items-start space-x-10 overflow-x-auto pb-24 min-h-[220px]">
+                  {/* Left Stack: Events / Motion Blocks */}
+                  <div className="flex flex-col items-start min-w-[200px] pb-24 min-h-[200px]">
+                    <Reorder.Group 
+                      axis="y" 
+                      values={motionBlocks} 
+                      onReorder={setMotionBlocks} 
+                      className="w-full flex flex-col items-start space-y-[-2px] pb-24 min-h-[180px]"
+                    >
+                      <AnimatePresence>
+                        {motionBlocks.map((block, index) => {
+                          const originalIndex = program.findIndex(b => b.instanceId === block.instanceId);
+                          const isActive = activeStepIndex === originalIndex;
+                          return renderBlockNode(block, originalIndex, isActive);
+                        })}
+                      </AnimatePresence>
+                    </Reorder.Group>
+                  </div>
 
-                    if (block.type === 'when_flag_clicked') {
-                      return (
-                        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="cursor-grab active:cursor-grabbing shrink-0"
-                          >
-                            <PureCSSBlock 
-                              category="events"
-                              type={block.type}
-                              label={block.label}
-                              isActive={isActive}
-                              isPalette={false}
-                              onRemove={program.length > 1 ? () => handleRemoveBlock(index) : undefined}
-                            />
-                          </motion.div>
-                        </Reorder.Item>
-                      );
-                    }
-
-                    // C-BLOCK EXPANDABLE BRACKETS FOR REPEAT & CONTROL LOOPS
-                    if (block.type === 'repeat' || block.type === 'forever' || block.type === 'if_then') {
-                      return (
-                        <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
-                          <motion.div
-                            layout
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.9 }}
-                            className="cursor-grab active:cursor-grabbing shrink-0"
-                          >
-                            <PureCSSLoopBlock 
-                              type={block.type}
-                              label={block.label}
-                              repeatCount={block.repeatCount ?? 1}
-                              isActive={isActive}
-                              isPalette={false}
-                              onRemove={() => handleRemoveBlock(index)}
-                              onRepeatCountChange={(val) => handleUpdateRepeatCount(block.instanceId, val)}
-                              onAddChild={(blockDef) => handleAddChildToLoop(block.instanceId, blockDef)}
-                            >
-                              <Reorder.Group 
-                                axis="y" 
-                                values={block.children || []} 
-                                onReorder={(newChildren) => handleReorderChildren(block.instanceId, newChildren)}
-                                className="w-full flex flex-col space-y-[2px] items-start"
-                              >
-                                <AnimatePresence>
-                                  {(block.children || []).map((child, childIdx) => (
-                                    <Reorder.Item key={child.instanceId} value={child} layout className="w-fit flex items-start">
-                                      <motion.div
-                                        layout
-                                        initial={{ opacity: 0, scale: 0.95 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
-                                        className="cursor-grab active:cursor-grabbing shrink-0"
-                                      >
-                                        <PureCSSBlock 
-                                          category={child.category}
-                                          type={child.type}
-                                          label={child.label}
-                                          stepValue={child.stepValue}
-                                          isActive={false}
-                                          isPalette={false}
-                                          onRemove={() => handleRemoveChildFromLoop(block.instanceId, childIdx)}
-                                          onStepValueChange={(val) => handleUpdateNestedStepValue(block.instanceId, child.instanceId, val)}
-                                        />
-                                      </motion.div>
-                                    </Reorder.Item>
-                                  ))}
-                                </AnimatePresence>
-                              </Reorder.Group>
-                            </PureCSSLoopBlock>
-                          </motion.div>
-                        </Reorder.Item>
-                      );
-                    }
-
-                    // ALL OTHER INSTRUCTION BLOCKS (MOTION, LOOKS, SOUND, EVENTS, VARS, HTML)
-                    return (
-                      <Reorder.Item key={block.instanceId} value={block} layout className="w-fit flex items-start">
-                        <motion.div
-                          layout
-                          initial={{ opacity: 0, scale: 0.95 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.9 }}
-                          className="cursor-grab active:cursor-grabbing shrink-0"
-                        >
-                          <PureCSSBlock 
-                            category={block.category}
-                            type={block.type}
-                            label={block.label}
-                            stepValue={block.stepValue}
-                            isActive={isActive}
-                            isPalette={false}
-                            onRemove={() => handleRemoveBlock(index)}
-                            onStepValueChange={(val) => handleUpdateStepValue(block.instanceId, val)}
-                          />
-                        </motion.div>
-                      </Reorder.Item>
-                    );
-                  })}
-                </AnimatePresence>
-              </Reorder.Group>
+                  {/* Right Stack: HTML Hat & HTML Blocks */}
+                  <div className="flex flex-col items-start min-w-[200px] pl-6 border-l border-slate-300/60 pb-24 min-h-[200px]">
+                    <Reorder.Group 
+                      axis="y" 
+                      values={htmlBlocks} 
+                      onReorder={setHtmlBlocks} 
+                      className="w-full flex flex-col items-start space-y-[-2px] pb-24 min-h-[180px]"
+                    >
+                      <AnimatePresence>
+                        {htmlBlocks.map((block, index) => {
+                          const originalIndex = program.findIndex(b => b.instanceId === block.instanceId);
+                          const isActive = activeStepIndex === originalIndex;
+                          return renderBlockNode(block, originalIndex, isActive);
+                        })}
+                      </AnimatePresence>
+                    </Reorder.Group>
+                  </div>
+                </div>
+              ) : (
+                <Reorder.Group 
+                  axis="y" 
+                  values={program} 
+                  onReorder={(newProg) => {
+                    const hats = newProg.filter(b => b.type === 'when_flag_clicked' || b.type === 'when_html_started');
+                    const rest = newProg.filter(b => b.type !== 'when_flag_clicked' && b.type !== 'when_html_started');
+                    setProgram([...hats, ...rest]);
+                  }} 
+                  className="w-full flex flex-col items-start space-y-[-2px] pb-24 min-h-[200px]"
+                >
+                  <AnimatePresence>
+                    {program.map((block, index) => {
+                      const isActive = activeStepIndex === index;
+                      return renderBlockNode(block, index, isActive);
+                    })}
+                  </AnimatePresence>
+                </Reorder.Group>
+              )}
             </div>
 
             {/* Floating Code Stack Zoom Control Widget at bottom-right of stack dropzone */}
@@ -803,7 +1013,8 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
         </div>
       )}
+    </div>
 
-    </motion.div>
+  </motion.div>
   );
 };

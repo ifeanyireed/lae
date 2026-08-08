@@ -207,8 +207,11 @@ func (db *DB) SeedWorldsAndAdventures() error {
 	for _, a := range adventures {
 		for lvlNum := 1; lvlNum <= 12; lvlNum++ {
 			title := fmt.Sprintf("Mission %d", lvlNum)
-			if a.ID == 1 {
+			if a.WorldID == 1 && a.ID == 1 {
 				titles := []string{"Power Up!", "First Steps", "Around the Tree", "Energy Crystal", "Treasure Trail", "Danger Ahead", "Watch Your Step!", "Hidden Rewards", "Treasure Hunt", "Choose Wisely", "Explorer's Trial", "Journey Home"}
+				title = titles[lvlNum-1]
+			} else if a.WorldID == 2 && (a.ID == 6 || a.ID == 1) {
+				titles := []string{"Welcome Builder", "The HTML Skeleton", "Head & Body", "Add a Title", "Save the Kingdom", "View Your Page", "Add Your First Content", "Repair the Structure", "Missing Tags", "Complete Document", "Builder Challenge", "Kingdom Foundation"}
 				title = titles[lvlNum-1]
 			}
 
@@ -280,14 +283,15 @@ func (db *DB) SaveLevelWaypoints(ctx context.Context, adventureID int, levelNumb
 
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		_, _ = db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE level_number = ?", string(waypointsJSON), levelNumber)
+		_, _ = db.ExecContext(ctx, `
+			INSERT INTO levels (adventure_id, level_number, title, objective, mechanic, waypoints)
+			VALUES (?, ?, 'Custom Level', '', '', ?)
+			ON DUPLICATE KEY UPDATE waypoints = VALUES(waypoints)
+		`, adventureID, levelNumber, string(waypointsJSON))
 	}
 
 	var levelID int
-	err = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE adventure_id = ? AND level_number = ?", adventureID, levelNumber).Scan(&levelID)
-	if err != nil {
-		_ = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE level_number = ? LIMIT 1", levelNumber).Scan(&levelID)
-	}
+	_ = db.QueryRowContext(ctx, "SELECT id FROM levels WHERE adventure_id = ? AND level_number = ?", adventureID, levelNumber).Scan(&levelID)
 
 	if levelID > 0 {
 		_, _ = db.ExecContext(ctx, "DELETE FROM level_waypoints WHERE level_id = ?", levelID)

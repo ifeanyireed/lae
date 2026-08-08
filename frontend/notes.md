@@ -3,5 +3,3 @@
 npm run cdn:deploy
 
 ##It will automatically connect via SFTP and sync your latest assets to the CDN!
-
-─────────────────────────────────────────────────────────────────────────

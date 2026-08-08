@@ -78,7 +78,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
 
               <div>
                 <h2 className="text-xl sm:text-3xl font-black font-varela text-amber-200 uppercase tracking-tight">
-                  {currentAdv ? currentAdv.title : currentWorld.name}
+                  {currentAdv ? `${selectedWorldId} . ${currentAdv.id} . ${currentAdv.title}` : currentWorld.name}
                 </h2>
                 <p className="text-xs sm:text-sm font-bold text-amber-400 mt-0.5">
                   {currentAdv ? currentAdv.story : currentWorld.description}
@@ -96,7 +96,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                 </span>
               </div>
               <h2 className="text-xl sm:text-2xl font-black text-amber-100 mt-1">
-                {currentAdv ? currentAdv.title : 'Select an Adventure'}
+                {currentAdv ? `${selectedWorldId} . ${currentAdv.id} . ${currentAdv.title}` : 'Select an Adventure'}
               </h2>
             </div>
             <button
@@ -176,7 +176,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
                       <span className={`text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-full ${
                         isAdvUnlocked ? 'bg-amber-950 text-amber-300' : 'bg-slate-800 text-slate-500'
                       }`}>
-                        ADV {adv.id}
+                        {selectedWorldId} . {adv.id}
                       </span>
                       <span className={`text-[10px] sm:text-xs font-black uppercase font-mono ${
                         isAdvUnlocked ? 'text-amber-300' : 'text-slate-500'

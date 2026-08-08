@@ -17,7 +17,16 @@ import {
   IconSparkles,
   IconBell,
   IconFlag,
-  IconPuzzle
+  IconPuzzle,
+  IconFileCode,
+  IconBrain,
+  IconTag,
+  IconHome,
+  IconHeading,
+  IconTypography,
+  IconList,
+  IconLink,
+  IconPhoto,
 } from '@tabler/icons-react';
 
 export interface PureCSSBlockProps {
@@ -26,10 +35,12 @@ export interface PureCSSBlockProps {
   category?: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html';
   icon?: React.ReactNode;
   stepValue?: number;
+  textValue?: string;
   isActive?: boolean;
   isPalette?: boolean;
   onRemove?: () => void;
   onStepValueChange?: (val: number) => void;
+  onTextValueChange?: (val: string) => void;
 }
 
 const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string; badgeBorder: string }> = {
@@ -38,7 +49,7 @@ const CATEGORY_COLORS: Record<string, { bg: string; border: string; text: string
   sound: { bg: 'bg-[#CF63CF]', border: 'border-[#BD42BD]', text: 'text-white', badgeBorder: 'border-[#BD42BD]' },
   events: { bg: 'bg-[#FFBF00]', border: 'border-[#CC9900]', text: 'text-slate-900', badgeBorder: 'border-[#CC9900]' },
   vars: { bg: 'bg-[#FF8C1A]', border: 'border-[#DB6E00]', text: 'text-white', badgeBorder: 'border-[#DB6E00]' },
-  html: { bg: 'bg-[#0F9D58]', border: 'border-[#0B7B44]', text: 'text-white', badgeBorder: 'border-[#0B7B44]' },
+  html: { bg: 'bg-[#7E22CE]', border: 'border-[#6B21A8]', text: 'text-white', badgeBorder: 'border-[#6B21A8]' },
 };
 
 const HEX_BG_COLORS: Record<string, string> = {
@@ -47,7 +58,7 @@ const HEX_BG_COLORS: Record<string, string> = {
   sound: '#CF63CF',
   events: '#FFBF00',
   vars: '#FF8C1A',
-  html: '#0F9D58',
+  html: '#7E22CE',
 };
 
 const HEX_BORDER_COLORS: Record<string, string> = {
@@ -56,7 +67,7 @@ const HEX_BORDER_COLORS: Record<string, string> = {
   sound: '#BD42BD',
   events: '#CC9900',
   vars: '#DB6E00',
-  html: '#0B7B44',
+  html: '#6B21A8',
 };
 
 const renderBlockIcon = (type: string, category: string) => {
@@ -84,8 +95,21 @@ const renderBlockIcon = (type: string, category: string) => {
     case 'stop_sounds': return <IconBell className="w-4 h-4 shrink-0" />;
     case 'set_variable':
     case 'change_variable': return <IconPuzzle className="w-4 h-4 shrink-0" />;
+
+    // HTML Functional Icons
+    case 'doctype': return <IconFileCode className="w-4 h-4 shrink-0 text-white" />;
+    case 'html_tag': return <IconCode className="w-4 h-4 shrink-0 text-white" />;
+    case 'head_tag': return <IconBrain className="w-4 h-4 shrink-0 text-white" />;
+    case 'title_tag': return <IconTag className="w-4 h-4 shrink-0 text-white" />;
+    case 'body_tag': return <IconHome className="w-4 h-4 shrink-0 text-white" />;
+    case 'h1_tag': return <IconHeading className="w-4 h-4 shrink-0 text-white" />;
+    case 'p_tag': return <IconTypography className="w-4 h-4 shrink-0 text-white" />;
+    case 'list_tag': return <IconList className="w-4 h-4 shrink-0 text-white" />;
+    case 'link_tag': return <IconLink className="w-4 h-4 shrink-0 text-white" />;
+    case 'img_tag': return <IconPhoto className="w-4 h-4 shrink-0 text-white" />;
+
     default:
-      if (category === 'html') return <IconCode className="w-4 h-4 shrink-0" />;
+      if (category === 'html') return <IconCode className="w-4 h-4 shrink-0 text-white" />;
       if (category === 'sound') return <IconBell className="w-4 h-4 shrink-0" />;
       if (category === 'looks') return <IconMessage className="w-4 h-4 shrink-0" />;
       if (category === 'vars') return <IconPuzzle className="w-4 h-4 shrink-0" />;
@@ -99,67 +123,100 @@ export const PureCSSBlock: React.FC<PureCSSBlockProps> = ({
   category = 'motion',
   icon,
   stepValue,
+  textValue,
   isActive = false,
   isPalette = false,
   onRemove,
   onStepValueChange,
+  onTextValueChange,
 }) => {
-  const colorScheme = CATEGORY_COLORS[category] || CATEGORY_COLORS.motion;
-  const hexBg = HEX_BG_COLORS[category] || HEX_BG_COLORS.motion;
-  const hexBorder = HEX_BORDER_COLORS[category] || HEX_BORDER_COLORS.motion;
+  let colorScheme = CATEGORY_COLORS[category] || CATEGORY_COLORS.motion;
+  let hexBg = HEX_BG_COLORS[category] || HEX_BG_COLORS.motion;
+  let hexBorder = HEX_BORDER_COLORS[category] || HEX_BORDER_COLORS.motion;
 
-  // Event Hat Block (when flag clicked): Standard event block body + inverted top bow hat arc
-  if (type === 'when_flag_clicked') {
+  if (type === 'html_tag') {
+    colorScheme = { bg: 'bg-[#2563EB]', border: 'border-[#1D4ED8]', text: 'text-white', badgeBorder: 'border-[#1D4ED8]' };
+    hexBg = '#2563EB';
+    hexBorder = '#1D4ED8';
+  } else if (type === 'head_tag') {
+    colorScheme = { bg: 'bg-[#FF9100]', border: 'border-[#E65100]', text: 'text-white', badgeBorder: 'border-[#E65100]' };
+    hexBg = '#FF9100';
+    hexBorder = '#E65100';
+  } else if (type === 'title_tag') {
+    colorScheme = { bg: 'bg-[#E91E63]', border: 'border-[#C2185B]', text: 'text-white', badgeBorder: 'border-[#C2185B]' };
+    hexBg = '#E91E63';
+    hexBorder = '#C2185B';
+  } else if (type === 'text_input') {
+    colorScheme = { bg: 'bg-[#38BDF8]', border: 'border-[#0284C7]', text: 'text-slate-950', badgeBorder: 'border-[#0284C7]' };
+    hexBg = '#38BDF8';
+    hexBorder = '#0284C7';
+  }
+
+  // Event Hat Block (when flag clicked OR HTML started): Standard event block body + inverted top bow hat arc
+  if (type === 'when_flag_clicked' || type === 'when_html_started') {
+    const isHtmlHat = type === 'when_html_started';
+    const hatFill = isHtmlHat ? '#7E22CE' : '#FFBF00';
+    const hatStroke = isHtmlHat ? '#6B21A8' : '#CC9900';
+    const textColor = isHtmlHat ? 'text-white' : 'text-slate-900';
+
     return (
       <div className={`relative inline-block ${isPalette ? 'mt-4 mb-1' : 'mt-4 mb-0'}`}>
-        {/* Inverted Top Bow Hat Arc (Width 90px, offset left 12px, matching 2px #CC9900 stroke) */}
+        {/* Inverted Top Bow Hat Arc */}
         <svg 
           className="absolute -top-[13px] left-[12px] w-[90px] h-[15px] z-20 pointer-events-none" 
           viewBox="0 0 90 15" 
           fill="none"
         >
-          {/* Fill path */}
           <path 
             d="M 0 15 C 15 0.5, 45 0.5, 90 15 Z" 
-            fill="#FFBF00" 
+            fill={hatFill} 
           />
-          {/* Top curve border stroke matching 2px rectangle border */}
           <path 
             d="M 0 15 C 15 0.5, 45 0.5, 90 15" 
             fill="none" 
-            stroke="#CC9900" 
+            stroke={hatStroke} 
             strokeWidth="2" 
           />
         </svg>
 
         {/* Seam Cover removing top border line under inverted bow */}
-        <div className="absolute top-0 left-[13px] w-[88px] h-[3px] bg-[#FFBF00] z-25 pointer-events-none" />
+        <div className="absolute top-0 left-[13px] w-[88px] h-[3px] z-25 pointer-events-none" style={{ backgroundColor: hatFill }} />
 
-        {/* Standard Block Body (height 44px, bg-[#FFBF00], border-[#CC9900]) */}
+        {/* Standard Block Body */}
         <div 
-          className={`relative inline-flex items-center bg-[#FFBF00] border-2 border-[#CC9900] rounded-md px-4 py-2 select-none transition-colors shadow-md ${
+          className={`relative inline-flex items-center border-2 rounded-md px-4 py-2 select-none transition-colors shadow-md ${
             isActive ? 'ring-4 ring-amber-400 z-30 shadow-lg' : 'hover:brightness-105 hover:shadow-lg'
           }`}
           style={{
-            minWidth: isPalette ? '150px' : '175px',
+            minWidth: isPalette ? '140px' : '150px',
             height: '44px',
+            backgroundColor: hatFill,
+            borderColor: hatStroke,
           }}
         >
           {/* Content flexbox container */}
-          <div className="flex items-center justify-between w-full space-x-2 text-slate-900 font-semibold text-xs leading-none relative z-20">
+          <div className={`flex items-center justify-between w-full space-x-2 ${textColor} font-semibold text-xs leading-none relative z-20`}>
             <div className="flex items-center space-x-1.5 truncate h-full">
-              <span className="lowercase font-medium text-sm tracking-tight leading-none">when</span>
-              {/* play.svg red button icon scaled up */}
-              <div className="w-7.5 h-7.5 relative flex items-center justify-center shrink-0 filter drop-shadow">
-                <Image src="/play.svg" alt="play" width={30} height={30} className="object-contain scale-125" />
-              </div>
-              <span className="lowercase font-medium text-sm tracking-tight leading-none">clicked</span>
+              {isHtmlHat ? (
+                <>
+                  <IconCode className="w-4.5 h-4.5 text-amber-300 flex-shrink-0" />
+                  <span className="font-extrabold text-sm tracking-wider uppercase leading-none">HTML</span>
+                </>
+              ) : (
+                <>
+                  <span className="lowercase font-medium text-sm tracking-tight leading-none">when</span>
+                  <div className="w-7.5 h-7.5 relative flex items-center justify-center shrink-0 filter drop-shadow">
+                    <Image src="/play.svg" alt="play" width={30} height={30} className="object-contain scale-125" />
+                  </div>
+                  <span className="lowercase font-medium text-sm tracking-tight leading-none">clicked</span>
+                </>
+              )}
             </div>
 
             {!isPalette && onRemove && (
               <button 
                 onClick={(e) => { e.stopPropagation(); onRemove(); }}
-                className="p-1 hover:text-red-700 transition text-slate-900/80 shrink-0 ml-1"
+                className="p-1 hover:text-red-700 transition opacity-80 shrink-0 ml-1"
                 title="Remove Block"
               >
                 <IconTrash className="w-3.5 h-3.5" />
@@ -170,13 +227,18 @@ export const PureCSSBlock: React.FC<PureCSSBlockProps> = ({
 
         {/* Seamless Seam Fill Cover for bottom tab */}
         <div 
-          className="absolute -bottom-[2px] left-[17px] w-[38px] h-[3px] bg-[#FFBF00] z-25 pointer-events-none" 
+          className="absolute -bottom-[2px] left-[17px] w-[38px] h-[3px] z-25 pointer-events-none" 
+          style={{ backgroundColor: hatFill }}
         />
 
         {/* Bottom Outset Puzzle Notch Protrusion */}
         <div 
-          className="absolute -bottom-[11px] left-[16px] w-[40px] h-[11.5px] bg-[#FFBF00] border-b-2 border-x-2 border-[#CC9900] z-30"
-          style={{ clipPath: 'polygon(0 0, 8px 100%, 32px 100%, 40px 0)' }}
+          className="absolute -bottom-[11px] left-[16px] w-[40px] h-[11.5px] border-b-2 border-x-2 z-30"
+          style={{ 
+            backgroundColor: hatFill, 
+            borderColor: hatStroke,
+            clipPath: 'polygon(0 0, 8px 100%, 32px 100%, 40px 0)' 
+          }}
         />
       </div>
     );
@@ -199,7 +261,7 @@ export const PureCSSBlock: React.FC<PureCSSBlockProps> = ({
         <div className={`flex items-center justify-between w-full space-x-2 ${colorScheme.text} font-semibold text-xs leading-none relative z-20`}>
           <div className="flex items-center space-x-1.5 truncate h-full">
             {renderBlockIcon(type, category)}
-            <span className="lowercase font-medium text-sm tracking-tight leading-none">{label}</span>
+            <span className={`lowercase font-medium text-sm tracking-tight leading-none ${category === 'html' ? 'font-mono' : ''}`}>{label}</span>
           </div>
 
           {/* Input step badge */}
@@ -220,6 +282,26 @@ export const PureCSSBlock: React.FC<PureCSSBlockProps> = ({
                 />
               )}
               <span className={`text-sm font-medium ${colorScheme.text} lowercase leading-none`}>steps</span>
+            </div>
+          )}
+
+          {/* Editable text value input field */}
+          {(type === 'text_input' || textValue !== undefined) && (
+            <div className="flex items-center space-x-1.5 shrink-0 ml-1.5 h-full">
+              {isPalette ? (
+                <div className={`h-7 px-3 flex items-center justify-center bg-white text-[#575E75] rounded-full font-mono text-xs font-bold border-2 ${colorScheme.badgeBorder} shadow-inner leading-none truncate max-w-[110px]`}>
+                  {textValue || 'text'}
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  value={textValue ?? 'Hello'}
+                  onChange={(e) => onTextValueChange && onTextValueChange(e.target.value)}
+                  onClick={(e) => e.stopPropagation()}
+                  className={`h-7 w-24 sm:w-36 px-2.5 bg-white text-slate-900 rounded-full font-mono text-center border-2 ${colorScheme.badgeBorder} font-bold text-xs outline-none focus:ring-2 focus:ring-amber-400 shadow-inner leading-none select-text`}
+                  placeholder="type text..."
+                />
+              )}
             </div>
           )}
 

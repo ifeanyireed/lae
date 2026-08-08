@@ -23,7 +23,7 @@ export interface PathWaypoint {
   c?: number;
   xPercent?: number; // 0-100% relative X position on Figma board
   yPercent?: number; // 0-100% relative Y position on Figma board
-  type?: 'start' | 'goal' | 'coin' | 'star' | 'shell' | 'pit' | 'question_block' | 'vine' | 'normal';
+  type?: 'start' | 'goal' | 'coin' | 'star' | 'shell' | 'pit' | 'question_block' | 'vine' | 'normal' | 'doctype' | 'html_tag' | 'head_tag' | 'title_tag' | 'html' | 'head' | 'title' | 'doctype_html';
   label?: string;
   effect?: 'advance_3' | 'back_2' | 'shortcut';
   initialHeading?: 'N' | 'E' | 'S' | 'W';

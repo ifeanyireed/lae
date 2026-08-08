@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CustomizerLeaderboard } from '@/components/CustomizerLeaderboard';
@@ -244,11 +244,12 @@ export default function Home() {
 
   React.useEffect(() => {
     const advId = selectedAdventureId || 1;
-    const currentAdv = ALL_ADVENTURES.find((a) => a.id === advId) || ALL_ADVENTURES[0];
+    const currentWorld = ALL_WORLDS.find((w) => w.id === selectedWorldId) || ALL_WORLDS[0];
+    const currentAdv = currentWorld.adventures.find((a) => a.id === advId) || currentWorld.adventures[0];
     const defaultLevels = currentAdv.levels;
     setDbLevels(defaultLevels);
 
-    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels?adventure_id=${advId}`)
+    fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels?world_id=${selectedWorldId}&adventure_id=${advId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.levels && data.levels.length > 0) {
@@ -268,7 +269,8 @@ export default function Home() {
 
               if (!savedWps || savedWps.length === 0) {
                 try {
-                  const localWps = localStorage.getItem(`level_waypoints_adv${advId}_lvl${lvlNum}`) || localStorage.getItem(`level_waypoints_${lvlNum}`);
+                  const localWps = localStorage.getItem(`level_waypoints_w${selectedWorldId}_adv${advId}_lvl${lvlNum}`) || 
+                                   localStorage.getItem(`level_waypoints_world${selectedWorldId}_adv${advId}_lvl${lvlNum}`);
                   if (localWps) {
                     savedWps = JSON.parse(localWps);
                   }
@@ -278,14 +280,15 @@ export default function Home() {
               return {
                 ...(defaultLevels[idx] || {}),
                 id: l.id || idx + 1,
+                worldId: selectedWorldId,
                 adventureId: advId,
                 levelNumber: lvlNum,
-                title: l.title || defaultLevels[idx]?.title || `Level ${lvlNum}`,
-                objective: l.objective || defaultLevels[idx]?.objective || '',
-                mechanic: l.mechanic || defaultLevels[idx]?.mechanic || '',
-                bgImage: defaultLevels[idx]?.bgImage || `/Adventure ${advId} - Level ${lvlNum}.svg`,
+                title: defaultLevels[idx]?.title || l.title || `Level ${lvlNum}`,
+                objective: defaultLevels[idx]?.objective || l.objective || '',
+                mechanic: defaultLevels[idx]?.mechanic || l.mechanic || '',
+                bgImage: defaultLevels[idx]?.bgImage || `/${selectedWorldId}_${advId}_${lvlNum}.svg`,
                 maxBlocks: l.max_blocks || l.maxBlocks || defaultLevels[idx]?.maxBlocks || 15,
-                availableBlocks: l.available_blocks || l.availableBlocks || defaultLevels[idx]?.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
+                availableBlocks: defaultLevels[idx]?.availableBlocks || l.available_blocks || l.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
                 waypoints: (savedWps && savedWps.length > 0) ? savedWps : expectedWaypoints,
               };
             })
@@ -293,7 +296,7 @@ export default function Home() {
         }
       })
       .catch(() => {});
-  }, [selectedAdventureId]);
+  }, [selectedAdventureId, selectedWorldId]);
 
   React.useEffect(() => {
     // Session Auto Re-authenticate on Refresh from Database using JWT/Session API
@@ -378,7 +381,7 @@ export default function Home() {
   const currentWorld = ALL_WORLDS.find((w) => w.id === selectedWorldId) || ALL_WORLDS[0];
   const currentAdv = currentWorld.adventures.find((a) => a.id === selectedAdventureId) || currentWorld.adventures[0];
   const activeAdventureLevels = currentAdv?.levels || PUZZLE_LEVELS;
-  const currentLevel = (dbLevels[currentLevelIndex] && dbLevels[currentLevelIndex].adventureId === currentAdv.id)
+  const currentLevel = (dbLevels[currentLevelIndex] && dbLevels[currentLevelIndex].adventureId === currentAdv.id && (dbLevels[currentLevelIndex].worldId || 1) === currentWorld.id)
     ? dbLevels[currentLevelIndex]
     : activeAdventureLevels[currentLevelIndex] || activeAdventureLevels[0];
   const waypoints = customWaypoints || currentLevel.waypoints || [];
@@ -394,6 +397,10 @@ export default function Home() {
     totalLevels: currentAdv.totalLevels || 12,
     adventureTitle: currentAdv.title || adventureTitle || ADVENTURE_1.title,
     story: currentAdv.story || adventureStory || ADVENTURE_1.story,
+    worldId: currentWorld.id,
+    worldName: currentWorld.name,
+    worldLanguage: currentWorld.language,
+    worldTheme: currentWorld.theme,
   };
 
   const [currentWaypointIndex, setCurrentWaypointIndex] = useState<number>(0);
@@ -406,7 +413,7 @@ export default function Home() {
 
   const [selectedCategory, setSelectedCategory] = useState<string>('motion');
 
-  // Scratch Editor Program State (Default initial blocks: ONLY 'when flag clicked')
+  // Scratch Editor Program State (Default initial blocks: 'when flag clicked' + 'HTML' hat block)
   const [program, setProgram] = useState<CodeBlock[]>([
     {
       instanceId: 'default-when-clicked',
@@ -415,7 +422,155 @@ export default function Home() {
       category: 'events',
       blockClass: 'block-events',
     },
+    {
+      instanceId: 'default-html-hat',
+      type: 'when_html_started',
+      label: 'HTML',
+      category: 'html',
+      blockClass: 'bg-purple-700 text-white border-purple-900 font-bold',
+    },
   ]);
+
+  // Helper to check if a specific block type is present anywhere in program (including nested blocks)
+  const hasBlockInTree = (blocks: CodeBlock[], targetType: string): boolean => {
+    return blocks.some(b => {
+      if (b.type === targetType) return true;
+      if (b.children && b.children.length > 0) {
+        return hasBlockInTree(b.children, targetType);
+      }
+      return false;
+    });
+  };
+
+  const isHtmlBlockTile = (type?: string): boolean => {
+    if (!type) return false;
+    return [
+      'doctype', 'doctype_html',
+      'html_tag', 'html',
+      'head_tag', 'head',
+      'title_tag', 'title',
+      'body_tag', 'body',
+      'h1_tag', 'h1',
+      'p_tag', 'p',
+      'list_tag', 'list',
+      'link_tag', 'link',
+      'img_tag', 'img'
+    ].includes(type);
+  };
+
+  const getBlockLabel = (wpType: string): string => {
+    if (wpType === 'doctype' || wpType === 'doctype_html') return '<!doctype html>';
+    if (wpType === 'html_tag' || wpType === 'html') return '<html>';
+    if (wpType === 'head_tag' || wpType === 'head') return '<head>';
+    if (wpType === 'title_tag' || wpType === 'title') return '<title>';
+    return `<${wpType}>`;
+  };
+
+  const isHtmlBlockInProgram = (wpType: string, blocks: CodeBlock[]): boolean => {
+    let reqTypes: string[] = [wpType];
+    if (wpType === 'doctype' || wpType === 'doctype_html') reqTypes = ['doctype', 'doctype_html'];
+    if (wpType === 'html_tag' || wpType === 'html') reqTypes = ['html_tag', 'html'];
+    if (wpType === 'head_tag' || wpType === 'head') reqTypes = ['head_tag', 'head'];
+    if (wpType === 'title_tag' || wpType === 'title') reqTypes = ['title_tag', 'title'];
+    if (wpType === 'body_tag' || wpType === 'body') reqTypes = ['body_tag', 'body'];
+    if (wpType === 'h1_tag' || wpType === 'h1') reqTypes = ['h1_tag', 'h1'];
+    if (wpType === 'p_tag' || wpType === 'p') reqTypes = ['p_tag', 'p'];
+    if (wpType === 'list_tag' || wpType === 'list') reqTypes = ['list_tag', 'list'];
+    if (wpType === 'link_tag' || wpType === 'link') reqTypes = ['link_tag', 'link'];
+    if (wpType === 'img_tag' || wpType === 'img') reqTypes = ['img_tag', 'img'];
+    return reqTypes.some(t => hasBlockInTree(blocks, t));
+  };
+
+  // Helper to extract nested title text from html_tag -> head_tag -> title_tag -> text_input block
+  const getTitleTextFromTree = (blocks: CodeBlock[]): string | null => {
+    for (const block of blocks) {
+      if (block.type === 'html_tag' && block.children) {
+        for (const headNode of block.children) {
+          if (headNode.type === 'head_tag' && headNode.children) {
+            for (const titleNode of headNode.children) {
+              if (titleNode.type === 'title_tag' && titleNode.children) {
+                for (const textNode of titleNode.children) {
+                  if (textNode.type === 'text_input' || textNode.textValue) {
+                    return textNode.textValue || textNode.label || 'Title';
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      if (block.type === 'title_tag' && block.children) {
+        for (const textNode of block.children) {
+          if (textNode.type === 'text_input' || textNode.textValue) {
+            return textNode.textValue || textNode.label || 'Title';
+          }
+        }
+      }
+
+      if (block.children && block.children.length > 0) {
+        const found = getTitleTextFromTree(block.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  const hasDoctype = hasBlockInTree(program, 'doctype');
+  const hasHtmlTag = hasBlockInTree(program, 'html_tag');
+  const isWorld2 = selectedWorldId === 2 || (currentLevel && currentLevel.worldId === 2);
+  const titleText = getTitleTextFromTree(program);
+
+  // Sync HTML Hat block for World 2 vs World 1
+  useEffect(() => {
+    if (isWorld2) {
+      setProgram((prev) => {
+        if (!prev.some((b) => b.type === 'when_html_started')) {
+          return [
+            {
+              instanceId: 'default-when-clicked',
+              type: 'when_flag_clicked',
+              label: 'when flag clicked',
+              category: 'events',
+              blockClass: 'block-events',
+            },
+            {
+              instanceId: 'default-html-hat',
+              type: 'when_html_started',
+              label: 'HTML',
+              category: 'html',
+              blockClass: 'bg-purple-700 text-white border-purple-900 font-bold',
+            },
+            ...prev.filter((b) => b.type !== 'when_flag_clicked'),
+          ];
+        }
+        return prev;
+      });
+    } else {
+      setProgram((prev) => prev.filter((b) => b.category !== 'html' && b.type !== 'when_html_started'));
+    }
+  }, [isWorld2]);
+
+  // Proximity Guide Effect: When sprite is on a tile next to an HTML tile, instruct user to add the block under the HTML stack
+  useEffect(() => {
+    if (isRunning) return;
+    const wps = customWaypoints || currentLevel?.waypoints || [];
+    if (wps.length === 0) return;
+
+    const currentWp = wps[currentWaypointIndex] || wps[0];
+    if (!currentWp) return;
+
+    const heading = currentHeading || 'S';
+    const nextWp = findNextWaypointInHeading(currentWp, heading, wps) || wps[currentWaypointIndex + 1];
+
+    if (nextWp && nextWp.type && isHtmlBlockTile(nextWp.type)) {
+      const hasBlock = isHtmlBlockInProgram(nextWp.type, program);
+      if (!hasBlock) {
+        const label = getBlockLabel(nextWp.type);
+        setSpeechBubble(`💡 Guide: Next tile is ${label}! Add the ${label} block under the HTML stack!`);
+      }
+    }
+  }, [currentWaypointIndex, customWaypoints, currentLevel, program, currentHeading, isRunning]);
 
   const handleToggleMute = () => {
     const muted = soundManager.toggleMute();
@@ -534,7 +689,8 @@ export default function Home() {
 
   // Path-Graph Execution Engine
   const handleRunProgram = async (blocksToRun?: CodeBlock[], speed = 1) => {
-    const codeBlocks = blocksToRun || program;
+    const rawBlocks = blocksToRun || program;
+    const codeBlocks = rawBlocks.filter((b) => b.category !== 'html');
     if (isRunning || waypoints.length === 0 || codeBlocks.length === 0) {
       if (codeBlocks.length === 0) soundManager.playError();
       return;
@@ -696,6 +852,29 @@ export default function Home() {
           return;
         }
 
+        // Check if approaching an HTML block that has NOT been added to the board (program)
+        if (nextWp.type && isHtmlBlockTile(nextWp.type) && !isHtmlBlockInProgram(nextWp.type, program)) {
+          soundManager.playError();
+          const newFailCount = levelFailCount + 1;
+          setLevelFailCount(newFailCount);
+
+          const label = getBlockLabel(nextWp.type);
+          setLoadingSpriteSrc('/monkey17.svg');
+          setSpeechBubble(`Missing ${label} block on board! Returning to START!`);
+
+          setIsGlobalLoading(true);
+          setIsZoomingQuickly(true);
+          await new Promise(res => setTimeout(res, 1850));
+          setIsZoomingQuickly(false);
+          setIsGlobalLoading(false);
+          setLoadingSpriteSrc('/monkey1.svg');
+
+          setIsRunning(false);
+          setActiveStepIndex(null);
+          handleReturnToStartPos();
+          return;
+        }
+
         soundManager.playStep();
         pathIdx = nextWp.index;
         setCurrentWaypointIndex(pathIdx);
@@ -705,6 +884,33 @@ export default function Home() {
         // 1. Check Coin Tile (Non-automatic coin hint)
         if (currentWpNew.type === 'coin' && !coinsCollectedSoFar.includes(pathIdx)) {
           setSpeechBubble('Standing on a Coin! Use "collect coin" block to collect it!');
+        }
+
+        // 1b. Check HTML Block Tiles
+        if (currentWpNew.type && isHtmlBlockTile(currentWpNew.type)) {
+          if (!isHtmlBlockInProgram(currentWpNew.type, program)) {
+            soundManager.playError();
+            const newFailCount = levelFailCount + 1;
+            setLevelFailCount(newFailCount);
+
+            const label = getBlockLabel(currentWpNew.type);
+            setLoadingSpriteSrc('/monkey17.svg');
+            setSpeechBubble(`Missing ${label} block on board! Returning to START!`);
+
+            setIsGlobalLoading(true);
+            setIsZoomingQuickly(true);
+            await new Promise(res => setTimeout(res, 1850));
+            setIsZoomingQuickly(false);
+            setIsGlobalLoading(false);
+            setLoadingSpriteSrc('/monkey1.svg');
+
+            setIsRunning(false);
+            setActiveStepIndex(null);
+            handleReturnToStartPos();
+            return;
+          }
+
+          setSpeechBubble(`Standing on ${getBlockLabel(currentWpNew.type)} tile!`);
         }
 
         // 2. Check Super Star Tile Logic (Advance 3 spaces)
@@ -1079,8 +1285,54 @@ export default function Home() {
         
         {/* MAZE CANVAS IS PERMANENTLY RENDERED ON-SCREEN AS THE BASE BOARD SCREEN */}
         <div className="w-full h-full relative z-10">
+
+          {/* WORLD 2 KINGDOM SCROLL: Mounted to the right beside sidebar buttons, just below top menu */}
+          <AnimatePresence>
+            {isWorld2 && (hasDoctype || hasHtmlTag) && (
+              <motion.div
+                key="world2-right-scroll"
+                initial={{ opacity: 0, scale: 0.9, x: 50 }}
+                animate={{ opacity: 1, scale: 1, x: 0 }}
+                exit={{ opacity: 0, scale: 0.9, x: 50 }}
+                transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+                className="fixed top-16 sm:top-18 md:top-20 right-0 xs:-right-3 sm:-right-6 md:-right-8 lg:-right-10 z-30 w-[360px] xs:w-[420px] sm:w-[500px] md:w-[580px] lg:w-[660px] h-[65vh] sm:h-[76vh] md:h-[84vh] lg:h-[88vh] pointer-events-none flex flex-col items-center justify-center pt-2 sm:pt-3"
+              >
+                <div 
+                  className={`relative w-full h-full transition-all duration-700 select-none flex items-center justify-center opacity-100 ${
+                    hasHtmlTag
+                      ? 'grayscale-0 opacity-100 filter drop-shadow-[0_0_35px_rgba(251,191,36,0.85)] brightness-105 saturate-125'
+                      : 'grayscale opacity-100 brightness-75 contrast-75 drop-shadow-none'
+                  }`}
+                >
+                  <Image 
+                    src="/scroll.svg" 
+                    alt="World 2 Kingdom Scroll" 
+                    fill 
+                    className="object-fill rounded-2xl opacity-100"
+                    priority
+                  />
+
+                  {/* TITLE TEXT DISPLAYED ON TOP FOLD OF THE SCROLL */}
+                  {titleText && (
+                    <motion.div
+                      key={titleText}
+                      initial={{ opacity: 0, scale: 0.9, y: -6 }}
+                      animate={{ opacity: 0.8, scale: 1, y: 0 }}
+                      transition={{ type: 'spring', stiffness: 350, damping: 22 }}
+                      className="absolute top-7 sm:top-9 md:top-10 left-1/2 -translate-x-1/2 z-30 font-sans font-normal text-slate-900 opacity-80 text-[10px] sm:text-xs md:text-sm text-center px-4 max-w-[78%] truncate pointer-events-none drop-shadow-sm select-none"
+                    >
+                      {titleText}
+                    </motion.div>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <GameCanvas 
             level={currentLevel}
+            selectedWorldId={selectedWorldId}
+            selectedAdventureId={selectedAdventureId || undefined}
             currentWaypointIndex={currentWaypointIndex}
             currentHeading={currentHeading}
             facingSegmentIndex={facingSegmentIndex}
@@ -1115,6 +1367,7 @@ export default function Home() {
                 onSelectCategory={setSelectedCategory}
                 program={program}
                 setProgram={setProgram}
+                isWorld2={isWorld2}
               />
             </div>
           )}
@@ -1216,7 +1469,7 @@ export default function Home() {
                     return (
                       <>
                         <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-tight drop-shadow-md">
-                          {currAdv.title}
+                          {selectedWorldId || currentWorld.id || 1} . {currAdv.id} . {currAdv.title}
                         </h1>
                         <p className="text-xs sm:text-sm font-medium text-emerald-400 mt-1 max-w-2xl mx-auto drop-shadow-sm">
                           {currAdv.story}
@@ -1319,13 +1572,8 @@ export default function Home() {
 
                         {/* Title & Concept Name under image */}
                         <div className="flex flex-col items-center text-center mt-1 max-w-[150px]">
-                          <span className={`text-xs sm:text-sm md:text-base font-black tracking-wide transition ${
+                          <span className={`text-xs sm:text-sm font-bold tracking-wide transition leading-tight line-clamp-2 ${
                             isAdvUnlocked ? 'text-amber-300 group-hover:text-amber-200' : 'text-slate-500'
-                          }`}>
-                            Adventure {adv.id}
-                          </span>
-                          <span className={`text-xs sm:text-sm font-bold transition leading-tight line-clamp-2 ${
-                            isAdvUnlocked ? 'text-slate-200 group-hover:text-white' : 'text-slate-500'
                           }`}>
                             {adv.title}
                           </span>
@@ -1356,7 +1604,7 @@ export default function Home() {
                   exit="exit"
                   className="grid grid-cols-6 gap-3 sm:gap-5 max-w-5xl w-full py-4 z-20"
                 >
-                  {(ALL_ADVENTURES.find(a => a.id === selectedAdventureId) || ALL_ADVENTURES[0]).levels.map((lvlConfig, i) => {
+                  {(currentWorld.adventures.find(a => a.id === selectedAdventureId) || currentWorld.adventures[0]).levels.map((lvlConfig, i) => {
                     const levelNum = i + 1;
                     const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
                     const levelTitle = lvlConfig?.title || `Level ${levelNum}`;

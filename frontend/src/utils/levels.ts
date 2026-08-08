@@ -8,6 +8,15 @@ export const LEVEL_1_WAYPOINTS: PathWaypoint[] = [
   { index: 3, r: 3, c: 0, xPercent: 50.16, yPercent: 63.0, type: 'goal', label: 'FINISH' },
 ];
 
+// Level 2.1.1 specific track waypoints (aligned with 2_1_1.svg track center at xPercent 46.03)
+export const LEVEL_2_1_1_WAYPOINTS: PathWaypoint[] = [
+  { index: 0, r: 0, c: 0, xPercent: 46.03, yPercent: 27.2, type: 'start', label: 'START', initialHeading: 'S' },
+  { index: 1, r: 1, c: 0, xPercent: 46.03, yPercent: 40.8, type: 'normal' },
+  { index: 2, r: 2, c: 0, xPercent: 46.03, yPercent: 54.4, type: 'normal' },
+  { index: 3, r: 3, c: 0, xPercent: 46.03, yPercent: 68.0, type: 'normal' },
+  { index: 4, r: 4, c: 0, xPercent: 46.03, yPercent: 81.4, type: 'goal', label: 'FINISH' },
+];
+
 // Level 2 specific track waypoints (straight vertical axis in center of Level 2 SVG)
 export const LEVEL_2_WAYPOINTS: PathWaypoint[] = [
   { index: 0, r: 0, c: 0, xPercent: 49.44, yPercent: 35.7, type: 'start', label: 'START', initialHeading: 'S' },
@@ -520,11 +529,11 @@ function createAdv(
       adventureId: advId,
       levelNumber: i + 1,
       title: name,
-      description: `World ${worldId} — Adventure ${advId}: ${name}. ${concept}.`,
-      objective: `Complete ${name} to advance your ${concept} skills.`,
+      description: name,
+      objective: name,
       mechanic,
       bgImage: `/${worldId}_${advId}_${i + 1}.svg`,
-      waypoints: LEVEL_1_WAYPOINTS,
+      waypoints: (worldId === 2 && advId === 1 && i === 0) ? LEVEL_2_1_1_WAYPOINTS : LEVEL_1_WAYPOINTS,
       availableBlocks: ['move_forward', 'turn_left', 'turn_right', 'turn_around', 'repeat'],
       maxBlocks: 15,
     })),
