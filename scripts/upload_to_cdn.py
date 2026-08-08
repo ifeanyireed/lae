@@ -7,7 +7,7 @@ HOST = os.getenv("CDN_HOST", "82.29.191.184")
 PORT = int(os.getenv("CDN_PORT", "65002"))
 USERNAME = os.getenv("CDN_USER", "u721451974")
 PASSWORD = os.getenv("CDN_PASS", "*Reedb4b4")
-REMOTE_PATH = os.getenv("CDN_REMOTE_PATH", "public_html/assets")
+REMOTE_PATH = os.getenv("CDN_REMOTE_PATH", "domains/resultspro.ng/public_html/cdn/assets")
 
 LOCAL_PUBLIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/public"))
 
@@ -25,11 +25,15 @@ try:
     sftp = paramiko.SFTPClient.from_transport(transport)
     print("✅ Connected to SFTP server successfully.")
 
-    # Ensure remote assets directory exists
-    try:
-        sftp.mkdir(REMOTE_PATH)
-    except IOError:
-        pass
+    # Ensure remote nested assets directory exists
+    path_parts = REMOTE_PATH.strip("/").split("/")
+    curr_path = ""
+    for part in path_parts:
+        curr_path += "/" + part
+        try:
+            sftp.mkdir(curr_path)
+        except IOError:
+            pass
 
     uploaded_count = 0
     for filename in CDN_ASSETS:
