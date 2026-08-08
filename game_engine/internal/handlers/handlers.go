@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -32,6 +33,7 @@ type LevelResponse struct {
 }
 
 type UpdateWaypointsRequest struct {
+	WorldID     int                      `json:"world_id,omitempty"`
 	AdventureID int                      `json:"adventure_id"`
 	LevelNumber int                      `json:"level_number"`
 	Waypoints   []database.LevelWaypoint `json:"waypoints"`
@@ -132,10 +134,27 @@ func (g *GameEngineHandler) GetAdventuresHandler(w http.ResponseWriter, r *http.
 func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
+	worldIDStr := r.URL.Query().Get("world_id")
 	adventureIDStr := r.URL.Query().Get("adventure_id")
-	cacheKey := "game:levels:all"
-	if adventureIDStr != "" {
-		cacheKey = "game:levels:adv:" + adventureIDStr
+
+	worldID, _ := strconv.Atoi(worldIDStr)
+	if worldID <= 0 {
+		worldID = 1
+	}
+
+	advID, _ := strconv.Atoi(adventureIDStr)
+	if advID <= 0 {
+		advID = 1
+	}
+
+	dbAdvID := advID
+	if worldID > 1 && advID <= 5 {
+		dbAdvID = (worldID-1)*5 + advID
+	}
+
+	cacheKey := fmt.Sprintf("game:levels:w:%d:adv:%d", worldID, advID)
+	if adventureIDStr == "" {
+		cacheKey = fmt.Sprintf("game:levels:w:%d:all", worldID)
 	}
 
 	if cachedJSON, ok := g.Cache.Get(r.Context(), cacheKey); ok {
@@ -149,8 +168,7 @@ func (g *GameEngineHandler) GetLevelsHandler(w http.ResponseWriter, r *http.Requ
 		var err error
 
 		if adventureIDStr != "" {
-			advID, _ := strconv.Atoi(adventureIDStr)
-			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, max_blocks, available_blocks, waypoints FROM levels WHERE adventure_id = ? ORDER BY level_number ASC", advID)
+			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, max_blocks, available_blocks, waypoints FROM levels WHERE adventure_id = ? ORDER BY level_number ASC", dbAdvID)
 		} else {
 			rows, err = g.DB.QueryContext(r.Context(), "SELECT id, adventure_id, level_number, title, objective, mechanic, max_blocks, available_blocks, waypoints FROM levels ORDER BY level_number ASC")
 		}
@@ -228,11 +246,26 @@ func (g *GameEngineHandler) SaveWaypointsHandler(w http.ResponseWriter, r *http.
 		return
 	}
 
+	worldID := req.WorldID
+	if worldID <= 0 {
+		if worldStr := r.URL.Query().Get("world_id"); worldStr != "" {
+			worldID, _ = strconv.Atoi(worldStr)
+		}
+	}
+	if worldID <= 0 {
+		worldID = 1
+	}
+
 	if req.AdventureID <= 0 {
 		req.AdventureID = 1
 	}
 
-	err := g.DB.SaveLevelWaypoints(r.Context(), req.AdventureID, req.LevelNumber, req.Waypoints)
+	dbAdvID := req.AdventureID
+	if worldID > 1 && req.AdventureID <= 5 {
+		dbAdvID = (worldID-1)*5 + req.AdventureID
+	}
+
+	err := g.DB.SaveLevelWaypoints(r.Context(), dbAdvID, req.LevelNumber, req.Waypoints)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
@@ -240,7 +273,7 @@ func (g *GameEngineHandler) SaveWaypointsHandler(w http.ResponseWriter, r *http.
 	}
 
 	// Invalidate Redis cache for levels
-	g.Cache.Del(r.Context(), "game:levels:all", "game:levels:adv:"+strconv.Itoa(req.AdventureID))
+	g.Cache.Del(r.Context(), "game:levels:all", fmt.Sprintf("game:levels:w:%d:adv:%d", worldID, req.AdventureID), "game:levels:adv:"+strconv.Itoa(req.AdventureID), "game:levels:adv:"+strconv.Itoa(dbAdvID))
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{
