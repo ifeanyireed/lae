@@ -239,14 +239,18 @@ export default function Home() {
         }
       })
       .catch(() => {});
+  }, []);
 
+  React.useEffect(() => {
     const advId = selectedAdventureId || 1;
+    const currentAdv = ALL_ADVENTURES.find((a) => a.id === advId) || ALL_ADVENTURES[0];
+    const defaultLevels = currentAdv.levels;
+    setDbLevels(defaultLevels);
+
     fetch(`${GAME_ENGINE_API_URL}/api/v1/game/levels?adventure_id=${advId}`)
       .then((res) => res.json())
       .then((data) => {
         if (data && data.success && data.levels && data.levels.length > 0) {
-          const currentAdv = ALL_ADVENTURES.find((a) => a.id === advId) || ALL_ADVENTURES[0];
-          const defaultLevels = currentAdv.levels;
           setDbLevels(
             data.levels.map((l: any, idx: number) => {
               const lvlNum = l.level_number || idx + 1;
@@ -287,7 +291,9 @@ export default function Home() {
         }
       })
       .catch(() => {});
+  }, [selectedAdventureId]);
 
+  React.useEffect(() => {
     // Session Auto Re-authenticate on Refresh from Database using JWT/Session API
     let savedToken: string | null = null;
     let savedCode: string | null = null;
@@ -369,7 +375,9 @@ export default function Home() {
 
   const currentAdv = ALL_ADVENTURES.find((a) => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
   const activeAdventureLevels = currentAdv?.levels || PUZZLE_LEVELS;
-  const currentLevel = dbLevels[currentLevelIndex] || activeAdventureLevels[currentLevelIndex] || activeAdventureLevels[0];
+  const currentLevel = (dbLevels[currentLevelIndex] && dbLevels[currentLevelIndex].adventureId === currentAdv.id)
+    ? dbLevels[currentLevelIndex]
+    : activeAdventureLevels[currentLevelIndex] || activeAdventureLevels[0];
   const waypoints = customWaypoints || currentLevel.waypoints || [];
 
   const levelInfo: LevelInfo = {
