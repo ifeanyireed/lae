@@ -375,7 +375,8 @@ export default function Home() {
     }
   }, [currentLevelIndex, customWaypoints, dbLevels]);
 
-  const currentAdv = ALL_ADVENTURES.find((a) => a.id === selectedAdventureId) || ALL_ADVENTURES[0];
+  const currentWorld = ALL_WORLDS.find((w) => w.id === selectedWorldId) || ALL_WORLDS[0];
+  const currentAdv = currentWorld.adventures.find((a) => a.id === selectedAdventureId) || currentWorld.adventures[0];
   const activeAdventureLevels = currentAdv?.levels || PUZZLE_LEVELS;
   const currentLevel = (dbLevels[currentLevelIndex] && dbLevels[currentLevelIndex].adventureId === currentAdv.id)
     ? dbLevels[currentLevelIndex]
@@ -388,7 +389,7 @@ export default function Home() {
     title: currentLevel.title,
     objective: currentLevel.objective || currentLevel.description || 'Complete mission goal.',
     mechanic: currentLevel.mechanic || 'Sequential Execution',
-    svgMap: currentLevel.bgImage || `/1_${selectedAdventureId || 1}_${currentLevelIndex + 1}.svg`,
+    svgMap: currentLevel.bgImage || `/${selectedWorldId || 1}_${selectedAdventureId || 1}_${currentLevelIndex + 1}.svg`,
     maxBlocks: currentLevel.maxBlocks,
     totalLevels: currentAdv.totalLevels || 12,
     adventureTitle: currentAdv.title || adventureTitle || ADVENTURE_1.title,

@@ -490,6 +490,15 @@ export const ALL_ADVENTURES: AdventureConfig[] = [
   ADVENTURE_5,
 ];
 
+export const WORLD_2_ADVENTURE_1: AdventureConfig = {
+  ...ADVENTURE_1,
+  levels: ADVENTURE_1.levels.map((lvl) => ({
+    ...lvl,
+    worldId: 2,
+    bgImage: `/2_1_${lvl.levelNumber}.svg`,
+  })),
+};
+
 export const WORLD_1: WorldConfig = {
   id: 1,
   slug: 'world-1',
@@ -503,7 +512,7 @@ export const WORLD_2: WorldConfig = {
   slug: 'world-2',
   name: 'World 2 — Crystal Realm',
   description: 'Explore advanced algorithms and complex problem solving.',
-  adventures: [ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
+  adventures: [WORLD_2_ADVENTURE_1, ADVENTURE_2, ADVENTURE_3, ADVENTURE_4, ADVENTURE_5],
 };
 
 export const WORLD_3: WorldConfig = {

@@ -12,9 +12,10 @@ REMOTE_PATH = os.getenv("CDN_REMOTE_PATH", "domains/resultspro.ng/public_html/cd
 LOCAL_PUBLIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/public"))
 
 # Heavy background and stage assets to sync to CDN
+import re
 CDN_ASSETS = [
     f for f in os.listdir(LOCAL_PUBLIC_DIR)
-    if f.startswith("1_") or f.startswith("Adventure") or f.endswith(".jpeg")
+    if re.match(r'^\d+_\d+_\d+\.svg$', f) or f.startswith("Adventure") or f.endswith(".jpeg")
 ]
 
 print(f"🚀 Preparing to sync {len(CDN_ASSETS)} assets to CDN ({HOST}:{PORT} -> {REMOTE_PATH})...")
