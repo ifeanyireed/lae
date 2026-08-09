@@ -26,6 +26,7 @@ import {
   IconRefresh,
   IconPhone,
   IconMail,
+  IconFilter,
 } from '@tabler/icons-react';
 
 // Types for Admin Platform Modules
@@ -78,8 +79,22 @@ export default function AdminControlsPage() {
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
+  const [userOrgFilter, setUserOrgFilter] = useState<string>('ALL');
+  const [userGroupFilter, setUserGroupFilter] = useState<string>('ALL');
   const [copiedTokenId, setCopiedTokenId] = useState<string | null>(null);
   const [copiedStudentCodeId, setCopiedStudentCodeId] = useState<string | null>(null);
+
+  // Pagination State
+  const [orgPage, setOrgPage] = useState<number>(1);
+  const [userPage, setUserPage] = useState<number>(1);
+  const [subPage, setSubPage] = useState<number>(1);
+  const itemsPerPage = 8;
+
+  useEffect(() => {
+    setOrgPage(1);
+    setUserPage(1);
+    setSubPage(1);
+  }, [searchQuery, userOrgFilter, userGroupFilter]);
 
   // Initial Seed Data / LocalStorage State
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
@@ -494,9 +509,7 @@ export default function AdminControlsPage() {
 
         <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
-              <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={28} height={28} className="object-contain" />
-            </div>
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={56} height={56} className="object-contain drop-shadow-md shrink-0" />
             <span className="font-semibold text-xs tracking-widest uppercase text-amber-300">
               PuzzlePro Admin Controls
             </span>
@@ -516,10 +529,8 @@ export default function AdminControlsPage() {
         </div>
 
         <div className="relative z-10 w-full max-w-[380px] bg-slate-900/80 md:bg-white/90 p-7 rounded-[28px] border border-white/20 md:border-white/60 shadow-2xl backdrop-blur-xl flex flex-col gap-4">
-          <div className="text-center md:text-left">
-            <div className="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center border border-amber-600 shadow-md mb-2 mx-auto md:mx-0">
-              <IconShieldCheck className="w-7 h-7 text-slate-950" />
-            </div>
+          <div className="text-center md:text-left flex flex-col items-center md:items-start">
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={48} height={48} className="object-contain mb-2 drop-shadow-md shrink-0" />
             <h2 className="text-xl font-bold text-white md:text-slate-900 tracking-tight">Admin Controls</h2>
             <p className="text-[10px] text-slate-400 md:text-slate-500 font-semibold uppercase tracking-wide mt-0.5">
               Sign in to platform dashboard
@@ -593,13 +604,20 @@ export default function AdminControlsPage() {
       o.contactPhone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const filteredUsers = usersList.filter(
-    (u) =>
+  const filteredUsers = usersList.filter((u) => {
+    const matchesSearch =
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.studentCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.groupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.organisationName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      u.organisationName.toLowerCase().includes(searchQuery.toLowerCase());
+
+    const matchesOrg = userOrgFilter === 'ALL' || u.organisationId === userOrgFilter;
+    const matchesGroup = userGroupFilter === 'ALL' || u.groupName === userGroupFilter;
+
+    return matchesSearch && matchesOrg && matchesGroup;
+  });
+
+  const uniqueGroupNames = Array.from(new Set(usersList.map((u) => u.groupName).filter(Boolean)));
 
   const filteredSubs = subscriptionsList.filter(
     (s) =>
@@ -608,30 +626,37 @@ export default function AdminControlsPage() {
       s.planName.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalOrgPages = Math.ceil(filteredOrgs.length / itemsPerPage) || 1;
+  const orgStartIndex = (orgPage - 1) * itemsPerPage;
+  const paginatedOrgs = filteredOrgs.slice(orgStartIndex, orgStartIndex + itemsPerPage);
+
+  const totalUserPages = Math.ceil(filteredUsers.length / itemsPerPage) || 1;
+  const userStartIndex = (userPage - 1) * itemsPerPage;
+  const paginatedUsers = filteredUsers.slice(userStartIndex, userStartIndex + itemsPerPage);
+
+  const totalSubPages = Math.ceil(filteredSubs.length / itemsPerPage) || 1;
+  const subStartIndex = (subPage - 1) * itemsPerPage;
+  const paginatedSubs = filteredSubs.slice(subStartIndex, subStartIndex + itemsPerPage);
+
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col">
-      {/* Top Admin Header Bar */}
-      <header className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between shadow-md">
+      {/* Top Admin Header Bar (Clean Light NETS ERP Style) */}
+      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs">
         <div className="flex items-center space-x-3">
-          <div className="w-9 h-9 bg-amber-400 rounded-xl flex items-center justify-center border border-amber-500 shadow-sm">
-            <Image src="/monkey1.svg" alt="PuzzlePro" width={24} height={24} className="object-contain" />
-          </div>
+          <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={44} height={44} className="object-contain drop-shadow-sm shrink-0" />
           <div>
-            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
-              <span>PuzzlePro Admin Controls</span>
-              <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30 uppercase font-semibold tracking-wider">
-                v2.1.1 Enterprise
-              </span>
+            <h1 className="text-base font-bold text-slate-900 tracking-tight">
+              PuzzlePro
             </h1>
-            <p className="text-[11px] text-slate-400 font-medium">Platform Administration & Worksuite</p>
+            <p className="text-[11px] text-slate-500 font-medium">Platform Administration & Worksuite</p>
           </div>
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="text-xs font-semibold text-slate-300 hidden sm:inline">Admin User</span>
+          <span className="text-xs font-semibold text-slate-600 hidden sm:inline">Admin User</span>
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer border border-slate-700 shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer border border-slate-200 shadow-xs"
           >
             <IconLogout className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -680,17 +705,17 @@ export default function AdminControlsPage() {
         </div>
 
         {/* 3 Core Modules Navigation Tabs */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center space-x-2 w-full sm:w-auto">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="flex items-center space-x-6 w-full sm:w-auto px-2">
             <button
               onClick={() => {
                 setActiveTab('organisations');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+              className={`py-1.5 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
                 activeTab === 'organisations'
-                  ? 'bg-slate-900 text-amber-400 shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100 font-semibold'
+                  ? 'text-amber-600 border-amber-500'
+                  : 'text-slate-500 hover:text-slate-800 border-transparent font-medium'
               }`}
             >
               <IconBuildingSkyscraper className="w-4 h-4" />
@@ -702,8 +727,10 @@ export default function AdminControlsPage() {
                 setActiveTab('users');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
-                activeTab === 'users' ? 'bg-slate-900 text-amber-400 shadow-sm' : 'text-slate-600 hover:bg-slate-100 font-semibold'
+              className={`py-1.5 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+                activeTab === 'users'
+                  ? 'text-amber-600 border-amber-500'
+                  : 'text-slate-500 hover:text-slate-800 border-transparent font-medium'
               }`}
             >
               <IconUsers className="w-4 h-4" />
@@ -715,10 +742,10 @@ export default function AdminControlsPage() {
                 setActiveTab('subscriptions');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+              className={`py-1.5 text-xs font-bold transition flex items-center space-x-2 cursor-pointer border-b-2 ${
                 activeTab === 'subscriptions'
-                  ? 'bg-slate-900 text-amber-400 shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100 font-semibold'
+                  ? 'text-amber-600 border-amber-500'
+                  : 'text-slate-500 hover:text-slate-800 border-transparent font-medium'
               }`}
             >
               <IconCreditCard className="w-4 h-4" />
@@ -778,7 +805,7 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {filteredOrgs.map((org) => (
+                  {paginatedOrgs.map((org) => (
                     <tr key={org.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3.5 px-3 font-semibold text-slate-900">{org.name}</td>
                       <td className="py-3.5 px-3 text-slate-500 font-mono text-[11px]">{org.domain}</td>
@@ -882,6 +909,32 @@ export default function AdminControlsPage() {
                 </tbody>
               </table>
             </div>
+
+            {/* Pagination Controls Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-150 pt-4 mt-1 gap-3">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Showing {filteredOrgs.length > 0 ? orgStartIndex + 1 : 0} to {Math.min(orgStartIndex + itemsPerPage, filteredOrgs.length)} of {filteredOrgs.length} organisations
+              </span>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  disabled={orgPage === 1}
+                  onClick={() => setOrgPage((prev) => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-bold text-slate-700 px-2">
+                  Page {orgPage} of {totalOrgPages}
+                </span>
+                <button
+                  disabled={orgPage >= totalOrgPages}
+                  onClick={() => setOrgPage((prev) => Math.min(prev + 1, totalOrgPages))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -916,6 +969,58 @@ export default function AdminControlsPage() {
               </button>
             </div>
 
+            {/* Organisation & Group Dropdown Filters */}
+            <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider text-[10px] flex items-center space-x-1">
+                <IconFilter className="w-3.5 h-3.5 text-slate-400" />
+                <span>Filter By:</span>
+              </span>
+
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-semibold text-slate-700">Organisation:</label>
+                <select
+                  value={userOrgFilter}
+                  onChange={(e) => setUserOrgFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                >
+                  <option value="ALL">All Organisations ({organisations.length})</option>
+                  {organisations.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {o.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <label className="text-xs font-semibold text-slate-700">Group / Class:</label>
+                <select
+                  value={userGroupFilter}
+                  onChange={(e) => setUserGroupFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                >
+                  <option value="ALL">All Groups ({uniqueGroupNames.length})</option>
+                  {uniqueGroupNames.map((grp) => (
+                    <option key={grp} value={grp}>
+                      {grp}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {(userOrgFilter !== 'ALL' || userGroupFilter !== 'ALL') && (
+                <button
+                  onClick={() => {
+                    setUserOrgFilter('ALL');
+                    setUserGroupFilter('ALL');
+                  }}
+                  className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-[11px] font-semibold transition cursor-pointer"
+                >
+                  Reset Filters
+                </button>
+              )}
+            </div>
+
             {/* User Roster Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
@@ -931,7 +1036,7 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {filteredUsers.map((usr) => (
+                  {paginatedUsers.map((usr) => (
                     <tr key={usr.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3.5 px-3 font-semibold text-slate-900">{usr.name}</td>
                       <td className="py-3.5 px-3">
@@ -1011,12 +1116,38 @@ export default function AdminControlsPage() {
                   {filteredUsers.length === 0 && (
                     <tr>
                       <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-medium">
-                        No student users found.
+                        No student users found matching filters.
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Controls Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-150 pt-4 mt-1 gap-3">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Showing {filteredUsers.length > 0 ? userStartIndex + 1 : 0} to {Math.min(userStartIndex + itemsPerPage, filteredUsers.length)} of {filteredUsers.length} students
+              </span>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  disabled={userPage === 1}
+                  onClick={() => setUserPage((prev) => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-bold text-slate-700 px-2">
+                  Page {userPage} of {totalUserPages}
+                </span>
+                <button
+                  disabled={userPage >= totalUserPages}
+                  onClick={() => setUserPage((prev) => Math.min(prev + 1, totalUserPages))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -1066,7 +1197,7 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {filteredSubs.map((sub) => (
+                  {paginatedSubs.map((sub) => (
                     <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
                       <td className="py-3.5 px-3 font-semibold text-slate-900">{sub.organisationName}</td>
                       <td className="py-3.5 px-3 text-slate-500">{sub.userEmail}</td>
@@ -1095,6 +1226,32 @@ export default function AdminControlsPage() {
                   )}
                 </tbody>
               </table>
+            </div>
+
+            {/* Pagination Controls Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-150 pt-4 mt-1 gap-3">
+              <span className="text-[11px] text-slate-500 font-medium">
+                Showing {filteredSubs.length > 0 ? subStartIndex + 1 : 0} to {Math.min(subStartIndex + itemsPerPage, filteredSubs.length)} of {filteredSubs.length} subscriptions
+              </span>
+              <div className="flex items-center space-x-1.5">
+                <button
+                  disabled={subPage === 1}
+                  onClick={() => setSubPage((prev) => Math.max(prev - 1, 1))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Previous
+                </button>
+                <span className="text-xs font-bold text-slate-700 px-2">
+                  Page {subPage} of {totalSubPages}
+                </span>
+                <button
+                  disabled={subPage >= totalSubPages}
+                  onClick={() => setSubPage((prev) => Math.min(prev + 1, totalSubPages))}
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-semibold cursor-pointer transition"
+                >
+                  Next
+                </button>
+              </div>
             </div>
           </div>
         )}
