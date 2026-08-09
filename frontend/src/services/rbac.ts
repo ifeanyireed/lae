@@ -120,16 +120,5 @@ export async function authenticateUser(
     }
   } catch (e) {}
 
-  // Fallback for school educator login
-  if (cleanId.includes('@') && cleanPass) {
-    localStorage.setItem('puzzlepro_school_session', 'authenticated');
-    return {
-      isAuthenticated: true,
-      role: 'school',
-      orgId: 'org_skil_9901',
-      redirectUrl: '/schools?orgId=org_skil_9901',
-    };
-  }
-
   return { error: 'Invalid login credentials. Please check your email, password, or student code.' };
 }
