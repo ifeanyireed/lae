@@ -118,7 +118,7 @@ export default function Home() {
     return closestWp;
   };
 
-  const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(false);
+  const [isGlobalLoading, setIsGlobalLoading] = useState<boolean>(true);
   const [loadingMessage, setLoadingMessage] = useState<string>('Synchronizing Adventure Data...');
 
   // Database Progress Sync Helper
@@ -377,6 +377,11 @@ export default function Home() {
         .finally(() => {
           setIsGlobalLoading(false);
         });
+    } else {
+      const timer = setTimeout(() => {
+        setIsGlobalLoading(false);
+      }, 250);
+      return () => clearTimeout(timer);
     }
   }, []);
 
