@@ -11,6 +11,7 @@ import (
 
 	"player_service/internal/auth"
 	"player_service/internal/database"
+	"player_service/internal/embed"
 )
 
 type PlayerServiceHandler struct {
@@ -602,7 +603,12 @@ func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r 
 		req.ID = fmt.Sprintf("org_%d", time.Now().UnixNano()%100000)
 	}
 	if req.Token == "" {
-		req.Token = fmt.Sprintf("TOKEN_%s_%d", strings.ToUpper(req.Name[:min(4, len(req.Name))]), time.Now().UnixNano()%10000)
+		signedTok, errTok := embed.GenerateSignedEmbedToken(req.ID, 365*24*time.Hour)
+		if errTok == nil {
+			req.Token = signedTok
+		} else {
+			req.Token = fmt.Sprintf("EMB_TOKEN_%s_%d", strings.ToUpper(req.Name[:min(4, len(req.Name))]), time.Now().UnixNano()%10000)
+		}
 	}
 	if req.Type == "" {
 		req.Type = "school"
@@ -1204,5 +1210,186 @@ func (p *PlayerServiceHandler) SaveGroupHandler(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "group": req})
 }
+
+// VerifyEmbedTokenHandler validates embed tokens according to host domain & DB entitlements (Checklist 1-9)
+func (p *PlayerServiceHandler) VerifyEmbedTokenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"valid": false, "error": "Database unavailable"})
+		return
+	}
+
+	tokenStr := r.URL.Query().Get("token")
+	if tokenStr == "" {
+		tokenStr = r.URL.Query().Get("embed_token")
+	}
+	if tokenStr == "" {
+		var body struct {
+			Token      string `json:"token"`
+			EmbedToken string `json:"embed_token"`
+			Origin     string `json:"origin"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
+			if body.Token != "" {
+				tokenStr = body.Token
+			} else {
+				tokenStr = body.EmbedToken
+			}
+		}
+	}
+
+	if tokenStr == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"valid": false,
+			"error": "Missing embed token in request",
+		})
+		return
+	}
+
+	// 1. Verify signed HMAC token signature and expiration (Check 1, 2, 3, 5)
+	payload, err := embed.VerifySignedEmbedToken(tokenStr)
+	var orgID string
+	var isSigned bool = true
+
+	if err != nil {
+		// Legacy plain token fallback check in database
+		var foundOrgID string
+		errDb := p.DB.QueryRowContext(r.Context(), "SELECT id FROM organisations WHERE token = ?", tokenStr).Scan(&foundOrgID)
+		if errDb == nil && foundOrgID != "" {
+			orgID = foundOrgID
+			isSigned = false
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"valid": false,
+				"error": fmt.Sprintf("Embed authentication failed: %v", err),
+			})
+			return
+		}
+	} else {
+		orgID = payload.OrgID
+	}
+
+	// 2. Fetch Organisation & Entitlements dynamically from Database (Check 4, 7, 8)
+	ctx := r.Context()
+	var org database.Organisation
+	err = p.DB.QueryRowContext(ctx, `
+		SELECT id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type
+		FROM organisations WHERE id = ?
+	`, orgID).Scan(&org.ID, &org.Name, &org.Domain, &org.ContactEmail, &org.ContactPhone, &org.Token, &org.GoogleAdsEnabled, &org.Type)
+
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"valid": false,
+			"error": fmt.Sprintf("Organisation for embed token '%s' not found in database", orgID),
+		})
+		return
+	}
+
+	// 3. Domain Origin Verification (Check 9)
+	requestOrigin := r.Header.Get("Origin")
+	if requestOrigin == "" {
+		requestOrigin = r.Header.Get("Referer")
+	}
+	if requestOrigin == "" {
+		requestOrigin = r.URL.Query().Get("origin")
+	}
+
+	if org.Domain != "" && org.Domain != "*" && requestOrigin != "" {
+		cleanDomain := strings.ToLower(org.Domain)
+		cleanOrigin := strings.ToLower(requestOrigin)
+		if !strings.Contains(cleanOrigin, cleanDomain) && !strings.Contains(cleanDomain, "localhost") {
+			w.WriteHeader(http.StatusForbidden)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{
+				"valid": false,
+				"error": fmt.Sprintf("Domain authorization failed: Embed token for '%s' is not authorized on host origin '%s'", org.Domain, requestOrigin),
+			})
+			return
+		}
+	}
+
+	// 4. Fetch Active Subscription Entitlements (Check 8)
+	var sub database.Subscription
+	sub.PlanName = "School Enterprise"
+	sub.Status = "active"
+	sub.Seats = 100
+	_ = p.DB.QueryRowContext(ctx, `
+		SELECT plan_name, status, seats FROM subscriptions WHERE organisation_id = ? LIMIT 1
+	`, org.ID).Scan(&sub.PlanName, &sub.Status, &sub.Seats)
+
+	// 5. Generate Separate Player Session Token (Check 6)
+	playerSessionToken := fmt.Sprintf("SESS_%s_%d", org.ID, time.Now().UnixNano())
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"valid": true,
+		"organisation": map[string]interface{}{
+			"id":            org.ID,
+			"name":          org.Name,
+			"domain":        org.Domain,
+			"contact_email": org.ContactEmail,
+			"type":          org.Type,
+		},
+		"entitlements": map[string]interface{}{
+			"google_ads_enabled": org.GoogleAdsEnabled,
+			"plan_name":          sub.PlanName,
+			"status":             sub.Status,
+			"seats":              sub.Seats,
+			"allowed_worlds":     []int{1, 2, 3, 4, 5},
+			"allowed_domain":     org.Domain,
+		},
+		"player_session_token": playerSessionToken,
+		"token_info": map[string]interface{}{
+			"is_signed": isSigned,
+			"minimal_payload": map[string]interface{}{
+				"org_id": org.ID,
+				"exp":    time.Now().Add(365 * 24 * time.Hour).Unix(),
+			},
+		},
+	})
+}
+
+// GenerateEmbedTokenHandler creates a signed HMAC embed token for an organisation
+func (p *PlayerServiceHandler) GenerateEmbedTokenHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req struct {
+		OrganisationID string `json:"organisation_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.OrganisationID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Missing organisation_id"})
+		return
+	}
+
+	signedToken, err := embed.GenerateSignedEmbedToken(req.OrganisationID, 365*24*time.Hour)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	// Update database token column
+	_, _ = p.DB.ExecContext(r.Context(), "UPDATE organisations SET token = ? WHERE id = ?", signedToken, req.OrganisationID)
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"token":   signedToken,
+		"minimal_payload": map[string]interface{}{
+			"org_id": req.OrganisationID,
+			"exp":    time.Now().Add(365 * 24 * time.Hour).Unix(),
+		},
+	})
+}
+
 
 

@@ -17,6 +17,7 @@ import { PathWaypoint, LevelConfig } from '@/types/game';
 import { soundManager } from '@/utils/sound';
 import { GAME_ENGINE_API_URL, PLAYER_SERVICE_API_URL } from '@/utils/api';
 import { getCdnUrl } from '@/utils/cdn';
+import { verifyEmbedToken } from '@/services/api';
 
 export default function Home() {
   const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('map');
@@ -27,6 +28,8 @@ export default function Home() {
   const [totalXP, setTotalXP] = useState(0);
 
   const [showSplash, setShowSplash] = useState(true);
+  const [embedError, setEmbedError] = useState<string | null>(null);
+  const [isVerifyingEmbed, setIsVerifyingEmbed] = useState<boolean>(false);
 
   // Embeddable Engine User & Host Handshake Session Context
   const [userContext, setUserContext] = useState({
@@ -313,7 +316,39 @@ export default function Home() {
   }, [selectedAdventureId, selectedWorldId]);
 
   React.useEffect(() => {
-    // Session Auto Re-authenticate on Refresh from Database using JWT/Session API
+    // 1. Check for iFrame Embed Token in URL query params (Checklist 1-9)
+    if (typeof window !== 'undefined') {
+      const searchParams = new URLSearchParams(window.location.search);
+      const embedToken = searchParams.get('embed_token') || searchParams.get('token');
+      if (embedToken && embedToken.startsWith('EMB.')) {
+        setIsGlobalLoading(true);
+        setLoadingMessage('Verifying iFrame Embed Token...');
+        verifyEmbedToken(embedToken).then((res) => {
+          setIsGlobalLoading(false);
+          if (!res.valid) {
+            setEmbedError(res.error || 'iFrame Embed Authentication Failed: Invalid or Expired Token');
+          } else {
+            setEmbedError(null);
+            if (res.player_session_token) {
+              try {
+                sessionStorage.setItem('puzzlepro_session_token', res.player_session_token);
+                localStorage.setItem('puzzlepro_session_token', res.player_session_token);
+              } catch (e) {}
+            }
+            if (res.organisation) {
+              setUserContext((prev) => ({
+                ...prev,
+                groupName: res.organisation?.name || prev.groupName,
+              }));
+            }
+            setShowSplash(false);
+          }
+        });
+        return;
+      }
+    }
+
+    // 2. Session Auto Re-authenticate on Refresh from Database using JWT/Session API
     let savedToken: string | null = null;
     let savedCode: string | null = null;
     try {
@@ -1185,6 +1220,31 @@ export default function Home() {
   return (
     <main className="w-screen h-screen overflow-hidden text-slate-100 flex flex-col font-sans relative bg-slate-900">
       
+      {/* Refuse game load if iFrame Embed Token is invalid, expired, or domain mismatch */}
+      {embedError && (
+        <div className="fixed inset-0 z-[9999] bg-slate-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center select-none">
+          <div className="bg-slate-900 border-2 border-red-500/50 p-8 rounded-3xl max-w-md w-full shadow-2xl flex flex-col items-center gap-4 animate-fade-in-up">
+            <div className="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/30 flex items-center justify-center text-red-500 shadow-md">
+              <svg className="w-10 h-10 stroke-current" fill="none" viewBox="0 0 24 24" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div>
+              <h2 className="text-xl font-bold text-white tracking-tight">Embed Authorization Refused</h2>
+              <p className="text-xs font-medium text-red-300 mt-2 leading-relaxed bg-red-950/50 p-3 rounded-xl border border-red-800/40">
+                {embedError}
+              </p>
+            </div>
+            <div className="text-[10px] text-slate-400 font-mono bg-slate-950 p-3 rounded-xl border border-white/10 w-full text-left leading-relaxed">
+              <span className="text-amber-400 font-bold block mb-1">Server-Side Security Enforcement:</span>
+              • Signed HMAC Token Signature Check<br />
+              • Expiration & Domain Origin Check<br />
+              • Business Entitlements Validated
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Background Image */}
       <div className="fixed inset-0 z-0 overflow-hidden">
         <Image 

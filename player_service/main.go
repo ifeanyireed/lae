@@ -37,6 +37,11 @@ func main() {
 	mux.HandleFunc("/api/v1/player/groups", h.GetGroupsHandler)
 	mux.HandleFunc("/api/v1/player/centres", h.GetCentresHandler)
 
+	// iFrame Embed Verification & Token Endpoints
+	mux.HandleFunc("/api/v1/embed/verify", h.VerifyEmbedTokenHandler)
+	mux.HandleFunc("/api/v1/embed/handshake", h.VerifyEmbedTokenHandler)
+	mux.HandleFunc("/api/v1/embed/generate-token", h.GenerateEmbedTokenHandler)
+
 	// Centres REST Endpoints
 	mux.HandleFunc("/api/v1/centres", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

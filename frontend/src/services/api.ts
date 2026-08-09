@@ -229,6 +229,51 @@ export async function saveSubscription(sub: Partial<Subscription>): Promise<Subs
   return null;
 }
 
+// IFRAME EMBED HANDLER & VERIFICATION
+export interface EmbedVerificationResponse {
+  valid: boolean;
+  error?: string;
+  organisation?: {
+    id: string;
+    name: string;
+    domain: string;
+    contact_email?: string;
+    type?: string;
+  };
+  entitlements?: {
+    google_ads_enabled: boolean;
+    plan_name: string;
+    status: string;
+    seats: number;
+    allowed_worlds: number[];
+    allowed_domain?: string;
+  };
+  player_session_token?: string;
+  token_info?: {
+    is_signed: boolean;
+    minimal_payload: {
+      org_id: string;
+      exp: number;
+    };
+  };
+}
+
+export async function verifyEmbedToken(token: string): Promise<EmbedVerificationResponse> {
+  try {
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    const res = await fetch(
+      `${PLAYER_SERVICE_URL}/api/v1/embed/verify?token=${encodeURIComponent(token)}&origin=${encodeURIComponent(origin)}`
+    );
+    const data = await res.json();
+    return data;
+  } catch (e) {
+    return {
+      valid: false,
+      error: 'Network error verifying iFrame embed token',
+    };
+  }
+}
+
 // CENTRES & LOCATIONS
 export interface CentreApiItem {
   id: number;
