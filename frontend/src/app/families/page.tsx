@@ -133,13 +133,11 @@ export default function FamiliesPage() {
           (o.password === loginPassword || loginPassword === 'parent123')
       );
 
-      if (match || loginEmail === 'parent@family.com') {
-        const targetOrgId = match ? match.id : '';
-        if (targetOrgId) {
-          sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-          localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-          setActiveOrgId(targetOrgId);
-        }
+      if (match) {
+        const targetOrgId = match.id;
+        sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+        localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+        setActiveOrgId(targetOrgId);
         setIsAuthenticated(true);
         localStorage.setItem('puzzlepro_family_session', 'authenticated');
         await loadDataFromDB(targetOrgId);
@@ -338,10 +336,6 @@ export default function FamiliesPage() {
               New Family? Start Onboarding Setup →
             </Link>
           </div>
-
-          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
-            Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">parent@family.com / parent123</span>
-          </p>
         </div>
       </div>
     );

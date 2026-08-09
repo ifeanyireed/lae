@@ -158,13 +158,11 @@ export default function SchoolsPage() {
           (o.password === loginPassword || loginPassword === 'school123')
       );
 
-      if (match || loginEmail === 'teacher@school.edu') {
-        const targetOrgId = match ? match.id : '';
-        if (targetOrgId) {
-          sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-          localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-          setActiveOrgId(targetOrgId);
-        }
+      if (match) {
+        const targetOrgId = match.id;
+        sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+        localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+        setActiveOrgId(targetOrgId);
         setIsAuthenticated(true);
         localStorage.setItem('puzzlepro_school_session', 'authenticated');
         await loadDataFromDB(targetOrgId);
@@ -377,10 +375,6 @@ export default function SchoolsPage() {
               New Educator / School? Start Onboarding Setup →
             </Link>
           </div>
-
-          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
-            Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">teacher@school.edu / school123</span>
-          </p>
         </div>
       </div>
     );

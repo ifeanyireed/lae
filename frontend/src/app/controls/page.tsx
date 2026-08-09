@@ -248,7 +248,7 @@ export default function AdminControlsPage() {
         setIsAuthenticated(true);
         localStorage.setItem('puzzlepro_admin_session', 'authenticated');
       } else {
-        setAuthError('Invalid Admin credentials. Try admin@puzzlepro.com / admin123');
+        setAuthError('Invalid Admin email or password.');
       }
       setIsLoggingIn(false);
     }, 450);
@@ -535,10 +535,6 @@ export default function AdminControlsPage() {
               )}
             </button>
           </form>
-
-          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
-            Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">admin@puzzlepro.com / admin123</span>
-          </p>
         </div>
       </div>
     );
