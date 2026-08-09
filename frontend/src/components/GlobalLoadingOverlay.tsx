@@ -26,12 +26,12 @@ export const GlobalLoadingOverlay: React.FC<GlobalLoadingOverlayProps> = ({
           transition={{ duration: 0.2, ease: 'easeInOut' }}
           className="fixed inset-0 z-[99999] flex flex-col items-center justify-center bg-slate-950/60 backdrop-blur-md select-none pointer-events-auto"
         >
-          {/* Monkey Sprite Container with Motion Bouncing Animation */}
+          {/* Monkey Sprite Container with Smooth Zooming Animation Matching Loading Overlay */}
           <motion.div
             animate={
               isQuickZoom
-                ? { scale: [1, 1.3, 0.85, 1.3, 0.85, 1.3, 0.85, 1.3, 0.85, 1.3, 1], rotate: [0, -6, 6, -6, 6, 0] }
-                : { scale: [0.85, 1.25, 0.85], y: [0, -14, 0], rotate: [-5, 5, -5] }
+                ? { scale: [1, 1.3, 0.85, 1.3, 0.85, 1.3, 0.85, 1.3, 0.85, 1.3, 1] }
+                : { scale: [0.85, 1.25, 0.85] }
             }
             transition={{
               duration: 1.8,
