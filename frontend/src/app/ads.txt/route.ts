@@ -1,3 +1,5 @@
+export const dynamic = 'force-static';
+
 export function GET() {
   return new Response('google.com, pub-5968977408464822, DIRECT, f08c47fec0942fa0\n', {
     headers: {
