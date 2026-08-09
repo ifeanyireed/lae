@@ -1345,8 +1345,9 @@ func (p *PlayerServiceHandler) VerifyEmbedTokenHandler(w http.ResponseWriter, r 
 	if org.Domain != "" && org.Domain != "*" && requestOrigin != "" {
 		cleanDomain := strings.ToLower(org.Domain)
 		cleanOrigin := strings.ToLower(requestOrigin)
-		// Allow origin if it contains organisation domain, platform host (learn2earnhq.com, resultspro.ng), or localhost
+		// Allow origin if it contains organisation domain, school host (skilluplearningacademy.com), platform host (learn2earnhq.com, resultspro.ng), or localhost
 		isAllowed := strings.Contains(cleanOrigin, cleanDomain) ||
+			strings.Contains(cleanOrigin, "skilluplearningacademy.com") ||
 			strings.Contains(cleanOrigin, "learn2earnhq.com") ||
 			strings.Contains(cleanOrigin, "resultspro.ng") ||
 			strings.Contains(cleanOrigin, "localhost") ||

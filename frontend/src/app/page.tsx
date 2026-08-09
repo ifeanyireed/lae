@@ -1242,12 +1242,6 @@ export default function Home() {
                 {embedError}
               </p>
             </div>
-            <div className="text-[10px] text-slate-400 font-mono bg-slate-950 p-3 rounded-xl border border-white/10 w-full text-left leading-relaxed">
-              <span className="text-amber-400 font-bold block mb-1">Server-Side Security Enforcement:</span>
-              • Signed HMAC Token Signature Check<br />
-              • Expiration & Domain Origin Check<br />
-              • Business Entitlements Validated
-            </div>
           </div>
         </div>
       )}
