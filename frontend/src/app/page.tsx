@@ -19,7 +19,7 @@ import { GAME_ENGINE_API_URL, PLAYER_SERVICE_API_URL } from '@/utils/api';
 import { getCdnUrl } from '@/utils/cdn';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('studio');
+  const [activeTab, setActiveTab] = useState<'studio' | 'customizer' | 'map'>('map');
   const [selectedCharacter, setSelectedCharacter] = useState<string>('monkey');
 
   const [characterName, setCharacterName] = useState('Monkey');

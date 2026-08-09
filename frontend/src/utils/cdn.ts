@@ -1,7 +1,7 @@
 export const CDN_BASE_URL = (process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.resultspro.ng/assets').replace(/\/+$/, '');
 
-// Unique timestamp key to force immediate browser and CDN cache invalidation when assets update
-const ASSET_VERSION_KEY = `2.1.1_${Date.now()}`;
+// Unique version key to manage browser and CDN cache invalidation deterministically
+const ASSET_VERSION_KEY = process.env.NEXT_PUBLIC_BUILD_VERSION || '2.1.1_v1';
 
 // Local assets stored directly in /public directory that should bypass external CDN URL
 const LOCAL_PUBLIC_ASSETS = ['/2_1_1.svg', '/scroll.svg', '/play.svg', '/reset.svg', '/start.svg', '/monkey1.svg'];
