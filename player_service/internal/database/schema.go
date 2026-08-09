@@ -232,6 +232,12 @@ func (db *DB) seedAccessCodeUsers(ctx context.Context) {
 		ON DUPLICATE KEY UPDATE name = VALUES(name)
 	`)
 
+	_, _ = db.ExecContext(ctx, `
+		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type)
+		VALUES ('org_skil_9901', 'SkillUp Learning Academy', '*', 'contact@skilluplearningacademy.com', '+1 (555) 019-2831', 'TOKEN_SKIL_9901', true, 'school')
+		ON DUPLICATE KEY UPDATE token = VALUES(token)
+	`)
+
 	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO centres (id, organisation_id, name, location, code) VALUES (1, 'org_001', 'Main Campus', 'Central Education Hub', 'main-campus')")
 	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (1, 'org_001', 1, 'Grade 5 Coding Class', 'grade-5-coding')")
 
