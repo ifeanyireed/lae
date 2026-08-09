@@ -720,7 +720,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
             >
               <div className="flex items-center space-x-2">
                 <IconGripHorizontal className="w-4 h-4 text-slate-800 opacity-80" />
-                <span className="text-xs font-black text-slate-950">Track Mapper Modal ({liveWaypoints.length} Tiles)</span>
+                <span className="text-xs font-black text-slate-950">Track Mapper ({liveWaypoints.length} Tiles)</span>
               </div>
 
               <div className="flex items-center space-x-2" onPointerDown={(e) => e.stopPropagation()}>
