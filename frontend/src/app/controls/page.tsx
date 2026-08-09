@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import {
   IconBuildingSkyscraper,
   IconUsers,
@@ -29,6 +30,8 @@ import {
   IconFilter,
   IconLoader2,
   IconFolderPlus,
+  IconRocket,
+  IconDeviceLaptop,
 } from '@tabler/icons-react';
 
 // Character avatar options from public/images
@@ -679,7 +682,7 @@ export default function AdminControlsPage() {
 
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
 
-        <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white animate-fade-in-up">
+        <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-lg flex-col gap-6 text-white animate-fade-in-up">
           <div className="flex items-center gap-3">
             <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={56} height={56} className="object-contain drop-shadow-md shrink-0 transition-transform hover:scale-105" />
             <span className="font-normal text-xs tracking-widest uppercase text-amber-300">
@@ -691,11 +694,32 @@ export default function AdminControlsPage() {
               Empowering Talent, <br />
               <span className="text-amber-400 font-medium">Driving Platform Growth.</span>
             </h1>
-            <p className="text-xs text-slate-200/80 mt-4 leading-relaxed font-normal">
-              Welcome to the PuzzlePro Controls Dashboard. Manage schools & families, turn Google Ads monetization on/off, assign 8-digit student access codes, and manage paid subscriptions.
+            <p className="text-xs text-slate-200/90 mt-3 leading-relaxed font-normal">
+              PuzzlePro is the ultimate gamified coding platform for schools, educators, and families.
             </p>
           </div>
-          <div className="text-[10px] text-slate-400 font-normal uppercase tracking-wider mt-4">
+
+          {/* Key App Features Highlights */}
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">636 Coding Quests</span>
+              <span className="text-[11px] text-slate-200/80">Interactive Scratch blocks, HTML, CSS, JS & Python.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">8-Digit Access Codes</span>
+              <span className="text-[11px] text-slate-200/80">Instant passwordless student logins & tracking.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">5 Gamified Worlds</span>
+              <span className="text-[11px] text-slate-200/80">Custom world assignments per school or child.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">Google Ads & Embeds</span>
+              <span className="text-[11px] text-slate-200/80">Toggle ad monetization & iFrame LMS embeds.</span>
+            </div>
+          </div>
+
+          <div className="text-[10px] text-slate-400 font-normal uppercase tracking-wider mt-2">
             © 2026 PuzzlePro Controls Dashboard. All rights reserved.
           </div>
         </div>
@@ -765,7 +789,16 @@ export default function AdminControlsPage() {
             </button>
           </form>
 
-          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-1">
+          <div className="pt-2 border-t border-white/10 md:border-slate-200 flex items-center justify-between text-[11px]">
+            <Link href="/schools" className="text-amber-400 md:text-amber-600 hover:underline font-normal">
+              Schools Portal →
+            </Link>
+            <Link href="/families" className="text-amber-400 md:text-amber-600 hover:underline font-normal">
+              Families Portal →
+            </Link>
+          </div>
+
+          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
             Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">admin@puzzlepro.com / admin123</span>
           </p>
         </div>
