@@ -50,3 +50,15 @@ services:
         value: "*Reedb4b4"
       - key: DB_NAME
         value: u721451974_lae_db
+
+  - type: web
+    name: puzzlepro-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: out
+    envVars:
+      - key: NEXT_PUBLIC_GAME_ENGINE_URL
+        value: https://game-engine-service.onrender.com
+      - key: NEXT_PUBLIC_PLAYER_SERVICE_URL
+        value: https://player-service-bttg.onrender.com
