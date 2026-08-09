@@ -18,8 +18,8 @@ import {
   IconFolderPlus,
   IconAlertCircle,
   IconX,
-  IconArrowLeft,
   IconCrown,
+  IconLoader2,
 } from '@tabler/icons-react';
 
 const AVATAR_OPTIONS = [
@@ -53,6 +53,7 @@ export default function SchoolsPage() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
   const [activeTab, setActiveTab] = useState<'students' | 'groups'>('students');
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,10 +150,17 @@ export default function SchoolsPage() {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (loginEmail || loginPassword) {
+    if (!loginEmail || !loginPassword) {
+      setAuthError('Please enter both educator email and password.');
+      return;
+    }
+    setIsLoggingIn(true);
+    setAuthError('');
+    setTimeout(() => {
       setIsAuthenticated(true);
       localStorage.setItem('puzzlepro_school_session', 'authenticated');
-    }
+      setIsLoggingIn(false);
+    }, 450);
   };
 
   const handleLogout = () => {
@@ -240,57 +248,138 @@ export default function SchoolsPage() {
     return matchesSearch && matchesGroup;
   });
 
+  // Full-screen glassmorphic video background login screen matching Admin Controls
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-slate-900 font-sans flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-blue-950 to-slate-900 z-0" />
-        <div className="relative z-10 w-full max-w-md bg-white/95 backdrop-blur-xl p-8 rounded-3xl border border-white/60 shadow-2xl flex flex-col gap-5 animate-fade-in-up">
+      <div className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative overflow-hidden">
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover filter brightness-85 contrast-105 z-0"
+        >
+          <source src="/login_bg.mov" type="video/quicktime" />
+          <source src="/login_bg.mov" type="video/mp4" />
+        </video>
+
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
+
+        <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-lg flex-col gap-6 text-white animate-fade-in-up">
           <div className="flex items-center gap-3">
-            <Image src="/monkey1.svg" alt="PuzzlePro" width={44} height={44} className="object-contain" />
-            <div>
-              <h1 className="text-xl font-medium text-slate-900">Schools Portal</h1>
-              <p className="text-xs text-slate-500 font-normal">Manage student rosters & learning worlds</p>
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={56} height={56} className="object-contain drop-shadow-md shrink-0 transition-transform hover:scale-105" />
+            <span className="font-normal text-xs tracking-widest uppercase text-amber-300">
+              PuzzlePro Schools
+            </span>
+          </div>
+          <div>
+            <h1 className="text-4xl lg:text-5xl font-medium text-white leading-tight tracking-tight">
+              Educator Portal, <br />
+              <span className="text-amber-400 font-medium">Inspiring Young Coders.</span>
+            </h1>
+            <p className="text-xs text-slate-200/90 mt-3 leading-relaxed font-normal">
+              Manage student access codes, organize classes, and assign interactive coding worlds.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">Class Management</span>
+              <span className="text-[11px] text-slate-200/80">Organize students into Grade 5, Robotics, or STEM labs.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">8-Digit Access Codes</span>
+              <span className="text-[11px] text-slate-200/80">Generate & copy instant passwordless access codes.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">World Assignments</span>
+              <span className="text-[11px] text-slate-200/80">Assign Monkey Explorers, HTML, CSS, JS, or Python.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">XP Progress Tracking</span>
+              <span className="text-[11px] text-slate-200/80">Monitor student coding milestones & total XP.</span>
             </div>
           </div>
 
-          <form onSubmit={handleLogin} className="space-y-4">
+          <div className="text-[10px] text-slate-400 font-normal uppercase tracking-wider mt-2">
+            © 2026 PuzzlePro Schools Portal. All rights reserved.
+          </div>
+        </div>
+
+        <div className="relative z-10 w-full max-w-[380px] bg-slate-900/80 md:bg-white/90 p-7 rounded-[28px] border border-white/20 md:border-white/60 shadow-2xl backdrop-blur-xl flex flex-col gap-4 animate-fade-in-up">
+          <div className="text-center md:text-left flex flex-col items-center md:items-start">
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={48} height={48} className="object-contain mb-2 drop-shadow-md shrink-0 transition-transform hover:scale-105" />
+            <h2 className="text-xl font-medium text-white md:text-slate-900 tracking-tight">Schools Portal</h2>
+            <p className="text-[10px] text-slate-400 md:text-slate-500 font-normal uppercase tracking-wide mt-0.5">
+              Sign in to educator portal
+            </p>
+          </div>
+
+          <form onSubmit={handleLogin} className="space-y-3.5">
+            {authError && (
+              <div className="bg-red-500/10 md:bg-red-50 text-red-400 md:text-red-700 text-[11px] font-normal p-3 rounded-xl border border-red-500/20 md:border-red-200 flex items-center gap-2 animate-fade-in-up">
+                <IconAlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
             <div>
-              <label className="block text-[10px] font-normal text-slate-600 uppercase mb-1">School Educator Email</label>
+              <label className="block text-[9px] font-normal text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
+                Educator Email
+              </label>
               <input
                 type="email"
                 placeholder="teacher@school.edu"
                 value={loginEmail}
-                onChange={(e) => setLoginEmail(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                onChange={(e) => {
+                  setLoginEmail(e.target.value);
+                  setAuthError('');
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900 transition-all duration-200"
               />
             </div>
+
             <div>
-              <label className="block text-[10px] font-normal text-slate-600 uppercase mb-1">Password</label>
+              <label className="block text-[9px] font-normal text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
+                Password
+              </label>
               <input
                 type="password"
                 placeholder="••••••••"
                 value={loginPassword}
-                onChange={(e) => setLoginPassword(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                onChange={(e) => {
+                  setLoginPassword(e.target.value);
+                  setAuthError('');
+                }}
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900 transition-all duration-200"
               />
             </div>
+
             <button
               type="submit"
-              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-medium rounded-xl text-xs border border-amber-500 shadow-sm transition-all"
+              disabled={isLoggingIn}
+              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500 flex items-center justify-center space-x-2 disabled:opacity-75"
             >
-              Sign In to School Portal
+              {isLoggingIn ? (
+                <>
+                  <IconLoader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <span>Sign In to Schools Portal</span>
+              )}
             </button>
           </form>
 
-          <div className="pt-2 border-t border-slate-150 flex items-center justify-between text-xs text-slate-500">
-            <Link href="/controls" className="hover:text-amber-600 transition flex items-center space-x-1">
-              <IconArrowLeft className="w-3.5 h-3.5" />
-              <span>Admin Controls</span>
-            </Link>
-            <Link href="/families" className="hover:text-amber-600 transition">
-              Families Portal →
+          <div className="pt-2 border-t border-white/10 md:border-slate-200 text-center text-xs">
+            <Link href="/onboarding" className="text-amber-400 md:text-amber-600 font-medium hover:underline">
+              New Educator / School? Start Onboarding Setup →
             </Link>
           </div>
+
+          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
+            Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">teacher@school.edu / school123</span>
+          </p>
         </div>
       </div>
     );
@@ -309,12 +398,6 @@ export default function SchoolsPage() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <Link
-            href="/controls"
-            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal transition border border-slate-200"
-          >
-            Admin Controls
-          </Link>
           <button
             onClick={handleLogout}
             className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal flex items-center space-x-1.5 border border-slate-200"

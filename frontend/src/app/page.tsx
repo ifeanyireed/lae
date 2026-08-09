@@ -1458,6 +1458,12 @@ export default function Home() {
                     if (selectedAdventureId !== null) {
                       setSelectedAdventureId(null);
                     } else {
+                      try {
+                        localStorage.removeItem('puzzlepro_session_token');
+                        sessionStorage.removeItem('puzzlepro_session_token');
+                        localStorage.removeItem('puzzlepro_session_code');
+                        sessionStorage.removeItem('puzzlepro_session_code');
+                      } catch (e) {}
                       setShowSplash(true);
                       setActiveTab('studio');
                     }
@@ -1468,29 +1474,30 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Temporary Left Floating Vertical Sidebar: Admin World Selector */}
-              {userContext.role === 'admin' && selectedAdventureId === null && (
-                <div className="fixed left-4 top-1/2 -translate-y-1/2 z-40 flex flex-col space-y-2 bg-white/90 backdrop-blur-md p-2.5 rounded-2xl border border-slate-300 shadow-2xl items-center pointer-events-auto">
-                  <span className="text-[10px] font-black text-slate-950 px-1 font-mono uppercase tracking-wider text-center max-w-[80px] leading-tight">
-                    Admin Worlds
+              {/* Bottom Center Horizontal Admin World Navigator */}
+              {userContext.role === 'admin' && (
+                <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 flex items-center space-x-2 bg-slate-950/85 backdrop-blur-md p-1.5 px-3 rounded-2xl border border-white/20 shadow-2xl pointer-events-auto scale-90 sm:scale-95 transition-all duration-200">
+                  <span className="text-[9px] font-medium text-amber-400 font-mono uppercase tracking-wider shrink-0 hidden xs:inline">
+                    Admin Worlds:
                   </span>
-                  <div className="w-full h-px bg-slate-300 my-1" />
-                  {ALL_WORLDS.map((w) => (
-                    <button
-                      key={`map-page-world-${w.id}`}
-                      onClick={() => {
-                        soundManager.playClick();
-                        setSelectedWorldId(w.id);
-                      }}
-                      className={`w-full px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 shadow-sm text-center ${
-                        selectedWorldId === w.id
-                          ? 'bg-amber-400 text-slate-950 border border-amber-600 ring-2 ring-amber-500 scale-105'
-                          : 'bg-white/90 text-slate-950 border border-slate-300 hover:bg-amber-400'
-                      }`}
-                    >
-                      World {w.id}
-                    </button>
-                  ))}
+                  <div className="flex items-center space-x-1">
+                    {ALL_WORLDS.map((w) => (
+                      <button
+                        key={`map-page-world-${w.id}`}
+                        onClick={() => {
+                          soundManager.playClick();
+                          setSelectedWorldId(w.id);
+                        }}
+                        className={`px-2.5 py-1 rounded-xl text-[11px] font-medium transition-all duration-200 cursor-pointer shrink-0 border ${
+                          selectedWorldId === w.id
+                            ? 'bg-amber-400 text-slate-950 border-amber-500 shadow-sm scale-105'
+                            : 'bg-slate-900/90 text-slate-300 border-white/10 hover:bg-slate-800 hover:text-white'
+                        }`}
+                      >
+                        World {w.id}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 

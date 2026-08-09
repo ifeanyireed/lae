@@ -789,15 +789,6 @@ export default function AdminControlsPage() {
             </button>
           </form>
 
-          <div className="pt-2 border-t border-white/10 md:border-slate-200 flex items-center justify-between text-[11px]">
-            <Link href="/schools" className="text-amber-400 md:text-amber-600 hover:underline font-normal">
-              Schools Portal →
-            </Link>
-            <Link href="/families" className="text-amber-400 md:text-amber-600 hover:underline font-normal">
-              Families Portal →
-            </Link>
-          </div>
-
           <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-normal mt-0.5">
             Default credentials: <span className="font-normal text-amber-500 md:text-slate-900">admin@puzzlepro.com / admin123</span>
           </p>

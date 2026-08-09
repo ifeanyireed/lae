@@ -165,7 +165,19 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
           {/* 2. CENTER WOODEN BOARD: Monkey Sprite Avatar & 3D Game Code Input */}
           <div className="text-center my-auto pt-1 sm:pt-2 space-y-0 max-w-[68%] sm:max-w-[62%] mx-auto flex flex-col items-center justify-center">
             {/* Monkey 1 Avatar Header (layered behind the input field) */}
-            <div className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 drop-shadow-xl transform hover:scale-105 transition -mb-5 sm:-mb-7 pointer-events-none">
+            <motion.div
+              animate={{
+                y: [0, -10, 0, 10, 0],
+                rotate: [0, -4, 0, 4, 0],
+                scale: [1, 1.04, 1, 1.04, 1],
+              }}
+              transition={{
+                duration: 3.5,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+              className="relative z-10 w-28 h-28 sm:w-36 sm:h-36 drop-shadow-xl -mb-5 sm:-mb-7 pointer-events-none"
+            >
               <Image
                 src="/monkey1.svg"
                 alt="Monkey Explorer"
@@ -173,7 +185,7 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({
                 className="object-contain"
                 priority
               />
-            </div>
+            </motion.div>
 
             {/* 3D INPUT FIELD: ENTER GAME CODE (layered in front of monkey) */}
             <div className="w-full pt-0 pb-1 px-1 relative z-20">
