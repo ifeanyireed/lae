@@ -284,3 +284,39 @@
   border-bottom-color: #064e3b;
   border-radius: 9999px;
 }
+
+/* Controls Page Smooth Animation Keyframes */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes topLoadingBar {
+  0% {
+    width: 0%;
+    left: 0;
+  }
+  50% {
+    width: 70%;
+    left: 15%;
+  }
+  100% {
+    width: 100%;
+    left: 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-top-bar {
+  animation: topLoadingBar 0.8s ease-in-out infinite;
+}
+

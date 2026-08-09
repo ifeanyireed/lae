@@ -27,6 +27,7 @@ import {
   IconPhone,
   IconMail,
   IconFilter,
+  IconLoader2,
 } from '@tabler/icons-react';
 
 // Character avatar options from public/images
@@ -41,6 +42,16 @@ const AVATAR_OPTIONS = [
   '/images/character8.jpg',
   '/images/character9.jpg',
   '/images/character10.jpg',
+  '/images/character11.jpg',
+  '/images/character12.jpg',
+  '/images/character13.jpg',
+  '/images/character14.jpg',
+  '/images/character15.jpg',
+  '/images/character16.jpg',
+  '/images/character17.jpg',
+  '/images/character18.jpg',
+  '/images/character19.jpg',
+  '/images/character20.jpg',
   '/images/cowboy_avatar.jpg',
   '/images/pirate_avatar.jpg',
   '/images/viking_avatar.jpg',
@@ -92,9 +103,11 @@ export default function AdminControlsPage() {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [authError, setAuthError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  // Active Module State
+  // Active Module State & Loading Transitions
   const [activeTab, setActiveTab] = useState<'organisations' | 'users' | 'subscriptions'>('organisations');
+  const [isLoadingModule, setIsLoadingModule] = useState<boolean>(false);
 
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
@@ -114,6 +127,17 @@ export default function AdminControlsPage() {
     setUserPage(1);
     setSubPage(1);
   }, [searchQuery, userOrgFilter, userGroupFilter]);
+
+  // Tab switch with animated loading state
+  const handleTabChange = (tab: 'organisations' | 'users' | 'subscriptions') => {
+    if (tab === activeTab) return;
+    setIsLoadingModule(true);
+    setActiveTab(tab);
+    setSearchQuery('');
+    setTimeout(() => {
+      setIsLoadingModule(false);
+    }, 280);
+  };
 
   // Initial Seed Data / LocalStorage State
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
@@ -258,7 +282,7 @@ export default function AdminControlsPage() {
           },
           {
             id: 'usr_104',
-            name: 'Emily Davis (Instructor)',
+            name: 'Emily Davis',
             avatar: '/images/character4.jpg',
             studentCode: '58392014',
             role: 'teacher',
@@ -267,6 +291,84 @@ export default function AdminControlsPage() {
             groupName: 'Grade 5 Coding Class',
             assignedWorldId: 1,
             totalXP: 2500,
+            status: 'active',
+          },
+          {
+            id: 'usr_105',
+            name: 'Lucas Martinez',
+            avatar: '/images/character5.jpg',
+            studentCode: '62918304',
+            role: 'student',
+            organisationId: 'org_002',
+            organisationName: 'Metro City Unified Schools',
+            groupName: 'Robotics Group A',
+            assignedWorldId: 4,
+            totalXP: 910,
+            status: 'active',
+          },
+          {
+            id: 'usr_106',
+            name: 'Maya Patel',
+            avatar: '/images/character6.jpg',
+            studentCode: '74019283',
+            role: 'student',
+            organisationId: 'org_001',
+            organisationName: 'STEM Explorers Academy',
+            groupName: 'Grade 5 Coding Class',
+            assignedWorldId: 5,
+            totalXP: 1350,
+            status: 'active',
+          },
+          {
+            id: 'usr_107',
+            name: 'Ethan Brown',
+            avatar: '/images/character7.jpg',
+            studentCode: '31092847',
+            role: 'student',
+            organisationId: 'org_003',
+            organisationName: 'Jungle Coders Kids Club',
+            groupName: 'Junior Explorers',
+            assignedWorldId: 2,
+            totalXP: 670,
+            status: 'active',
+          },
+          {
+            id: 'usr_108',
+            name: 'Sophia Taylor',
+            avatar: '/images/character8.jpg',
+            studentCode: '59201938',
+            role: 'student',
+            organisationId: 'org_002',
+            organisationName: 'Metro City Unified Schools',
+            groupName: 'Robotics Group A',
+            assignedWorldId: 3,
+            totalXP: 1100,
+            status: 'active',
+          },
+          {
+            id: 'usr_109',
+            name: 'Liam Wilson (Cowboy)',
+            avatar: '/images/cowboy_avatar.jpg',
+            studentCode: '82019374',
+            role: 'student',
+            organisationId: 'org_001',
+            organisationName: 'STEM Explorers Academy',
+            groupName: 'Grade 5 Coding Class',
+            assignedWorldId: 1,
+            totalXP: 880,
+            status: 'active',
+          },
+          {
+            id: 'usr_110',
+            name: 'Olivia Thomas (Pirate)',
+            avatar: '/images/pirate_avatar.jpg',
+            studentCode: '19384729',
+            role: 'student',
+            organisationId: 'org_003',
+            organisationName: 'Jungle Coders Kids Club',
+            groupName: 'Junior Explorers',
+            assignedWorldId: 4,
+            totalXP: 1450,
             status: 'active',
           },
         ];
@@ -341,20 +443,24 @@ export default function AdminControlsPage() {
     } catch (e) {}
   };
 
-  // Login handler
+  // Animated Login handler
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) {
       setAuthError('Please enter both admin email and password.');
       return;
     }
-    if (loginEmail === 'admin@puzzlepro.com' || loginEmail === 'admin' || loginPassword === 'admin123') {
-      setIsAuthenticated(true);
-      setAuthError('');
-      localStorage.setItem('puzzlepro_admin_session', 'authenticated');
-    } else {
-      setAuthError('Invalid Admin credentials. Try admin@puzzlepro.com / admin123');
-    }
+    setIsLoggingIn(true);
+    setAuthError('');
+    setTimeout(() => {
+      if (loginEmail === 'admin@puzzlepro.com' || loginEmail === 'admin' || loginPassword === 'admin123') {
+        setIsAuthenticated(true);
+        localStorage.setItem('puzzlepro_admin_session', 'authenticated');
+      } else {
+        setAuthError('Invalid Admin credentials. Try admin@puzzlepro.com / admin123');
+      }
+      setIsLoggingIn(false);
+    }, 450);
   };
 
   const handleLogout = () => {
@@ -513,7 +619,7 @@ export default function AdminControlsPage() {
   };
 
   // ==========================================
-  // UNAUTHENTICATED LOGIN SCREEN (NETS ERP STYLE)
+  // UNAUTHENTICATED LOGIN SCREEN (NETS ERP STYLE WITH ANIMATIONS)
   // ==========================================
   if (!isAuthenticated) {
     return (
@@ -533,9 +639,9 @@ export default function AdminControlsPage() {
         {/* Rich dark gradient overlay matching NETS ERP */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
 
-        <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white">
+        <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white animate-fade-in-up">
           <div className="flex items-center gap-3">
-            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={56} height={56} className="object-contain drop-shadow-md shrink-0" />
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={56} height={56} className="object-contain drop-shadow-md shrink-0 transition-transform hover:scale-105" />
             <span className="font-normal text-xs tracking-widest uppercase text-amber-300">
               PuzzlePro Controls
             </span>
@@ -554,9 +660,9 @@ export default function AdminControlsPage() {
           </div>
         </div>
 
-        <div className="relative z-10 w-full max-w-[380px] bg-slate-900/80 md:bg-white/90 p-7 rounded-[28px] border border-white/20 md:border-white/60 shadow-2xl backdrop-blur-xl flex flex-col gap-4">
+        <div className="relative z-10 w-full max-w-[380px] bg-slate-900/80 md:bg-white/90 p-7 rounded-[28px] border border-white/20 md:border-white/60 shadow-2xl backdrop-blur-xl flex flex-col gap-4 animate-fade-in-up">
           <div className="text-center md:text-left flex flex-col items-center md:items-start">
-            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={48} height={48} className="object-contain mb-2 drop-shadow-md shrink-0" />
+            <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={48} height={48} className="object-contain mb-2 drop-shadow-md shrink-0 transition-transform hover:scale-105" />
             <h2 className="text-xl font-medium text-white md:text-slate-900 tracking-tight">Controls Dashboard</h2>
             <p className="text-[10px] text-slate-400 md:text-slate-500 font-normal uppercase tracking-wide mt-0.5">
               Sign in to platform dashboard
@@ -565,7 +671,7 @@ export default function AdminControlsPage() {
 
           <form onSubmit={handleLogin} className="space-y-3.5">
             {authError && (
-              <div className="bg-red-500/10 md:bg-red-50 text-red-400 md:text-red-700 text-[11px] font-normal p-3 rounded-xl border border-red-500/20 md:border-red-200 flex items-center gap-2">
+              <div className="bg-red-500/10 md:bg-red-50 text-red-400 md:text-red-700 text-[11px] font-normal p-3 rounded-xl border border-red-500/20 md:border-red-200 flex items-center gap-2 animate-fade-in-up">
                 <IconAlertCircle className="w-4 h-4 shrink-0" />
                 <span>{authError}</span>
               </div>
@@ -583,7 +689,7 @@ export default function AdminControlsPage() {
                   setLoginEmail(e.target.value);
                   setAuthError('');
                 }}
-                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900"
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900 transition-all duration-200"
               />
             </div>
 
@@ -599,15 +705,23 @@ export default function AdminControlsPage() {
                   setLoginPassword(e.target.value);
                   setAuthError('');
                 }}
-                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900"
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900 transition-all duration-200"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500"
+              disabled={isLoggingIn}
+              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500 flex items-center justify-center space-x-2 disabled:opacity-75"
             >
-              Sign In to Controls Dashboard
+              {isLoggingIn ? (
+                <>
+                  <IconLoader2 className="w-4 h-4 animate-spin" />
+                  <span>Signing In...</span>
+                </>
+              ) : (
+                <span>Sign In to Controls Dashboard</span>
+              )}
             </button>
           </form>
 
@@ -620,7 +734,7 @@ export default function AdminControlsPage() {
   }
 
   // ==========================================
-  // AUTHENTICATED DASHBOARD (NETS ERP LAYOUT)
+  // AUTHENTICATED DASHBOARD (NETS ERP LAYOUT WITH FLOWING ANIMATIONS)
   // ==========================================
   const filteredOrgs = organisations.filter(
     (o) =>
@@ -665,11 +779,18 @@ export default function AdminControlsPage() {
   const paginatedSubs = filteredSubs.slice(subStartIndex, subStartIndex + itemsPerPage);
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col">
+    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col relative overflow-x-hidden">
+      {/* Top Animated Loading Progress Bar */}
+      {isLoadingModule && (
+        <div className="h-1 bg-amber-200/60 overflow-hidden absolute top-0 left-0 right-0 z-50">
+          <div className="h-full bg-amber-500 animate-top-bar" />
+        </div>
+      )}
+
       {/* Top Admin Header Bar */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-xs">
+      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-xs z-10">
         <div className="flex items-center space-x-3">
-          <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={44} height={44} className="object-contain drop-shadow-sm shrink-0" />
+          <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={44} height={44} className="object-contain drop-shadow-sm shrink-0 transition-transform hover:scale-105" />
           <div>
             <h1 className="text-base font-medium text-slate-900 tracking-tight">
               PuzzlePro
@@ -682,7 +803,7 @@ export default function AdminControlsPage() {
           <span className="text-xs font-normal text-slate-600 hidden sm:inline">Admin User</span>
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal flex items-center space-x-1.5 transition cursor-pointer border border-slate-200 shadow-xs"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal flex items-center space-x-1.5 transition cursor-pointer border border-slate-200 shadow-xs active:scale-95"
           >
             <IconLogout className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -690,11 +811,11 @@ export default function AdminControlsPage() {
         </div>
       </header>
 
-      {/* Main Admin Dashboard Body */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6">
+      {/* Main Admin Dashboard Body (Flows Up on Load) */}
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 animate-fade-in-up">
         {/* Metric Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div>
               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Organisations</p>
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{organisations.length} Active</h3>
@@ -702,29 +823,29 @@ export default function AdminControlsPage() {
                 {organisations.filter((o) => o.googleAdsEnabled).length} Monetized via Ads
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 transition-transform duration-200 hover:scale-110">
               <IconBuildingSkyscraper className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div>
               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Enrolled Students</p>
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{usersList.length} Students</h3>
               <p className="text-[11px] font-normal text-blue-600 mt-0.5">8-Digit Access Codes Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 transition-transform duration-200 hover:scale-110">
               <IconUsers className="w-6 h-6" />
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div>
               <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Paid Subscriptions</p>
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{subscriptionsList.length} Accounts</h3>
               <p className="text-[11px] font-normal text-amber-600 mt-0.5">Active Enterprise Plans</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 transition-transform duration-200 hover:scale-110">
               <IconCreditCard className="w-6 h-6" />
             </div>
           </div>
@@ -734,13 +855,10 @@ export default function AdminControlsPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
           <div className="flex items-center space-x-6 w-full sm:w-auto px-2">
             <button
-              onClick={() => {
-                setActiveTab('organisations');
-                setSearchQuery('');
-              }}
-              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+              onClick={() => handleTabChange('organisations')}
+              className={`py-1.5 text-xs transition-all duration-200 flex items-center space-x-2 cursor-pointer border-b-2 ${
                 activeTab === 'organisations'
-                  ? 'text-amber-600 border-amber-500 font-medium'
+                  ? 'text-amber-600 border-amber-500 font-medium scale-[1.02]'
                   : 'text-slate-500 hover:text-slate-800 border-transparent font-normal'
               }`}
             >
@@ -749,13 +867,10 @@ export default function AdminControlsPage() {
             </button>
 
             <button
-              onClick={() => {
-                setActiveTab('users');
-                setSearchQuery('');
-              }}
-              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+              onClick={() => handleTabChange('users')}
+              className={`py-1.5 text-xs transition-all duration-200 flex items-center space-x-2 cursor-pointer border-b-2 ${
                 activeTab === 'users'
-                  ? 'text-amber-600 border-amber-500 font-medium'
+                  ? 'text-amber-600 border-amber-500 font-medium scale-[1.02]'
                   : 'text-slate-500 hover:text-slate-800 border-transparent font-normal'
               }`}
             >
@@ -764,13 +879,10 @@ export default function AdminControlsPage() {
             </button>
 
             <button
-              onClick={() => {
-                setActiveTab('subscriptions');
-                setSearchQuery('');
-              }}
-              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+              onClick={() => handleTabChange('subscriptions')}
+              className={`py-1.5 text-xs transition-all duration-200 flex items-center space-x-2 cursor-pointer border-b-2 ${
                 activeTab === 'subscriptions'
-                  ? 'text-amber-600 border-amber-500 font-medium'
+                  ? 'text-amber-600 border-amber-500 font-medium scale-[1.02]'
                   : 'text-slate-500 hover:text-slate-800 border-transparent font-normal'
               }`}
             >
@@ -787,14 +899,14 @@ export default function AdminControlsPage() {
               placeholder="Search module..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 transition-all duration-200"
             />
           </div>
         </div>
 
         {/* MODULE 1: ORGANISATION MANAGEMENT */}
         {activeTab === 'organisations' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
                 <h2 className="text-base font-medium text-slate-900 tracking-tight">Organisation Management</h2>
@@ -809,7 +921,7 @@ export default function AdminControlsPage() {
                   setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true });
                   setIsOrgModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Organisation</span>
@@ -831,8 +943,12 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {paginatedOrgs.map((org) => (
-                    <tr key={org.id} className="hover:bg-slate-50 transition-colors">
+                  {paginatedOrgs.map((org, index) => (
+                    <tr
+                      key={org.id}
+                      className="hover:bg-slate-50/80 transition-colors animate-fade-in-up"
+                      style={{ animationDelay: `${index * 40}ms` }}
+                    >
                       <td className="py-3.5 px-3 font-normal text-slate-900">{org.name}</td>
                       <td className="py-3.5 px-3 text-slate-500 font-mono text-[11px]">{org.domain}</td>
                       <td className="py-3.5 px-3">
@@ -854,7 +970,7 @@ export default function AdminControlsPage() {
                           </span>
                           <button
                             onClick={() => copyEmbedCode(org)}
-                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
                             title="Copy iFrame Embed Code"
                           >
                             {copiedTokenId === org.id ? (
@@ -866,33 +982,34 @@ export default function AdminControlsPage() {
                         </div>
                       </td>
                       <td className="py-3.5 px-3">
-                        <button
+                        {/* Animated iOS Style Sliding Toggle */}
+                        <div
                           onClick={() => toggleGoogleAds(org.id)}
-                          className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-normal cursor-pointer border transition ${
-                            org.googleAdsEnabled
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
-                          }`}
+                          className="flex items-center space-x-2.5 cursor-pointer group select-none"
+                          title="Toggle Google Ads Monetization"
                         >
-                          {org.googleAdsEnabled ? (
-                            <>
-                              <IconToggleRight className="w-4 h-4 text-emerald-600" />
-                              <span>Ads ON</span>
-                            </>
-                          ) : (
-                            <>
-                              <IconToggleLeft className="w-4 h-4 text-slate-400" />
-                              <span>Ads OFF</span>
-                            </>
-                          )}
-                        </button>
+                          <div
+                            className={`w-10 h-5.5 flex items-center rounded-full p-0.5 transition-colors duration-300 ease-in-out ${
+                              org.googleAdsEnabled ? 'bg-emerald-500 shadow-xs' : 'bg-slate-300'
+                            }`}
+                          >
+                            <div
+                              className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-300 ease-in-out ${
+                                org.googleAdsEnabled ? 'translate-x-4.5' : 'translate-x-0'
+                              }`}
+                            />
+                          </div>
+                          <span className={`text-[11px] font-normal transition-colors duration-200 ${org.googleAdsEnabled ? 'text-emerald-700' : 'text-slate-500'}`}>
+                            {org.googleAdsEnabled ? 'Ads ON' : 'Ads OFF'}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3.5 px-3 font-normal text-slate-800">{org.activeStudents}</td>
                       <td className="py-3.5 px-3 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => setEmbedModalOrg(org)}
-                            className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-normal flex items-center space-x-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-normal flex items-center space-x-1 cursor-pointer transition-all duration-200 hover:scale-105 active:scale-95"
                           >
                             <IconCode className="w-3.5 h-3.5" />
                             <span>iFrame Snippet</span>
@@ -909,14 +1026,14 @@ export default function AdminControlsPage() {
                               });
                               setIsOrgModalOpen(true);
                             }}
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                             title="Edit Organisation"
                           >
                             <IconEdit className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteOrg(org.id)}
-                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                             title="Delete Organisation"
                           >
                             <IconTrash className="w-3.5 h-3.5" />
@@ -927,7 +1044,7 @@ export default function AdminControlsPage() {
                   ))}
                   {filteredOrgs.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal animate-fade-in-up">
                         No organisations found.
                       </td>
                     </tr>
@@ -945,7 +1062,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={orgPage === 1}
                   onClick={() => setOrgPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Previous
                 </button>
@@ -955,7 +1072,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={orgPage >= totalOrgPages}
                   onClick={() => setOrgPage((prev) => Math.min(prev + 1, totalOrgPages))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Next
                 </button>
@@ -966,7 +1083,7 @@ export default function AdminControlsPage() {
 
         {/* MODULE 2: USER & WORLD ASSIGNMENT MANAGEMENT */}
         {activeTab === 'users' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
                 <h2 className="text-base font-medium text-slate-900 tracking-tight">User & World Assignment</h2>
@@ -989,7 +1106,7 @@ export default function AdminControlsPage() {
                   });
                   setIsUserModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Student / User</span>
@@ -1008,7 +1125,7 @@ export default function AdminControlsPage() {
                 <select
                   value={userOrgFilter}
                   onChange={(e) => setUserOrgFilter(e.target.value)}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs transition-all duration-200"
                 >
                   <option value="ALL">All Organisations ({organisations.length})</option>
                   {organisations.map((o) => (
@@ -1024,7 +1141,7 @@ export default function AdminControlsPage() {
                 <select
                   value={userGroupFilter}
                   onChange={(e) => setUserGroupFilter(e.target.value)}
-                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs transition-all duration-200"
                 >
                   <option value="ALL">All Groups ({uniqueGroupNames.length})</option>
                   {uniqueGroupNames.map((grp) => (
@@ -1041,7 +1158,7 @@ export default function AdminControlsPage() {
                     setUserOrgFilter('ALL');
                     setUserGroupFilter('ALL');
                   }}
-                  className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-[11px] font-normal transition cursor-pointer"
+                  className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl text-[11px] font-normal transition-all duration-150 active:scale-95 cursor-pointer"
                 >
                   Reset Filters
                 </button>
@@ -1063,12 +1180,16 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {paginatedUsers.map((usr) => (
-                    <tr key={usr.id} className="hover:bg-slate-50 transition-colors">
+                  {paginatedUsers.map((usr, index) => (
+                    <tr
+                      key={usr.id}
+                      className="hover:bg-slate-50/80 transition-colors animate-fade-in-up"
+                      style={{ animationDelay: `${index * 40}ms` }}
+                    >
                       <td className="py-3.5 px-3 text-slate-900">
                         <div className="flex items-center space-x-2.5">
                           {/* Student Character Avatar */}
-                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 relative shrink-0 overflow-hidden shadow-xs">
+                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 relative shrink-0 overflow-hidden shadow-xs transition-transform hover:scale-110">
                             <Image
                               src={usr.avatar || '/images/character1.jpg'}
                               alt={usr.name}
@@ -1086,7 +1207,7 @@ export default function AdminControlsPage() {
                           </span>
                           <button
                             onClick={() => copyStudentCode(usr.id, usr.studentCode)}
-                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-all duration-200 hover:scale-105 active:scale-95 cursor-pointer"
                             title="Copy 8-Digit Access Code"
                           >
                             {copiedStudentCodeId === usr.id ? (
@@ -1108,7 +1229,7 @@ export default function AdminControlsPage() {
                         <select
                           value={usr.assignedWorldId}
                           onChange={(e) => handleAssignWorld(usr.id, parseInt(e.target.value))}
-                          className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-950 font-normal rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                          className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-950 font-normal rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs transition-all duration-200"
                         >
                           <option value={1}>World 1 (Monkey Explorers)</option>
                           <option value={2}>World 2 (HTML Architects)</option>
@@ -1138,14 +1259,14 @@ export default function AdminControlsPage() {
                               });
                               setIsUserModalOpen(true);
                             }}
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
+                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                             title="Edit Student"
                           >
                             <IconEdit className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(usr.id)}
-                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                             title="Delete Student"
                           >
                             <IconTrash className="w-3.5 h-3.5" />
@@ -1156,7 +1277,7 @@ export default function AdminControlsPage() {
                   ))}
                   {filteredUsers.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal animate-fade-in-up">
                         No student users found matching filters.
                       </td>
                     </tr>
@@ -1174,7 +1295,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={userPage === 1}
                   onClick={() => setUserPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Previous
                 </button>
@@ -1184,7 +1305,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={userPage >= totalUserPages}
                   onClick={() => setUserPage((prev) => Math.min(prev + 1, totalUserPages))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Next
                 </button>
@@ -1195,7 +1316,7 @@ export default function AdminControlsPage() {
 
         {/* MODULE 3: SUBSCRIPTION MANAGEMENT */}
         {activeTab === 'subscriptions' && (
-          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
                 <h2 className="text-base font-medium text-slate-900 tracking-tight">Subscription Management</h2>
@@ -1216,7 +1337,7 @@ export default function AdminControlsPage() {
                   });
                   setIsSubModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Paid Subscription</span>
@@ -1238,8 +1359,12 @@ export default function AdminControlsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
-                  {paginatedSubs.map((sub) => (
-                    <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
+                  {paginatedSubs.map((sub, index) => (
+                    <tr
+                      key={sub.id}
+                      className="hover:bg-slate-50/80 transition-colors animate-fade-in-up"
+                      style={{ animationDelay: `${index * 40}ms` }}
+                    >
                       <td className="py-3.5 px-3 font-normal text-slate-900">{sub.organisationName}</td>
                       <td className="py-3.5 px-3 text-slate-500">{sub.userEmail}</td>
                       <td className="py-3.5 px-3">
@@ -1260,7 +1385,7 @@ export default function AdminControlsPage() {
                   ))}
                   {filteredSubs.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal animate-fade-in-up">
                         No active subscriptions found.
                       </td>
                     </tr>
@@ -1278,7 +1403,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={subPage === 1}
                   onClick={() => setSubPage((prev) => Math.max(prev - 1, 1))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Previous
                 </button>
@@ -1288,7 +1413,7 @@ export default function AdminControlsPage() {
                 <button
                   disabled={subPage >= totalSubPages}
                   onClick={() => setSubPage((prev) => Math.min(prev + 1, totalSubPages))}
-                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition"
+                  className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-xl hover:bg-slate-100 disabled:opacity-40 text-xs font-normal cursor-pointer transition-all duration-150 active:scale-95"
                 >
                   Next
                 </button>
@@ -1301,7 +1426,7 @@ export default function AdminControlsPage() {
       {/* MODAL 1: iFrame Embed Code Viewer Modal */}
       {embedModalOrg && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <div className="flex items-center space-x-2">
                 <IconCode className="w-5 h-5 text-amber-500" />
@@ -1327,7 +1452,7 @@ export default function AdminControlsPage() {
             <div className="flex items-center justify-end space-x-3 pt-2">
               <button
                 onClick={() => copyEmbedCode(embedModalOrg)}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer"
               >
                 {copiedTokenId === embedModalOrg.id ? (
                   <>
@@ -1349,7 +1474,7 @@ export default function AdminControlsPage() {
       {/* MODAL 2: Add/Edit Organisation Modal */}
       {isOrgModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <h3 className="font-medium text-slate-900 text-base">
                 {editingOrg ? 'Edit Organisation' : 'Add New Organisation'}
@@ -1439,7 +1564,7 @@ export default function AdminControlsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-95"
                 >
                   {editingOrg ? 'Save Changes' : 'Create Organisation'}
                 </button>
@@ -1452,7 +1577,7 @@ export default function AdminControlsPage() {
       {/* MODAL 3: Add/Edit User Modal */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <h3 className="font-medium text-slate-900 text-base">
                 {editingUser ? 'Edit Student & World Assignment' : 'Add New Student / User'}
@@ -1489,10 +1614,10 @@ export default function AdminControlsPage() {
                       key={avatarPath}
                       type="button"
                       onClick={() => setUserForm({ ...userForm, avatar: avatarPath })}
-                      className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition cursor-pointer ${
+                      className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition-all duration-200 cursor-pointer ${
                         userForm.avatar === avatarPath
-                          ? 'border-amber-500 scale-105 shadow-sm ring-2 ring-amber-400/30'
-                          : 'border-transparent opacity-70 hover:opacity-100'
+                          ? 'border-amber-500 scale-110 shadow-sm ring-2 ring-amber-400/30'
+                          : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'
                       }`}
                     >
                       <Image src={avatarPath} alt="Character Avatar" fill className="object-cover" />
@@ -1509,7 +1634,7 @@ export default function AdminControlsPage() {
                   <button
                     type="button"
                     onClick={() => setUserForm({ ...userForm, studentCode: generate8DigitCode() })}
-                    className="text-[10px] font-normal text-amber-700 hover:text-amber-800 flex items-center space-x-1 cursor-pointer"
+                    className="text-[10px] font-normal text-amber-700 hover:text-amber-800 flex items-center space-x-1 cursor-pointer transition-transform hover:scale-105"
                   >
                     <IconRefresh className="w-3 h-3" />
                     <span>Auto Generate Code</span>
@@ -1585,7 +1710,7 @@ export default function AdminControlsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-95"
                 >
                   {editingUser ? 'Save Changes' : 'Create Student'}
                 </button>
@@ -1598,7 +1723,7 @@ export default function AdminControlsPage() {
       {/* MODAL 4: Add Subscription Modal */}
       {isSubModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <h3 className="font-medium text-slate-900 text-base">Add Paid Subscription</h3>
               <button
@@ -1671,7 +1796,7 @@ export default function AdminControlsPage() {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-95"
                 >
                   Create Subscription
                 </button>
