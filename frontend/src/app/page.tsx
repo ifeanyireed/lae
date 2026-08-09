@@ -277,6 +277,16 @@ export default function Home() {
                 } catch (e) {}
               }
 
+              let savedMaxBlocks: number | null = l.max_blocks || l.maxBlocks || null;
+              if (!savedMaxBlocks) {
+                try {
+                  const localMax = localStorage.getItem(`level_maxblocks_w${selectedWorldId}_adv${advId}_lvl${lvlNum}`);
+                  if (localMax) {
+                    savedMaxBlocks = parseInt(localMax);
+                  }
+                } catch (e) {}
+              }
+
               return {
                 ...(defaultLevels[idx] || {}),
                 id: l.id || idx + 1,
@@ -287,7 +297,7 @@ export default function Home() {
                 objective: defaultLevels[idx]?.objective || l.objective || '',
                 mechanic: defaultLevels[idx]?.mechanic || l.mechanic || '',
                 bgImage: defaultLevels[idx]?.bgImage || `/${selectedWorldId}_${advId}_${lvlNum}.svg`,
-                maxBlocks: l.max_blocks || l.maxBlocks || defaultLevels[idx]?.maxBlocks || 15,
+                maxBlocks: savedMaxBlocks || defaultLevels[idx]?.maxBlocks || 15,
                 availableBlocks: defaultLevels[idx]?.availableBlocks || l.available_blocks || l.availableBlocks || ['move_forward', 'turn_left', 'turn_right', 'turn_around'],
                 waypoints: (savedWps && savedWps.length > 0) ? savedWps : expectedWaypoints,
               };
@@ -691,6 +701,17 @@ export default function Home() {
       prev.map((l, idx) => {
         if (idx === currentLevelIndex) {
           return { ...l, waypoints: newWaypoints };
+        }
+        return l;
+      })
+    );
+  };
+
+  const handleUpdateMaxBlocks = (newMaxBlocks: number) => {
+    setDbLevels((prev) =>
+      prev.map((l, idx) => {
+        if (idx === currentLevelIndex) {
+          return { ...l, maxBlocks: newMaxBlocks };
         }
         return l;
       })
@@ -1361,6 +1382,7 @@ export default function Home() {
             characterName={characterName}
             selectedCharacter={selectedCharacter}
             onUpdateWaypoints={handleUpdateWaypoints}
+            onUpdateMaxBlocks={handleUpdateMaxBlocks}
             userRole={userContext.role}
             totalXP={userContext.totalXP}
             levelScore={userContext.totalScore}

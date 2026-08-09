@@ -2,6 +2,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -265,8 +266,8 @@ func (db *DB) SeedWorldsAndAdventures() error {
 	return nil
 }
 
-// SaveLevelWaypoints updates waypoints JSON in game_engine levels table
-func (db *DB) SaveLevelWaypoints(ctx context.Context, adventureID int, levelNumber int, waypoints []LevelWaypoint) error {
+// SaveLevelWaypoints updates waypoints JSON and max_blocks in game_engine levels table
+func (db *DB) SaveLevelWaypoints(ctx context.Context, adventureID int, levelNumber int, maxBlocks int, waypoints []LevelWaypoint) error {
 	waypointsJSON, err := json.Marshal(waypoints)
 	if err != nil {
 		return fmt.Errorf("failed to marshal waypoints: %w", err)
@@ -276,18 +277,27 @@ func (db *DB) SaveLevelWaypoints(ctx context.Context, adventureID int, levelNumb
 		adventureID = 1
 	}
 
-	res, err := db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE adventure_id = ? AND level_number = ?", string(waypointsJSON), adventureID, levelNumber)
+	var res sql.Result
+	if maxBlocks > 0 {
+		res, err = db.ExecContext(ctx, "UPDATE levels SET waypoints = ?, max_blocks = ? WHERE adventure_id = ? AND level_number = ?", string(waypointsJSON), maxBlocks, adventureID, levelNumber)
+	} else {
+		res, err = db.ExecContext(ctx, "UPDATE levels SET waypoints = ? WHERE adventure_id = ? AND level_number = ?", string(waypointsJSON), adventureID, levelNumber)
+	}
 	if err != nil {
 		return fmt.Errorf("failed to update levels waypoints: %w", err)
 	}
 
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
+		mb := maxBlocks
+		if mb <= 0 {
+			mb = 15
+		}
 		_, _ = db.ExecContext(ctx, `
-			INSERT INTO levels (adventure_id, level_number, title, objective, mechanic, waypoints)
-			VALUES (?, ?, 'Custom Level', '', '', ?)
-			ON DUPLICATE KEY UPDATE waypoints = VALUES(waypoints)
-		`, adventureID, levelNumber, string(waypointsJSON))
+			INSERT INTO levels (adventure_id, level_number, title, objective, mechanic, max_blocks, waypoints)
+			VALUES (?, ?, 'Custom Level', '', '', ?, ?)
+			ON DUPLICATE KEY UPDATE waypoints = VALUES(waypoints), max_blocks = VALUES(max_blocks)
+		`, adventureID, levelNumber, mb, string(waypointsJSON))
 	}
 
 	var levelID int

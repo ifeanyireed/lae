@@ -52,6 +52,7 @@ interface GameCanvasProps {
   characterName?: string;
   selectedCharacter?: string;
   onUpdateWaypoints?: (newWaypoints: PathWaypoint[]) => void;
+  onUpdateMaxBlocks?: (newMaxBlocks: number) => void;
   userRole?: string;
   totalXP?: number;
   levelScore?: number;
@@ -70,6 +71,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
   collectedCoins = [],
   selectedCharacter,
   onUpdateWaypoints,
+  onUpdateMaxBlocks,
   speechBubble,
   userRole = 'user',
   totalXP = 250,
@@ -79,12 +81,16 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
 
   const defaultWaypoints = level.waypoints || [];
   const [liveWaypoints, setLiveWaypoints] = useState<PathWaypoint[]>(defaultWaypoints);
+  const [maxBlocksAllowed, setMaxBlocksAllowed] = useState<number>(level.maxBlocks || 15);
   
   React.useEffect(() => {
     if (level.waypoints && level.waypoints.length > 0) {
       setLiveWaypoints(level.waypoints);
     }
-  }, [level.levelNumber, level.waypoints]);
+    if (level.maxBlocks) {
+      setMaxBlocksAllowed(level.maxBlocks);
+    }
+  }, [level.levelNumber, level.waypoints, level.maxBlocks]);
 
   const currentWaypoint = liveWaypoints[currentWaypointIndex] || liveWaypoints[0] || { xPercent: 35, yPercent: 15 };
 
@@ -340,10 +346,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
         const worldId = level.worldId || selectedWorldId || 1;
         localStorage.setItem(`level_waypoints_w${worldId}_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
         localStorage.setItem(`level_waypoints_world${worldId}_adv${advId}_lvl${level.levelNumber}`, JSON.stringify(liveWaypoints));
+        localStorage.setItem(`level_maxblocks_w${worldId}_adv${advId}_lvl${level.levelNumber}`, maxBlocksAllowed.toString());
       }
     } catch (e) {}
 
     if (onUpdateWaypoints) onUpdateWaypoints(liveWaypoints);
+    if (onUpdateMaxBlocks) onUpdateMaxBlocks(maxBlocksAllowed);
 
     try {
       const res = await fetch(`${GAME_ENGINE_API_URL}/api/v1/game/admin/levels/waypoints`, {
@@ -353,11 +361,12 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
           world_id: level.worldId || selectedWorldId || 1,
           adventure_id: level.adventureId || 1,
           level_number: level.levelNumber,
+          max_blocks: maxBlocksAllowed,
           waypoints: liveWaypoints,
         }),
       });
       if (res.ok) {
-        console.log(`✅ Level ${level.levelNumber} waypoints saved to MySQL database!`);
+        console.log(`✅ Level ${level.levelNumber} waypoints & max blocks (${maxBlocksAllowed}) saved to MySQL database!`);
       }
     } catch (err) {
       console.warn('DB save API call warning:', err);
@@ -715,6 +724,20 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
               </div>
 
               <div className="flex items-center space-x-2" onPointerDown={(e) => e.stopPropagation()}>
+                {/* Max Blocks Allowed Input */}
+                <div className="flex items-center space-x-1.5 bg-amber-100/90 px-2.5 py-0.5 rounded-full border border-amber-400 shadow-sm" onPointerDown={(e) => e.stopPropagation()}>
+                  <span className="text-[11px] font-black text-amber-950 uppercase tracking-tight whitespace-nowrap">Max Blocks:</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={maxBlocksAllowed}
+                    onChange={(e) => setMaxBlocksAllowed(Math.max(1, parseInt(e.target.value) || 1))}
+                    className="w-11 px-1 py-0.5 rounded-full bg-white text-slate-950 text-xs font-black text-center border border-amber-500 outline-none focus:ring-2 focus:ring-amber-500 shadow-inner"
+                    title="Edit Maximum Blocks Allowed for this Level"
+                  />
+                </div>
+
                 {/* Delete All Points Button */}
                 <button
                   type="button"
