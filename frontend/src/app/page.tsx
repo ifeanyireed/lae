@@ -337,13 +337,10 @@ export default function Home() {
             }
             setUserContext((prev) => ({
               ...prev,
-              username: res.organisation?.name ? `${res.organisation.name} Explorer` : 'SkillUp Explorer',
-              role: 'user',
               groupName: res.organisation?.name || prev.groupName,
             }));
-            setShowSplash(false);
-            setShowWelcomeModal(false);
-            setActiveTab('map');
+            // Require individual student access code login on SplashScreen for iframe embeds
+            setShowSplash(true);
           }
         });
         return;
