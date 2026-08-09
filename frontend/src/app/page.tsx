@@ -319,8 +319,8 @@ export default function Home() {
     // 1. Check for iFrame Embed Token in URL query params (Checklist 1-9)
     if (typeof window !== 'undefined') {
       const searchParams = new URLSearchParams(window.location.search);
-      const embedToken = searchParams.get('embed_token') || searchParams.get('token');
-      if (embedToken && embedToken.startsWith('EMB.')) {
+      const embedToken = searchParams.get('org_token') || searchParams.get('embed_token') || searchParams.get('token');
+      if (embedToken) {
         setIsGlobalLoading(true);
         setLoadingMessage('Verifying iFrame Embed Token...');
         verifyEmbedToken(embedToken).then((res) => {
