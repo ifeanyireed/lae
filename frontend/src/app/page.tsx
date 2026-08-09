@@ -335,13 +335,15 @@ export default function Home() {
                 localStorage.setItem('puzzlepro_session_token', res.player_session_token);
               } catch (e) {}
             }
-            if (res.organisation) {
-              setUserContext((prev) => ({
-                ...prev,
-                groupName: res.organisation?.name || prev.groupName,
-              }));
-            }
+            setUserContext((prev) => ({
+              ...prev,
+              username: res.organisation?.name ? `${res.organisation.name} Explorer` : 'SkillUp Explorer',
+              role: 'user',
+              groupName: res.organisation?.name || prev.groupName,
+            }));
             setShowSplash(false);
+            setShowWelcomeModal(false);
+            setActiveTab('map');
           }
         });
         return;
