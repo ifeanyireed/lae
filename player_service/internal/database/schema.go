@@ -6,24 +6,55 @@ import (
 	"time"
 )
 
+type Organisation struct {
+	ID               string    `json:"id"`
+	Name             string    `json:"name"`
+	Domain           string    `json:"domain"`
+	ContactEmail     string    `json:"contact_email"`
+	ContactPhone     string    `json:"contact_phone"`
+	Token            string    `json:"token"`
+	GoogleAdsEnabled bool      `json:"google_ads_enabled"`
+	Type             string    `json:"type"` // "school" | "family" | "enterprise"
+	ActiveStudents   int       `json:"active_students,omitempty"`
+	Groups           []string  `json:"groups,omitempty"`
+	CreatedAt        time.Time `json:"created_at,omitempty"`
+}
+
 type Group struct {
-	ID        int       `json:"id"`
-	Name      string    `json:"name"`
-	Code      string    `json:"code"`
-	CreatedAt time.Time `json:"created_at,omitempty"`
+	ID             int       `json:"id"`
+	OrganisationID string    `json:"organisation_id,omitempty"`
+	Name           string    `json:"name"`
+	Code           string    `json:"code"`
+	CreatedAt      time.Time `json:"created_at,omitempty"`
 }
 
 type User struct {
-	ID         int       `json:"id"`
-	Username   string    `json:"username"`
-	AccessCode string    `json:"access_code,omitempty"`
-	Role       string    `json:"role"`
-	GroupID    int       `json:"group_id"`
-	GroupName  string    `json:"group_name,omitempty"`
-	Avatar     string    `json:"avatar"`
-	TotalXP    int       `json:"total_xp"`
-	TotalStars int       `json:"total_stars"`
-	CreatedAt  time.Time `json:"created_at,omitempty"`
+	ID               int       `json:"id"`
+	Username         string    `json:"username"`
+	AccessCode       string    `json:"access_code,omitempty"`
+	Role             string    `json:"role"`
+	OrganisationID   string    `json:"organisation_id,omitempty"`
+	OrganisationName string    `json:"organisation_name,omitempty"`
+	GroupID          int       `json:"group_id"`
+	GroupName        string    `json:"group_name,omitempty"`
+	Avatar           string    `json:"avatar"`
+	AssignedWorldID  int       `json:"assigned_world_id,omitempty"`
+	TotalXP          int       `json:"total_xp"`
+	TotalStars       int       `json:"total_stars"`
+	CreatedAt        time.Time `json:"created_at,omitempty"`
+}
+
+type Subscription struct {
+	ID               string    `json:"id"`
+	OrganisationID   string    `json:"organisation_id,omitempty"`
+	OrganisationName string    `json:"organisation_name"`
+	UserEmail        string    `json:"user_email"`
+	PlanName         string    `json:"plan_name"`
+	Status           string    `json:"status"`
+	Seats            int       `json:"seats"`
+	Price            string    `json:"price"`
+	RenewalDate      string    `json:"renewal_date"`
+	CreatedAt        time.Time `json:"created_at,omitempty"`
 }
 
 type UserProgress struct {
@@ -43,12 +74,27 @@ func (db *DB) InitPlayerServiceSchema() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
+	createOrganisationsTable := `
+	CREATE TABLE IF NOT EXISTS organisations (
+		id VARCHAR(100) PRIMARY KEY,
+		name VARCHAR(255) NOT NULL,
+		domain VARCHAR(255) DEFAULT '',
+		contact_email VARCHAR(255) DEFAULT '',
+		contact_phone VARCHAR(100) DEFAULT '',
+		token VARCHAR(255) UNIQUE NOT NULL,
+		google_ads_enabled BOOLEAN DEFAULT TRUE,
+		type VARCHAR(50) DEFAULT 'school',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
+
 	createGroupsTable := `
 	CREATE TABLE IF NOT EXISTS groups (
 		id INT AUTO_INCREMENT PRIMARY KEY,
+		organisation_id VARCHAR(100) DEFAULT NULL,
 		name VARCHAR(255) NOT NULL,
 		code VARCHAR(100) UNIQUE NOT NULL,
-		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
 	createUsersTable := `
@@ -57,12 +103,30 @@ func (db *DB) InitPlayerServiceSchema() error {
 		username VARCHAR(100) UNIQUE NOT NULL,
 		access_code VARCHAR(50) UNIQUE DEFAULT NULL,
 		role VARCHAR(50) DEFAULT 'user',
+		organisation_id VARCHAR(100) DEFAULT NULL,
 		group_id INT DEFAULT 1,
-		avatar VARCHAR(255) DEFAULT '/monkey1.svg',
+		avatar VARCHAR(255) DEFAULT '/images/character1.jpg',
+		assigned_world_id INT DEFAULT 1,
 		total_xp INT DEFAULT 0,
 		total_stars INT DEFAULT 0,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-		FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE SET NULL
+		FOREIGN KEY (group_id) REFERENCES groups(id) ON DELETE SET NULL,
+		FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE SET NULL
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
+
+	createSubscriptionsTable := `
+	CREATE TABLE IF NOT EXISTS subscriptions (
+		id VARCHAR(100) PRIMARY KEY,
+		organisation_id VARCHAR(100) DEFAULT NULL,
+		organisation_name VARCHAR(255) NOT NULL,
+		user_email VARCHAR(255) NOT NULL,
+		plan_name VARCHAR(100) DEFAULT 'School Enterprise',
+		status VARCHAR(50) DEFAULT 'active',
+		seats INT DEFAULT 100,
+		price VARCHAR(50) DEFAULT '$299/mo',
+		renewal_date VARCHAR(50) DEFAULT '2027-01-01',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
 	createUserProgressTable := `
@@ -80,13 +144,24 @@ func (db *DB) InitPlayerServiceSchema() error {
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
+	if _, err := db.ExecContext(ctx, createOrganisationsTable); err != nil {
+		log.Printf("Warning: Organisations table creation error: %v", err)
+	}
 	if _, err := db.ExecContext(ctx, createGroupsTable); err != nil {
 		log.Printf("Warning: Groups table creation error: %v", err)
 	}
+	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN organisation_id VARCHAR(100) DEFAULT NULL;")
+
 	if _, err := db.ExecContext(ctx, createUsersTable); err != nil {
 		log.Printf("Warning: Users table creation error: %v", err)
 	}
 	_, _ = db.ExecContext(ctx, "ALTER TABLE users ADD COLUMN access_code VARCHAR(50) UNIQUE DEFAULT NULL;")
+	_, _ = db.ExecContext(ctx, "ALTER TABLE users ADD COLUMN organisation_id VARCHAR(100) DEFAULT NULL;")
+	_, _ = db.ExecContext(ctx, "ALTER TABLE users ADD COLUMN assigned_world_id INT DEFAULT 1;")
+
+	if _, err := db.ExecContext(ctx, createSubscriptionsTable); err != nil {
+		log.Printf("Warning: Subscriptions table creation error: %v", err)
+	}
 
 	if _, err := db.ExecContext(ctx, createUserProgressTable); err != nil {
 		log.Printf("Warning: User Progress table creation error: %v", err)
@@ -96,31 +171,39 @@ func (db *DB) InitPlayerServiceSchema() error {
 
 	db.seedAccessCodeUsers(ctx)
 
-	log.Println("✅ [player_service] Microservice tables (groups, users, user_progress) initialized.")
+	log.Println("✅ [player_service] Microservice tables (organisations, groups, users, subscriptions, user_progress) initialized.")
 	return nil
 }
 
 func (db *DB) seedAccessCodeUsers(ctx context.Context) {
-	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, name, code) VALUES (1, 'Jungle Explorers Group A', 'jungle-a')")
+	_, _ = db.ExecContext(ctx, `
+		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type)
+		VALUES ('org_001', 'STEM Explorers Academy', 'stemexplorers.edu', 'admin@stemexplorers.edu', '+1 (555) 234-5678', 'TOKEN_STEM_9932A', false, 'school')
+		ON DUPLICATE KEY UPDATE name = VALUES(name)
+	`)
+
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, name, code) VALUES (1, 'org_001', 'Grade 5 Coding Class', 'grade-5-coding')")
 
 	seedUsers := []struct {
-		Username   string
-		AccessCode string
-		Role       string
-		Avatar     string
-		XP         int
+		Username       string
+		AccessCode     string
+		Role           string
+		OrganisationID string
+		Avatar         string
+		WorldID        int
+		XP             int
 	}{
-		{"Admin_Explorer", "ADMN-2026", "admin", "/monkey1.svg", 0},
-		{"Cadet_Leo", "KIDS-1001", "user", "/monkey1.svg", 0},
-		{"Cadet_Maya", "KIDS-1002", "user", "/Profile.svg", 0},
-		{"Cadet_Sam", "KIDS-1003", "user", "/monkey1.svg", 0},
+		{"Admin_Explorer", "ADMN-2026", "admin", "org_001", "/monkey1.svg", 1, 0},
+		{"Alex Johnson", "83920193", "student", "org_001", "/images/character1.jpg", 1, 450},
+		{"Sarah Williams", "47201948", "student", "org_001", "/images/character2.jpg", 2, 820},
+		{"David Chen", "91823746", "student", "org_001", "/images/character3.jpg", 3, 1200},
 	}
 
 	for _, u := range seedUsers {
 		_, _ = db.ExecContext(ctx, `
-			INSERT INTO users (username, access_code, role, group_id, avatar, total_xp, total_stars)
-			VALUES (?, ?, ?, 1, ?, 0, 0)
-			ON DUPLICATE KEY UPDATE access_code = VALUES(access_code), role = VALUES(role)
-		`, u.Username, u.AccessCode, u.Role, u.Avatar)
+			INSERT INTO users (username, access_code, role, organisation_id, group_id, avatar, assigned_world_id, total_xp, total_stars)
+			VALUES (?, ?, ?, ?, 1, ?, ?, ?, 0)
+			ON DUPLICATE KEY UPDATE access_code = VALUES(access_code), role = VALUES(role), organisation_id = VALUES(organisation_id), assigned_world_id = VALUES(assigned_world_id)
+		`, u.Username, u.AccessCode, u.Role, u.OrganisationID, u.Avatar, u.WorldID, u.XP)
 	}
 }

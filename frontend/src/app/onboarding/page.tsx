@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { saveOrganisation, saveUser } from '@/services/api';
 import {
   IconSchool,
   IconHeartHandshake,
@@ -102,6 +103,32 @@ export default function OnboardingPage() {
   };
 
   const handleCompleteOnboarding = () => {
+    const orgId = `org_${Date.now().toString().slice(-4)}`;
+    const name = role === 'school' ? (schoolData.name || 'New School Academy') : (familyData.parentName || 'Happy Family Account');
+    const email = role === 'school' ? schoolData.email : familyData.email;
+    const phone = role === 'school' ? schoolData.phone : familyData.phone;
+    const domain = role === 'school' ? schoolData.domain : '';
+
+    saveOrganisation({
+      id: orgId,
+      name: name,
+      domain: domain || `${name.toLowerCase().replace(/\s+/g, '')}.com`,
+      contactEmail: email || 'contact@puzzlepro.ng',
+      contactPhone: phone || '+1 (555) 000-0000',
+      token: `TOKEN_${name.substring(0, Math.min(4, name.length)).toUpperCase()}_9901`,
+      groups: role === 'school' ? [initialAccount.className || 'Grade 5 Coding Class'] : ['Kids Group'],
+    });
+
+    saveUser({
+      name: initialAccount.name || (role === 'school' ? 'First Student' : 'Child Account'),
+      avatar: initialAccount.avatar,
+      studentCode: initialAccount.studentCode,
+      role: 'student',
+      organisationId: orgId,
+      groupName: role === 'school' ? (initialAccount.className || 'Grade 5 Coding Class') : 'Kids Group',
+      assignedWorldId: initialAccount.assignedWorldId,
+    });
+
     if (role === 'school') {
       localStorage.setItem('puzzlepro_school_session', 'authenticated');
       router.push('/schools');

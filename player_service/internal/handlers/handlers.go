@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"player_service/internal/auth"
 	"player_service/internal/database"
@@ -475,3 +476,414 @@ func (p *PlayerServiceHandler) getUserProgressList(ctx context.Context, userID i
 	}
 	return list
 }
+
+// GetOrganisationsHandler returns all schools & families organisations
+func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "organisations": []interface{}{}})
+		return
+	}
+
+	ctx := r.Context()
+	orgType := r.URL.Query().Get("type")
+	query := "SELECT id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type, created_at FROM organisations"
+	var args []interface{}
+	if orgType != "" {
+		query += " WHERE type = ?"
+		args = append(args, orgType)
+	}
+	query += " ORDER BY created_at DESC"
+
+	rows, err := p.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	orgs := make([]database.Organisation, 0)
+	for rows.Next() {
+		var o database.Organisation
+		var createdAt string
+		if err := rows.Scan(&o.ID, &o.Name, &o.Domain, &o.ContactEmail, &o.ContactPhone, &o.Token, &o.GoogleAdsEnabled, &o.Type, &createdAt); err == nil {
+			_ = p.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM users WHERE organisation_id = ?", o.ID).Scan(&o.ActiveStudents)
+
+			grpRows, err := p.DB.QueryContext(ctx, "SELECT name FROM groups WHERE organisation_id = ?", o.ID)
+			if err == nil {
+				o.Groups = make([]string, 0)
+				for grpRows.Next() {
+					var gName string
+					if err := grpRows.Scan(&gName); err == nil {
+						o.Groups = append(o.Groups, gName)
+					}
+				}
+				grpRows.Close()
+			}
+			orgs = append(orgs, o)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":       true,
+		"organisations": orgs,
+	})
+}
+
+// SaveOrganisationHandler creates or updates an organisation & tied groups
+func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req database.Organisation
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	ctx := r.Context()
+	if req.ID == "" {
+		req.ID = fmt.Sprintf("org_%d", time.Now().UnixNano()%100000)
+	}
+	if req.Token == "" {
+		req.Token = fmt.Sprintf("TOKEN_%s_%d", strings.ToUpper(req.Name[:min(4, len(req.Name))]), time.Now().UnixNano()%10000)
+	}
+	if req.Type == "" {
+		req.Type = "school"
+	}
+
+	_, err := p.DB.ExecContext(ctx, `
+		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			name = VALUES(name),
+			domain = VALUES(domain),
+			contact_email = VALUES(contact_email),
+			contact_phone = VALUES(contact_phone),
+			google_ads_enabled = VALUES(google_ads_enabled),
+			type = VALUES(type)
+	`, req.ID, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.Token, req.GoogleAdsEnabled, req.Type)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	for _, gName := range req.Groups {
+		if strings.TrimSpace(gName) != "" {
+			gCode := strings.ToLower(strings.ReplaceAll(gName, " ", "-"))
+			_, _ = p.DB.ExecContext(ctx, `
+				INSERT INTO groups (organisation_id, name, code) VALUES (?, ?, ?)
+				ON DUPLICATE KEY UPDATE organisation_id = VALUES(organisation_id), name = VALUES(name)
+			`, req.ID, gName, fmt.Sprintf("%s-%s", req.ID, gCode))
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "organisation": req})
+}
+
+// ToggleGoogleAdsHandler toggles ad monetization for an organisation
+func (p *PlayerServiceHandler) ToggleGoogleAdsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req struct {
+		ID               string `json:"id"`
+		GoogleAdsEnabled bool   `json:"google_ads_enabled"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), "UPDATE organisations SET google_ads_enabled = ? WHERE id = ?", req.GoogleAdsEnabled, req.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// DeleteOrganisationHandler deletes an organisation
+func (p *PlayerServiceHandler) DeleteOrganisationHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	orgID := r.URL.Query().Get("id")
+	if orgID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Missing organisation ID"})
+		return
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), "DELETE FROM organisations WHERE id = ?", orgID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// GetUsersAdminHandler returns student & user list
+func (p *PlayerServiceHandler) GetUsersAdminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "users": []interface{}{}})
+		return
+	}
+
+	ctx := r.Context()
+	orgID := r.URL.Query().Get("organisation_id")
+
+	query := `
+		SELECT u.id, u.username, u.access_code, u.role, u.organisation_id, COALESCE(o.name, ''), u.group_id, COALESCE(g.name, ''), u.avatar, u.assigned_world_id, u.total_xp, u.total_stars
+		FROM users u
+		LEFT JOIN organisations o ON u.organisation_id = o.id
+		LEFT JOIN groups g ON u.group_id = g.id
+	`
+	var args []interface{}
+	if orgID != "" && orgID != "ALL" {
+		query += " WHERE u.organisation_id = ?"
+		args = append(args, orgID)
+	}
+	query += " ORDER BY u.id DESC"
+
+	rows, err := p.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	users := make([]database.User, 0)
+	for rows.Next() {
+		var u database.User
+		if err := rows.Scan(&u.ID, &u.Username, &u.AccessCode, &u.Role, &u.OrganisationID, &u.OrganisationName, &u.GroupID, &u.GroupName, &u.Avatar, &u.AssignedWorldID, &u.TotalXP, &u.TotalStars); err == nil {
+			users = append(users, u)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"users":   users,
+	})
+}
+
+// SaveUserAdminHandler creates or updates student user details & 8-digit access code
+func (p *PlayerServiceHandler) SaveUserAdminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req database.User
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	ctx := r.Context()
+	if req.AccessCode == "" {
+		req.AccessCode = fmt.Sprintf("%d", 10000000+time.Now().UnixNano()%90000000)
+	}
+	if req.Role == "" {
+		req.Role = "student"
+	}
+	if req.AssignedWorldID == 0 {
+		req.AssignedWorldID = 1
+	}
+
+	var groupID int = 1
+	if req.GroupName != "" {
+		_ = p.DB.QueryRowContext(ctx, "SELECT id FROM groups WHERE name = ?", req.GroupName).Scan(&groupID)
+	}
+
+	if req.ID > 0 {
+		_, err := p.DB.ExecContext(ctx, `
+			UPDATE users SET
+				username = ?,
+				access_code = ?,
+				role = ?,
+				organisation_id = ?,
+				group_id = ?,
+				avatar = ?,
+				assigned_world_id = ?
+			WHERE id = ?
+		`, req.Username, req.AccessCode, req.Role, req.OrganisationID, groupID, req.Avatar, req.AssignedWorldID, req.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+	} else {
+		res, err := p.DB.ExecContext(ctx, `
+			INSERT INTO users (username, access_code, role, organisation_id, group_id, avatar, assigned_world_id, total_xp, total_stars)
+			VALUES (?, ?, ?, ?, ?, ?, ?, 100, 0)
+		`, req.Username, req.AccessCode, req.Role, req.OrganisationID, groupID, req.Avatar, req.AssignedWorldID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+		id, _ := res.LastInsertId()
+		req.ID = int(id)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "user": req})
+}
+
+// AssignWorldHandler updates assigned_world_id for a student
+func (p *PlayerServiceHandler) AssignWorldHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req struct {
+		UserID          int `json:"user_id"`
+		AssignedWorldID int `json:"assigned_world_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), "UPDATE users SET assigned_world_id = ? WHERE id = ?", req.AssignedWorldID, req.UserID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// DeleteUserAdminHandler deletes a student user account
+func (p *PlayerServiceHandler) DeleteUserAdminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	userIDStr := r.URL.Query().Get("id")
+	userID, _ := strconv.Atoi(userIDStr)
+
+	_, err := p.DB.ExecContext(r.Context(), "DELETE FROM users WHERE id = ?", userID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// GetSubscriptionsHandler returns subscriptions
+func (p *PlayerServiceHandler) GetSubscriptionsHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "subscriptions": []interface{}{}})
+		return
+	}
+
+	rows, err := p.DB.QueryContext(r.Context(), "SELECT id, organisation_id, organisation_name, user_email, plan_name, status, seats, price, renewal_date FROM subscriptions ORDER BY created_at DESC")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	subs := make([]database.Subscription, 0)
+	for rows.Next() {
+		var s database.Subscription
+		if err := rows.Scan(&s.ID, &s.OrganisationID, &s.OrganisationName, &s.UserEmail, &s.PlanName, &s.Status, &s.Seats, &s.Price, &s.RenewalDate); err == nil {
+			subs = append(subs, s)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success":       true,
+		"subscriptions": subs,
+	})
+}
+
+// SaveSubscriptionHandler creates a subscription
+func (p *PlayerServiceHandler) SaveSubscriptionHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req database.Subscription
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	if req.ID == "" {
+		req.ID = fmt.Sprintf("sub_%d", time.Now().UnixNano()%10000)
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), `
+		INSERT INTO subscriptions (id, organisation_id, organisation_name, user_email, plan_name, status, seats, price, renewal_date)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+			organisation_name = VALUES(organisation_name),
+			user_email = VALUES(user_email),
+			plan_name = VALUES(plan_name),
+			status = VALUES(status),
+			seats = VALUES(seats),
+			price = VALUES(price),
+			renewal_date = VALUES(renewal_date)
+	`, req.ID, req.OrganisationID, req.OrganisationName, req.UserEmail, req.PlanName, req.Status, req.Seats, req.Price, req.RenewalDate)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "subscription": req})
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+

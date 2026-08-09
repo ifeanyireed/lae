@@ -36,6 +36,46 @@ func main() {
 	mux.HandleFunc("/api/v1/player/leaderboard", h.GetLeaderboardHandler)
 	mux.HandleFunc("/api/v1/player/groups", h.GetGroupsHandler)
 
+	// Admin Controls & Portal REST Endpoints
+	mux.HandleFunc("/api/v1/organisations", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetOrganisationsHandler(w, r)
+		case http.MethodPost, http.MethodPut:
+			h.SaveOrganisationHandler(w, r)
+		case http.MethodDelete:
+			h.DeleteOrganisationHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/organisations/google-ads", h.ToggleGoogleAdsHandler)
+
+	mux.HandleFunc("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetUsersAdminHandler(w, r)
+		case http.MethodPost, http.MethodPut:
+			h.SaveUserAdminHandler(w, r)
+		case http.MethodDelete:
+			h.DeleteUserAdminHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+	mux.HandleFunc("/api/v1/users/world", h.AssignWorldHandler)
+
+	mux.HandleFunc("/api/v1/subscriptions", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetSubscriptionsHandler(w, r)
+		case http.MethodPost, http.MethodPut:
+			h.SaveSubscriptionHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
 	// Legacy aliases
 	mux.HandleFunc("/api/v1/engine/handshake", h.HandshakeHandler)
 	mux.HandleFunc("/api/v1/engine/code-login", h.CodeLoginHandler)

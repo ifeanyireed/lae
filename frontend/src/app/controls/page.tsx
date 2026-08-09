@@ -4,6 +4,18 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {
+  fetchOrganisations as apiFetchOrgs,
+  saveOrganisation as apiSaveOrg,
+  toggleGoogleAds as apiToggleAds,
+  deleteOrganisation as apiDeleteOrg,
+  fetchUsers as apiFetchUsers,
+  saveUser as apiSaveUser,
+  assignWorld as apiAssignWorld,
+  deleteUser as apiDeleteUser,
+  fetchSubscriptions as apiFetchSubs,
+  saveSubscription as apiSaveSub,
+} from '@/services/api';
+import {
   IconBuildingSkyscraper,
   IconUsers,
   IconCreditCard,
@@ -187,6 +199,28 @@ export default function AdminControlsPage() {
       if (savedAuth === 'authenticated') {
         setIsAuthenticated(true);
       }
+
+      // Fetch Live Data from player_service microservice API (with LocalStorage fallback)
+      apiFetchOrgs().then((apiOrgs) => {
+        if (apiOrgs && apiOrgs.length > 0) {
+          setOrganisations(apiOrgs);
+          localStorage.setItem('puzzlepro_admin_orgs', JSON.stringify(apiOrgs));
+        }
+      });
+
+      apiFetchUsers().then((apiUsers) => {
+        if (apiUsers && apiUsers.length > 0) {
+          setUsersList(apiUsers);
+          localStorage.setItem('puzzlepro_admin_users', JSON.stringify(apiUsers));
+        }
+      });
+
+      apiFetchSubs().then((apiSubs) => {
+        if (apiSubs && apiSubs.length > 0) {
+          setSubscriptionsList(apiSubs);
+          localStorage.setItem('puzzlepro_admin_subs', JSON.stringify(apiSubs));
+        }
+      });
 
       // Seed Schools & Families with Tied Groups
       const savedOrgs = localStorage.getItem('puzzlepro_admin_orgs');
@@ -485,6 +519,10 @@ export default function AdminControlsPage() {
 
   // Toggle Google Ads per Org
   const toggleGoogleAds = (orgId: string) => {
+    const org = organisations.find((o) => o.id === orgId);
+    if (org) {
+      apiToggleAds(orgId, !org.googleAdsEnabled);
+    }
     const updated = organisations.map((org) => {
       if (org.id === orgId) {
         return { ...org, googleAdsEnabled: !org.googleAdsEnabled };
@@ -504,24 +542,22 @@ export default function AdminControlsPage() {
       .map((g) => g.trim())
       .filter((g) => g.length > 0);
 
+    let targetOrg: Organisation;
     if (editingOrg) {
-      const updated = organisations.map((org) =>
-        org.id === editingOrg.id
-          ? {
-              ...org,
-              name: orgForm.name,
-              domain: orgForm.domain,
-              contactEmail: orgForm.contactEmail,
-              contactPhone: orgForm.contactPhone,
-              googleAdsEnabled: orgForm.googleAdsEnabled,
-              groups: parsedGroups.length > 0 ? parsedGroups : org.groups,
-            }
-          : org
-      );
+      targetOrg = {
+        ...editingOrg,
+        name: orgForm.name,
+        domain: orgForm.domain,
+        contactEmail: orgForm.contactEmail,
+        contactPhone: orgForm.contactPhone,
+        googleAdsEnabled: orgForm.googleAdsEnabled,
+        groups: parsedGroups.length > 0 ? parsedGroups : editingOrg.groups,
+      };
+      const updated = organisations.map((org) => (org.id === editingOrg.id ? targetOrg : org));
       saveOrgs(updated);
     } else {
       const tokenRandom = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const newOrg: Organisation = {
+      targetOrg = {
         id: `org_${Date.now().toString().slice(-4)}`,
         name: orgForm.name,
         domain: orgForm.domain || `${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
@@ -533,8 +569,19 @@ export default function AdminControlsPage() {
         groups: parsedGroups.length > 0 ? parsedGroups : ['Default Group A'],
         createdAt: new Date().toISOString().split('T')[0],
       };
-      saveOrgs([...organisations, newOrg]);
+      saveOrgs([...organisations, targetOrg]);
     }
+
+    apiSaveOrg({
+      id: targetOrg.id,
+      name: targetOrg.name,
+      domain: targetOrg.domain,
+      contactEmail: targetOrg.contactEmail,
+      contactPhone: targetOrg.contactPhone,
+      token: targetOrg.token,
+      googleAdsEnabled: targetOrg.googleAdsEnabled,
+      groups: targetOrg.groups,
+    });
 
     setIsOrgModalOpen(false);
     setEditingOrg(null);
@@ -543,6 +590,7 @@ export default function AdminControlsPage() {
 
   const handleDeleteOrg = (id: string) => {
     if (confirm('Are you sure you want to delete this school / family?')) {
+      apiDeleteOrg(id);
       saveOrgs(organisations.filter((o) => o.id !== id));
     }
   };
@@ -562,25 +610,23 @@ export default function AdminControlsPage() {
       saveOrgs(updatedOrgs);
     }
 
+    let targetUser: PlatformUser;
     if (editingUser) {
-      const updated = usersList.map((u) =>
-        u.id === editingUser.id
-          ? {
-              ...u,
-              name: userForm.name,
-              avatar: userForm.avatar,
-              studentCode: finalStudentCode,
-              role: userForm.role,
-              organisationId: targetOrg.id,
-              organisationName: targetOrg.name,
-              groupName: finalGroup || 'Default Group A',
-              assignedWorldId: userForm.assignedWorldId,
-            }
-          : u
-      );
+      targetUser = {
+        ...editingUser,
+        name: userForm.name,
+        avatar: userForm.avatar,
+        studentCode: finalStudentCode,
+        role: userForm.role,
+        organisationId: targetOrg.id,
+        organisationName: targetOrg.name,
+        groupName: finalGroup || 'Default Group A',
+        assignedWorldId: userForm.assignedWorldId,
+      };
+      const updated = usersList.map((u) => (u.id === editingUser.id ? targetUser : u));
       saveUsers(updated);
     } else {
-      const newUser: PlatformUser = {
+      targetUser = {
         id: `usr_${Date.now().toString().slice(-4)}`,
         name: userForm.name,
         avatar: userForm.avatar || AVATAR_OPTIONS[0],
@@ -593,8 +639,10 @@ export default function AdminControlsPage() {
         totalXP: 100,
         status: 'active',
       };
-      saveUsers([...usersList, newUser]);
+      saveUsers([...usersList, targetUser]);
     }
+
+    apiSaveUser(targetUser);
 
     setIsUserModalOpen(false);
     setEditingUser(null);
@@ -603,12 +651,14 @@ export default function AdminControlsPage() {
 
   const handleDeleteUser = (id: string) => {
     if (confirm('Delete this student account?')) {
+      apiDeleteUser(id);
       saveUsers(usersList.filter((u) => u.id !== id));
     }
   };
 
   // Change Assigned World
   const handleAssignWorld = (userId: string, newWorldId: number) => {
+    apiAssignWorld(userId, newWorldId);
     const updated = usersList.map((u) => (u.id === userId ? { ...u, assignedWorldId: newWorldId } : u));
     saveUsers(updated);
   };
