@@ -334,6 +334,9 @@ export default function FamiliesPage() {
           loop
           muted
           playsInline
+          onError={(e) => {
+            ;(e.target as HTMLElement).style.display = 'none'
+          }}
           className="absolute inset-0 w-full h-full object-cover filter brightness-85 contrast-105 z-0"
         >
           <source src="/login_bg.mov" type="video/quicktime" />
