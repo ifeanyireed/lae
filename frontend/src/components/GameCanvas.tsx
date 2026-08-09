@@ -746,7 +746,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   title="Delete all waypoints"
                 >
                   <IconTrash className="w-3.5 h-3.5" />
-                  <span>Delete All Points</span>
+                  <span>Delete All</span>
                 </button>
 
                 {/* Save Maze Button */}
@@ -757,7 +757,7 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                   className="bg-amber-400 text-slate-950 border border-amber-600 px-3.5 py-1 rounded-full text-xs font-black flex items-center space-x-1 shadow-sm hover:bg-amber-300 transition cursor-pointer disabled:opacity-50"
                 >
                   {savedSuccess ? <IconCheck className="w-3.5 h-3.5 text-slate-950" /> : null}
-                  <span>{isSavingToDB ? 'Saving...' : savedSuccess ? 'Saved to DB!' : 'Save Maze to DB'}</span>
+                  <span>{isSavingToDB ? 'Saving...' : savedSuccess ? 'Saved!' : 'Save'}</span>
                 </button>
 
                 {/* Close Floating Track Mapper Modal */}
