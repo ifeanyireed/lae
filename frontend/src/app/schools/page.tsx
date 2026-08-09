@@ -22,6 +22,11 @@ import {
   IconLoader2,
   IconBuildingSkyscraper,
   IconMapPin,
+  IconSettings,
+  IconKey,
+  IconCreditCard,
+  IconLock,
+  IconShieldCheck,
 } from '@tabler/icons-react';
 
 import { useRouter } from 'next/navigation';
@@ -36,6 +41,10 @@ import {
   deleteCentre,
   fetchGroups,
   saveGroup,
+  updateOrgProfile,
+  updateOrgPassword,
+  fetchSubscriptions,
+  saveSubscription,
   CentreApiItem,
   GroupApiItem,
 } from '@/services/api';
@@ -73,7 +82,7 @@ export default function SchoolsPage() {
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  const [activeTab, setActiveTab] = useState<'students' | 'groups' | 'centres'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'groups' | 'centres' | 'profile'>('students');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCentreFilter, setSelectedCentreFilter] = useState<string>('ALL');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('ALL');
@@ -121,6 +130,33 @@ export default function SchoolsPage() {
     code: '',
   });
 
+  // Profile & Password & Subscription state
+  const [profileForm, setProfileForm] = useState({
+    name: '',
+    domain: '',
+    contactEmail: '',
+    contactPhone: '',
+    logoUrl: '/monkey1.svg',
+  });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  });
+  const [subscriptionDetails, setSubscriptionDetails] = useState({
+    planName: 'School Enterprise',
+    seats: 100,
+    price: '$299/mo',
+    renewalDate: '2026-12-31',
+    status: 'active',
+  });
+
+  const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [subMsg, setSubMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+
   const generate8DigitCode = () => {
     return Math.floor(10000000 + Math.random() * 90000000).toString();
   };
@@ -147,6 +183,14 @@ export default function SchoolsPage() {
         sessionStorage.setItem('puzzlepro_active_org_id', orgId);
         localStorage.setItem('puzzlepro_active_org_id', orgId);
         setSchoolName(matching.name);
+
+        setProfileForm({
+          name: matching.name || '',
+          domain: matching.domain || '',
+          contactEmail: matching.contactEmail || '',
+          contactPhone: matching.contactPhone || '',
+          logoUrl: matching.logoUrl || '/monkey1.svg',
+        });
       }
 
       // Read Centres from DB
@@ -306,6 +350,84 @@ export default function SchoolsPage() {
     if (confirm('Are you sure you want to delete this Campus Centre location?')) {
       await deleteCentre(id);
       await loadDataFromDB(activeOrgId);
+    }
+  };
+
+  const handleSaveProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!profileForm.name) return;
+    setIsUpdatingProfile(true);
+    setProfileMsg(null);
+
+    const success = await updateOrgProfile({
+      id: activeOrgId,
+      name: profileForm.name,
+      domain: profileForm.domain,
+      contactEmail: profileForm.contactEmail,
+      contactPhone: profileForm.contactPhone,
+      logoUrl: profileForm.logoUrl,
+    });
+
+    setIsUpdatingProfile(false);
+    if (success) {
+      setSchoolName(profileForm.name);
+      setProfileMsg({ type: 'success', text: 'School profile & branding details updated successfully!' });
+      await loadDataFromDB(activeOrgId);
+    } else {
+      setProfileMsg({ type: 'error', text: 'Failed to update school profile details. Please try again.' });
+    }
+  };
+
+  const handleUpdatePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordMsg(null);
+    if (!passwordForm.newPassword) {
+      setPasswordMsg({ type: 'error', text: 'Please enter a new password.' });
+      return;
+    }
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordMsg({ type: 'error', text: 'New password and confirmation do not match.' });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    const res = await updateOrgPassword({
+      id: activeOrgId,
+      currentPassword: passwordForm.currentPassword,
+      newPassword: passwordForm.newPassword,
+    });
+
+    setIsUpdatingPassword(false);
+    if (res.success) {
+      setPasswordMsg({ type: 'success', text: 'Password updated successfully!' });
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } else {
+      setPasswordMsg({ type: 'error', text: res.error || 'Password update failed.' });
+    }
+  };
+
+  const handleUpgradeSubscriptionPlan = async (planName: string, seats: number, price: string) => {
+    setSubMsg(null);
+    const res = await saveSubscription({
+      organisationId: activeOrgId,
+      planName,
+      seats,
+      price,
+      status: 'active',
+      renewalDate: '2026-12-31',
+    });
+
+    if (res) {
+      setSubscriptionDetails({
+        planName,
+        seats,
+        price,
+        renewalDate: '2026-12-31',
+        status: 'active',
+      });
+      setSubMsg({ type: 'success', text: `Subscription successfully updated to ${planName}!` });
+    } else {
+      setSubMsg({ type: 'error', text: 'Failed to update subscription plan.' });
     }
   };
 
@@ -550,6 +672,16 @@ export default function SchoolsPage() {
             >
               <IconBuildingSkyscraper className="w-4 h-4" />
               <span>Campus Centres & Locations</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('profile')}
+              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 shrink-0 ${
+                activeTab === 'profile' ? 'text-amber-600 border-amber-500 font-medium' : 'text-slate-500 border-transparent font-normal'
+              }`}
+            >
+              <IconSettings className="w-4 h-4" />
+              <span>Profile & Billing Settings</span>
             </button>
           </div>
 
@@ -913,6 +1045,260 @@ export default function SchoolsPage() {
                   No campus centres added yet. Click "+ Add Campus Centre" to add your first school location.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: PROFILE & BILLING SETTINGS */}
+        {activeTab === 'profile' && (
+          <div className="flex flex-col gap-6 animate-fade-in-up">
+            {/* Header banner */}
+            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center space-x-4">
+                <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shadow-xs">
+                  <Image src={profileForm.logoUrl || '/monkey1.svg'} alt="School Logo" width={56} height={56} className="object-contain" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">{profileForm.name || schoolName}</h2>
+                  <p className="text-xs text-slate-500 font-normal mt-0.5 flex items-center space-x-2">
+                    <span>{profileForm.contactEmail || 'admin@school.edu'}</span>
+                    <span>•</span>
+                    <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px] font-medium">School Account</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2 bg-slate-50 px-4 py-2 rounded-2xl border border-slate-200">
+                <IconShieldCheck className="w-5 h-5 text-emerald-600" />
+                <div className="text-left">
+                  <div className="text-[10px] text-slate-400 uppercase font-semibold">Subscription Status</div>
+                  <div className="text-xs font-bold text-slate-800">{subscriptionDetails.planName} ({subscriptionDetails.status})</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Profile & Branding Details Form */}
+              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+                <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                    <IconSettings className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900">School Profile & Branding</h3>
+                    <p className="text-[11px] text-slate-500">Update school logo, domain, and contact info</p>
+                  </div>
+                </div>
+
+                {profileMsg && (
+                  <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${profileMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                    {profileMsg.type === 'success' ? <IconCheck className="w-4 h-4 shrink-0" /> : <IconAlertCircle className="w-4 h-4 shrink-0" />}
+                    <span>{profileMsg.text}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleSaveProfileSubmit} className="flex flex-col gap-4">
+                  {/* Logo Avatar Quick Choice */}
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-2">School Logo / Character Avatar</label>
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {['/monkey1.svg', '/lion1.svg', '/penguin1.svg', '/panda1.svg', '/bear1.svg', '/fox1.svg'].map((img) => (
+                        <button
+                          key={img}
+                          type="button"
+                          onClick={() => setProfileForm({ ...profileForm, logoUrl: img })}
+                          className={`w-11 h-11 rounded-2xl p-1 border transition-all cursor-pointer ${profileForm.logoUrl === img ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                        >
+                          <Image src={img} alt="Logo option" width={36} height={36} className="object-contain w-full h-full" />
+                        </button>
+                      ))}
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="Or enter custom image URL (https://...)"
+                      value={profileForm.logoUrl}
+                      onChange={(e) => setProfileForm({ ...profileForm, logoUrl: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">School / Institution Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={profileForm.name}
+                      onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-medium text-slate-700 mb-1">Primary Domain (Allowed Origin)</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. stemexplorers.edu"
+                      value={profileForm.domain}
+                      onChange={(e) => setProfileForm({ ...profileForm, domain: e.target.value })}
+                      className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Contact Email</label>
+                      <input
+                        type="email"
+                        value={profileForm.contactEmail}
+                        onChange={(e) => setProfileForm({ ...profileForm, contactEmail: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Contact Phone</label>
+                      <input
+                        type="text"
+                        value={profileForm.contactPhone}
+                        onChange={(e) => setProfileForm({ ...profileForm, contactPhone: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isUpdatingProfile}
+                    className="py-2.5 px-5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-medium rounded-xl text-xs border border-amber-600/30 transition shadow-xs flex items-center justify-center space-x-2 cursor-pointer mt-2"
+                  >
+                    {isUpdatingProfile ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <span>Save Profile Details</span>}
+                  </button>
+                </form>
+              </div>
+
+              {/* Password & Security Update Form */}
+              <div className="flex flex-col gap-6">
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+                  <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <div className="w-9 h-9 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center">
+                      <IconKey className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">Security & Password</h3>
+                      <p className="text-[11px] text-slate-500">Update your school account password</p>
+                    </div>
+                  </div>
+
+                  {passwordMsg && (
+                    <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${passwordMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                      {passwordMsg.type === 'success' ? <IconCheck className="w-4 h-4 shrink-0" /> : <IconAlertCircle className="w-4 h-4 shrink-0" />}
+                      <span>{passwordMsg.text}</span>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleUpdatePasswordSubmit} className="flex flex-col gap-3">
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Current Password</label>
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={passwordForm.currentPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">New Password</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">Confirm New Password</label>
+                      <input
+                        type="password"
+                        required
+                        placeholder="••••••••"
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-purple-500"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isUpdatingPassword}
+                      className="py-2.5 px-5 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-xl text-xs border border-purple-700/30 transition shadow-xs flex items-center justify-center space-x-2 cursor-pointer mt-1"
+                    >
+                      {isUpdatingPassword ? <IconLoader2 className="w-4 h-4 animate-spin" /> : <span>Update Password</span>}
+                    </button>
+                  </form>
+                </div>
+
+                {/* Subscriptions & Billing Card */}
+                <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
+                  <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
+                    <div className="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
+                      <IconCreditCard className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">Manage Billing & Subscriptions</h3>
+                      <p className="text-[11px] text-slate-500">View capacity seats & upgrade plans instantly</p>
+                    </div>
+                  </div>
+
+                  {subMsg && (
+                    <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 ${subMsg.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-red-50 text-red-700 border border-red-200'}`}>
+                      {subMsg.type === 'success' ? <IconCheck className="w-4 h-4 shrink-0" /> : <IconAlertCircle className="w-4 h-4 shrink-0" />}
+                      <span>{subMsg.text}</span>
+                    </div>
+                  )}
+
+                  <div className="bg-slate-50 rounded-2xl p-4 border border-slate-200 flex flex-col gap-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-semibold">Active Plan</span>
+                        <h4 className="text-base font-bold text-slate-900">{subscriptionDetails.planName}</h4>
+                      </div>
+                      <span className="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">
+                        {subscriptionDetails.price}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span>Seats Capacity: <strong>{subscriptionDetails.seats} Student Seats</strong></span>
+                      <span>Renewal: <strong>{subscriptionDetails.renewalDate}</strong></span>
+                    </div>
+                  </div>
+
+                  {/* Upgrade Plans Options */}
+                  <div className="grid grid-cols-3 gap-2 mt-1">
+                    {[
+                      { name: 'Free Starter', seats: 5, price: '$0/mo' },
+                      { name: 'Pro Explorer', seats: 25, price: '$99/mo' },
+                      { name: 'School Enterprise', seats: 100, price: '$299/mo' },
+                    ].map((plan) => (
+                      <button
+                        key={plan.name}
+                        onClick={() => handleUpgradeSubscriptionPlan(plan.name, plan.seats, plan.price)}
+                        className={`p-3 rounded-2xl border text-left transition cursor-pointer flex flex-col justify-between ${subscriptionDetails.planName === plan.name ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-300' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                      >
+                        <div>
+                          <div className="text-[11px] font-bold text-slate-900">{plan.name}</div>
+                          <div className="text-[10px] text-slate-500">{plan.seats} Seats</div>
+                        </div>
+                        <div className="text-xs font-extrabold text-blue-600 mt-2">{plan.price}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

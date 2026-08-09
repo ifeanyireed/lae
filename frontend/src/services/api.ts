@@ -274,6 +274,59 @@ export async function verifyEmbedToken(token: string): Promise<EmbedVerification
   }
 }
 
+export async function updateOrgProfile(profile: {
+  id: string;
+  name: string;
+  domain?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  logoUrl?: string;
+}): Promise<boolean> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/organisations/profile`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: profile.id,
+        name: profile.name,
+        domain: profile.domain || '',
+        contact_email: profile.contactEmail || '',
+        contact_phone: profile.contactPhone || '',
+        logo_url: profile.logoUrl || '/monkey1.svg',
+      }),
+    });
+    const data = await res.json();
+    return !!(data && data.success);
+  } catch (e) {
+    return false;
+  }
+}
+
+export async function updateOrgPassword(params: {
+  id: string;
+  currentPassword?: string;
+  newPassword?: string;
+}): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/organisations/password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        id: params.id,
+        current_password: params.currentPassword || '',
+        new_password: params.newPassword || '',
+      }),
+    });
+    const data = await res.json();
+    if (data && data.success) {
+      return { success: true };
+    }
+    return { success: false, error: data.error || 'Password update failed' };
+  } catch (e) {
+    return { success: false, error: 'Network error updating password' };
+  }
+}
+
 // CENTRES & LOCATIONS
 export interface CentreApiItem {
   id: number;

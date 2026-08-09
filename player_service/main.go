@@ -82,6 +82,8 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/api/v1/organisations/google-ads", h.ToggleGoogleAdsHandler)
+	mux.HandleFunc("/api/v1/organisations/profile", h.UpdateProfileHandler)
+	mux.HandleFunc("/api/v1/organisations/password", h.UpdatePasswordHandler)
 
 	mux.HandleFunc("/api/v1/users", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

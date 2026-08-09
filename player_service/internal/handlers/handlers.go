@@ -516,7 +516,7 @@ func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r 
 	ctx := r.Context()
 	orgType := r.URL.Query().Get("type")
 	orgID := r.URL.Query().Get("id")
-	query := "SELECT id, name, domain, contact_email, contact_phone, password, token, google_ads_enabled, type, created_at FROM organisations"
+	query := "SELECT id, name, domain, contact_email, contact_phone, password, COALESCE(logo_url, '/monkey1.svg'), token, google_ads_enabled, type, created_at FROM organisations"
 	var args []interface{}
 	var conds []string
 	if orgType != "" {
@@ -544,7 +544,7 @@ func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r 
 	for rows.Next() {
 		var o database.Organisation
 		var createdAt string
-		if err := rows.Scan(&o.ID, &o.Name, &o.Domain, &o.ContactEmail, &o.ContactPhone, &o.Password, &o.Token, &o.GoogleAdsEnabled, &o.Type, &createdAt); err == nil {
+		if err := rows.Scan(&o.ID, &o.Name, &o.Domain, &o.ContactEmail, &o.ContactPhone, &o.Password, &o.LogoURL, &o.Token, &o.GoogleAdsEnabled, &o.Type, &createdAt); err == nil {
 			_ = p.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM users WHERE organisation_id = ?", o.ID).Scan(&o.ActiveStudents)
 
 			grpRows, err := p.DB.QueryContext(ctx, "SELECT name FROM groups WHERE organisation_id = ?", o.ID)
@@ -616,19 +616,23 @@ func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r 
 	if req.Password == "" {
 		req.Password = "school123"
 	}
+	if req.LogoURL == "" {
+		req.LogoURL = "/monkey1.svg"
+	}
 
 	_, err := p.DB.ExecContext(ctx, `
-		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, password, token, google_ads_enabled, type)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, password, logo_url, token, google_ads_enabled, type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			name = VALUES(name),
 			domain = VALUES(domain),
 			contact_email = VALUES(contact_email),
 			contact_phone = VALUES(contact_phone),
 			password = VALUES(password),
+			logo_url = VALUES(logo_url),
 			google_ads_enabled = VALUES(google_ads_enabled),
 			type = VALUES(type)
-	`, req.ID, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.Password, req.Token, req.GoogleAdsEnabled, req.Type)
+	`, req.ID, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.Password, req.LogoURL, req.Token, req.GoogleAdsEnabled, req.Type)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -1389,6 +1393,101 @@ func (p *PlayerServiceHandler) GenerateEmbedTokenHandler(w http.ResponseWriter, 
 			"exp":    time.Now().Add(365 * 24 * time.Hour).Unix(),
 		},
 	})
+}
+
+// UpdateProfileHandler updates organisation profile details (logo_url, name, domain, email, phone)
+func (p *PlayerServiceHandler) UpdateProfileHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req struct {
+		ID           string `json:"id"`
+		Name         string `json:"name"`
+		Domain       string `json:"domain"`
+		ContactEmail string `json:"contact_email"`
+		ContactPhone string `json:"contact_phone"`
+		LogoURL      string `json:"logo_url"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ID == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request parameters"})
+		return
+	}
+
+	if req.LogoURL == "" {
+		req.LogoURL = "/monkey1.svg"
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), `
+		UPDATE organisations SET
+			name = COALESCE(NULLIF(?, ''), name),
+			domain = ?,
+			contact_email = ?,
+			contact_phone = ?,
+			logo_url = ?
+		WHERE id = ?
+	`, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.LogoURL, req.ID)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// UpdatePasswordHandler verifies current password & sets new password for organisation
+func (p *PlayerServiceHandler) UpdatePasswordHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req struct {
+		ID              string `json:"id"`
+		CurrentPassword string `json:"current_password"`
+		NewPassword     string `json:"new_password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.ID == "" || req.NewPassword == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Missing required fields"})
+		return
+	}
+
+	ctx := r.Context()
+	var currentDbPassword string
+	err := p.DB.QueryRowContext(ctx, "SELECT password FROM organisations WHERE id = ?", req.ID).Scan(&currentDbPassword)
+	if err != nil {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Organisation not found"})
+		return
+	}
+
+	if currentDbPassword != "" && req.CurrentPassword != "" && currentDbPassword != req.CurrentPassword {
+		w.WriteHeader(http.StatusUnauthorized)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Incorrect current password"})
+		return
+	}
+
+	_, err = p.DB.ExecContext(ctx, "UPDATE organisations SET password = ? WHERE id = ?", req.NewPassword, req.ID)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
 }
 
 

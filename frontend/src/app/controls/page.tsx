@@ -89,6 +89,7 @@ export interface Organisation {
   contactEmail: string;
   contactPhone: string;
   password?: string;
+  logoUrl?: string;
   type?: string;
   token: string;
   googleAdsEnabled: boolean;
@@ -117,10 +118,10 @@ export interface PlatformUser {
 export interface Subscription {
   id: string;
   organisationId?: string;
-  organisationName: string;
-  userEmail: string;
-  planName: 'Free Starter' | 'Pro Explorer' | 'School Enterprise';
-  status: 'active' | 'expired' | 'canceled';
+  organisationName?: string;
+  userEmail?: string;
+  planName: string;
+  status: string;
   seats: number;
   price: string;
   renewalDate: string;
@@ -586,9 +587,9 @@ export default function AdminControlsPage() {
 
   const filteredSubs = subscriptionsList.filter(
     (s) =>
-      s.organisationName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.userEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.planName.toLowerCase().includes(searchQuery.toLowerCase())
+      (s.organisationName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.userEmail || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (s.planName || '').toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const totalOrgPages = Math.ceil(filteredOrgs.length / itemsPerPage) || 1;
