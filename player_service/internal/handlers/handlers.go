@@ -433,7 +433,32 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	rows, err := p.DB.QueryContext(r.Context(), "SELECT id, name, code FROM groups ORDER BY id ASC")
+	orgID := r.URL.Query().Get("organisation_id")
+	centreIDStr := r.URL.Query().Get("centre_id")
+
+	query := `
+		SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, g.code, g.created_at
+		FROM groups g
+		LEFT JOIN centres c ON g.centre_id = c.id
+	`
+	var args []interface{}
+	var conds []string
+	if orgID != "" && orgID != "ALL" {
+		conds = append(conds, "g.organisation_id = ?")
+		args = append(args, orgID)
+	}
+	if centreIDStr != "" && centreIDStr != "ALL" {
+		if cID, err := strconv.Atoi(centreIDStr); err == nil && cID > 0 {
+			conds = append(conds, "g.centre_id = ?")
+			args = append(args, cID)
+		}
+	}
+	if len(conds) > 0 {
+		query += " WHERE " + strings.Join(conds, " AND ")
+	}
+	query += " ORDER BY g.id ASC"
+
+	rows, err := p.DB.QueryContext(r.Context(), query, args...)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
@@ -444,7 +469,8 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 	var groups []database.Group
 	for rows.Next() {
 		var g database.Group
-		if err := rows.Scan(&g.ID, &g.Name, &g.Code); err == nil {
+		var createdAt string
+		if err := rows.Scan(&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &createdAt); err == nil {
 			groups = append(groups, g)
 		}
 	}
@@ -531,6 +557,19 @@ func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r 
 				}
 				grpRows.Close()
 			}
+
+			ctrRows, err := p.DB.QueryContext(ctx, "SELECT id, organisation_id, name, location, code FROM centres WHERE organisation_id = ?", o.ID)
+			if err == nil {
+				o.Centres = make([]database.Centre, 0)
+				for ctrRows.Next() {
+					var c database.Centre
+					if err := ctrRows.Scan(&c.ID, &c.OrganisationID, &c.Name, &c.Location, &c.Code); err == nil {
+						o.Centres = append(o.Centres, c)
+					}
+				}
+				ctrRows.Close()
+			}
+
 			orgs = append(orgs, o)
 		}
 	}
@@ -988,4 +1027,182 @@ func min(a, b int) int {
 	}
 	return b
 }
+
+// GetCentresHandler returns centres for an organisation
+func (p *PlayerServiceHandler) GetCentresHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "centres": []interface{}{}})
+		return
+	}
+
+	ctx := r.Context()
+	orgID := r.URL.Query().Get("organisation_id")
+
+	query := "SELECT id, organisation_id, name, location, code, created_at FROM centres"
+	var args []interface{}
+	if orgID != "" && orgID != "ALL" {
+		query += " WHERE organisation_id = ?"
+		args = append(args, orgID)
+	}
+	query += " ORDER BY id ASC"
+
+	rows, err := p.DB.QueryContext(ctx, query, args...)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+	defer rows.Close()
+
+	centres := make([]database.Centre, 0)
+	for rows.Next() {
+		var c database.Centre
+		var createdAt string
+		if err := rows.Scan(&c.ID, &c.OrganisationID, &c.Name, &c.Location, &c.Code, &createdAt); err == nil {
+			centres = append(centres, c)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"centres": centres,
+	})
+}
+
+// SaveCentreHandler creates or updates a centre
+func (p *PlayerServiceHandler) SaveCentreHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req database.Centre
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	if req.Name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Centre name is required"})
+		return
+	}
+
+	if req.Code == "" {
+		req.Code = strings.ToLower(strings.ReplaceAll(req.Name, " ", "-"))
+	}
+
+	ctx := r.Context()
+	if req.ID > 0 {
+		_, err := p.DB.ExecContext(ctx, `
+			UPDATE centres SET name = ?, location = ?, code = ?, organisation_id = ? WHERE id = ?
+		`, req.Name, req.Location, req.Code, req.OrganisationID, req.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+	} else {
+		res, err := p.DB.ExecContext(ctx, `
+			INSERT INTO centres (organisation_id, name, location, code) VALUES (?, ?, ?, ?)
+		`, req.OrganisationID, req.Name, req.Location, req.Code)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+		id, _ := res.LastInsertId()
+		req.ID = int(id)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "centre": req})
+}
+
+// DeleteCentreHandler deletes a centre
+func (p *PlayerServiceHandler) DeleteCentreHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id := r.URL.Query().Get("id")
+	if id == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Missing centre ID"})
+		return
+	}
+
+	_, err := p.DB.ExecContext(r.Context(), "DELETE FROM centres WHERE id = ?", id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// SaveGroupHandler creates or updates a group and ties it to a Centre & Organisation
+func (p *PlayerServiceHandler) SaveGroupHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req database.Group
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	if req.Name == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Group name is required"})
+		return
+	}
+
+	if req.Code == "" {
+		req.Code = fmt.Sprintf("%s-%s", req.OrganisationID, strings.ToLower(strings.ReplaceAll(req.Name, " ", "-")))
+	}
+
+	ctx := r.Context()
+	var centreID interface{} = nil
+	if req.CentreID > 0 {
+		centreID = req.CentreID
+	}
+
+	if req.ID > 0 {
+		_, err := p.DB.ExecContext(ctx, `
+			UPDATE groups SET name = ?, code = ?, organisation_id = ?, centre_id = ? WHERE id = ?
+		`, req.Name, req.Code, req.OrganisationID, centreID, req.ID)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+	} else {
+		res, err := p.DB.ExecContext(ctx, `
+			INSERT INTO groups (organisation_id, centre_id, name, code) VALUES (?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE organisation_id = VALUES(organisation_id), centre_id = VALUES(centre_id), name = VALUES(name)
+		`, req.OrganisationID, centreID, req.Name, req.Code)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+			return
+		}
+		id, _ := res.LastInsertId()
+		req.ID = int(id)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "group": req})
+}
+
 

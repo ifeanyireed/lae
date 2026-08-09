@@ -228,3 +228,132 @@ export async function saveSubscription(sub: Partial<Subscription>): Promise<Subs
   } catch (e) {}
   return null;
 }
+
+// CENTRES & LOCATIONS
+export interface CentreApiItem {
+  id: number;
+  organisationId: string;
+  name: string;
+  location?: string;
+  code?: string;
+}
+
+export interface GroupApiItem {
+  id: number;
+  organisationId: string;
+  centreId?: number;
+  centreName?: string;
+  name: string;
+  code?: string;
+}
+
+export async function fetchCentres(organisationId?: string): Promise<CentreApiItem[]> {
+  try {
+    const url = organisationId && organisationId !== 'ALL'
+      ? `${PLAYER_SERVICE_URL}/api/v1/centres?organisation_id=${organisationId}`
+      : `${PLAYER_SERVICE_URL}/api/v1/centres`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data && data.success && Array.isArray(data.centres)) {
+      return data.centres.map((c: any) => ({
+        id: c.id,
+        organisationId: c.organisation_id,
+        name: c.name,
+        location: c.location || '',
+        code: c.code || '',
+      }));
+    }
+  } catch (e) {}
+  return [];
+}
+
+export async function saveCentre(centre: Partial<CentreApiItem>): Promise<CentreApiItem | null> {
+  try {
+    const body = {
+      id: centre.id || 0,
+      organisation_id: centre.organisationId,
+      name: centre.name,
+      location: centre.location || '',
+      code: centre.code || '',
+    };
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/centres`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data && data.success && data.centre) {
+      return {
+        id: data.centre.id,
+        organisationId: data.centre.organisation_id,
+        name: data.centre.name,
+        location: data.centre.location || '',
+        code: data.centre.code || '',
+      };
+    }
+  } catch (e) {}
+  return null;
+}
+
+export async function deleteCentre(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/centres?id=${id}`, {
+      method: 'DELETE',
+    });
+    const data = await res.json();
+    return data && data.success;
+  } catch (e) {}
+  return false;
+}
+
+export async function fetchGroups(organisationId?: string, centreId?: number): Promise<GroupApiItem[]> {
+  try {
+    const params = new URLSearchParams();
+    if (organisationId && organisationId !== 'ALL') params.append('organisation_id', organisationId);
+    if (centreId && centreId > 0) params.append('centre_id', centreId.toString());
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/groups${queryString}`);
+    const data = await res.json();
+    if (data && data.success && Array.isArray(data.groups)) {
+      return data.groups.map((g: any) => ({
+        id: g.id,
+        organisationId: g.organisation_id,
+        centreId: g.centre_id || 0,
+        centreName: g.centre_name || '',
+        name: g.name,
+        code: g.code || '',
+      }));
+    }
+  } catch (e) {}
+  return [];
+}
+
+export async function saveGroup(group: Partial<GroupApiItem>): Promise<GroupApiItem | null> {
+  try {
+    const body = {
+      id: group.id || 0,
+      organisation_id: group.organisationId,
+      centre_id: group.centreId || null,
+      name: group.name,
+      code: group.code || '',
+    };
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/groups`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (data && data.success && data.group) {
+      return {
+        id: data.group.id,
+        organisationId: data.group.organisation_id,
+        centreId: data.group.centre_id || 0,
+        centreName: group.centreName || '',
+        name: data.group.name,
+        code: data.group.code || '',
+      };
+    }
+  } catch (e) {}
+  return null;
+}
+

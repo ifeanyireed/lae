@@ -35,6 +35,33 @@ func main() {
 	mux.HandleFunc("/api/v1/player/progress", h.GetProgressHandler)
 	mux.HandleFunc("/api/v1/player/leaderboard", h.GetLeaderboardHandler)
 	mux.HandleFunc("/api/v1/player/groups", h.GetGroupsHandler)
+	mux.HandleFunc("/api/v1/player/centres", h.GetCentresHandler)
+
+	// Centres REST Endpoints
+	mux.HandleFunc("/api/v1/centres", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetCentresHandler(w, r)
+		case http.MethodPost, http.MethodPut:
+			h.SaveCentreHandler(w, r)
+		case http.MethodDelete:
+			h.DeleteCentreHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
+
+	// Groups REST Endpoints
+	mux.HandleFunc("/api/v1/groups", func(w http.ResponseWriter, r *http.Request) {
+		switch r.Method {
+		case http.MethodGet:
+			h.GetGroupsHandler(w, r)
+		case http.MethodPost, http.MethodPut:
+			h.SaveGroupHandler(w, r)
+		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Admin Controls & Portal REST Endpoints
 	mux.HandleFunc("/api/v1/organisations", func(w http.ResponseWriter, r *http.Request) {

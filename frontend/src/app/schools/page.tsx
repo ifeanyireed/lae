@@ -20,10 +20,25 @@ import {
   IconX,
   IconCrown,
   IconLoader2,
+  IconBuildingSkyscraper,
+  IconMapPin,
 } from '@tabler/icons-react';
 
 import { useRouter } from 'next/navigation';
-import { fetchOrganisations, fetchUsers, saveUser, deleteUser, assignWorld as assignWorldApi } from '@/services/api';
+import {
+  fetchOrganisations,
+  fetchUsers,
+  saveUser,
+  deleteUser,
+  assignWorld as assignWorldApi,
+  fetchCentres,
+  saveCentre,
+  deleteCentre,
+  fetchGroups,
+  saveGroup,
+  CentreApiItem,
+  GroupApiItem,
+} from '@/services/api';
 import { authenticateUser } from '@/services/rbac';
 
 const AVATAR_OPTIONS = [
@@ -45,6 +60,8 @@ export interface SchoolStudent {
   avatar: string;
   studentCode: string;
   groupName: string;
+  centreId?: number;
+  centreName?: string;
   assignedWorldId: number;
   totalXP: number;
 }
@@ -56,13 +73,17 @@ export default function SchoolsPage() {
   const [authError, setAuthError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState<boolean>(false);
 
-  const [activeTab, setActiveTab] = useState<'students' | 'groups'>('students');
+  const [activeTab, setActiveTab] = useState<'students' | 'groups' | 'centres'>('students');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCentreFilter, setSelectedCentreFilter] = useState<string>('ALL');
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('ALL');
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
   const [activeOrgId, setActiveOrgId] = useState<string>('');
   const [schoolName, setSchoolName] = useState<string>('School Dashboard');
+  
+  const [centresList, setCentresList] = useState<CentreApiItem[]>([]);
+  const [groupsDetailList, setGroupsDetailList] = useState<GroupApiItem[]>([]);
   const [groupsList, setGroupsList] = useState<string[]>([
     'Grade 5 Coding Class',
     'Senior Coders Club',
@@ -71,6 +92,7 @@ export default function SchoolsPage() {
 
   const [students, setStudents] = useState<SchoolStudent[]>([]);
 
+  // Student Modal state
   const [isStudentModalOpen, setIsStudentModalOpen] = useState(false);
   const [editingStudent, setEditingStudent] = useState<SchoolStudent | null>(null);
   const [studentForm, setStudentForm] = useState({
@@ -81,8 +103,23 @@ export default function SchoolsPage() {
     assignedWorldId: 1,
   });
 
+  // Group Modal state
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
+  const [editingGroup, setEditingGroup] = useState<GroupApiItem | null>(null);
+  const [groupForm, setGroupForm] = useState({
+    id: 0,
+    name: '',
+    centreId: 0,
+  });
+
+  // Centre Modal state
+  const [isCentreModalOpen, setIsCentreModalOpen] = useState(false);
+  const [editingCentre, setEditingCentre] = useState<CentreApiItem | null>(null);
+  const [centreForm, setCentreForm] = useState({
+    name: '',
+    location: '',
+    code: '',
+  });
 
   const generate8DigitCode = () => {
     return Math.floor(10000000 + Math.random() * 90000000).toString();
@@ -110,28 +147,36 @@ export default function SchoolsPage() {
         sessionStorage.setItem('puzzlepro_active_org_id', orgId);
         localStorage.setItem('puzzlepro_active_org_id', orgId);
         setSchoolName(matching.name);
-        if (matching.groups && matching.groups.length > 0) {
-          setGroupsList(matching.groups);
-        }
+      }
+
+      // Read Centres from DB
+      const remoteCentres = await fetchCentres(orgId || undefined);
+      setCentresList(remoteCentres);
+
+      // Read Groups from DB
+      const remoteGroups = await fetchGroups(orgId || undefined);
+      setGroupsDetailList(remoteGroups);
+      if (remoteGroups.length > 0) {
+        setGroupsList(remoteGroups.map((g) => g.name));
       }
 
       // Read Users / Students directly from Database
       const remoteUsers = await fetchUsers(orgId || undefined);
-      const mapped: SchoolStudent[] = remoteUsers.map((u) => ({
-        id: u.id,
-        name: u.name,
-        avatar: u.avatar || '/images/character1.jpg',
-        studentCode: u.studentCode,
-        groupName: u.groupName || 'Grade 5 Coding Class',
-        assignedWorldId: u.assignedWorldId || 1,
-        totalXP: u.totalXP || 100,
-      }));
+      const mapped: SchoolStudent[] = remoteUsers.map((u) => {
+        const matchingGroup = remoteGroups.find((g) => g.name === u.groupName);
+        return {
+          id: u.id,
+          name: u.name,
+          avatar: u.avatar || '/images/character1.jpg',
+          studentCode: u.studentCode,
+          groupName: u.groupName || 'Grade 5 Coding Class',
+          centreId: matchingGroup?.centreId || 0,
+          centreName: matchingGroup?.centreName || '',
+          assignedWorldId: u.assignedWorldId || 1,
+          totalXP: u.totalXP || 100,
+        };
+      });
       setStudents(mapped);
-
-      const uniqueGroups = Array.from(new Set(mapped.map((s) => s.groupName).filter(Boolean)));
-      if (uniqueGroups.length > 0) {
-        setGroupsList(uniqueGroups);
-      }
     } catch (e) {}
   };
 
@@ -220,14 +265,48 @@ export default function SchoolsPage() {
     await loadDataFromDB(activeOrgId);
   };
 
-  const handleAddGroup = (e: React.FormEvent) => {
+  const handleSaveGroupSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newGroupName) return;
-    if (!groupsList.includes(newGroupName)) {
-      setGroupsList([...groupsList, newGroupName]);
-    }
-    setNewGroupName('');
+    if (!groupForm.name) return;
+
+    const selectedCentre = centresList.find((c) => c.id === groupForm.centreId);
+    await saveGroup({
+      id: groupForm.id || 0,
+      organisationId: activeOrgId,
+      centreId: groupForm.centreId || undefined,
+      centreName: selectedCentre?.name || '',
+      name: groupForm.name,
+    });
+
     setIsGroupModalOpen(false);
+    setEditingGroup(null);
+    setGroupForm({ id: 0, name: '', centreId: 0 });
+    await loadDataFromDB(activeOrgId);
+  };
+
+  const handleSaveCentreSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!centreForm.name) return;
+
+    await saveCentre({
+      id: editingCentre ? editingCentre.id : 0,
+      organisationId: activeOrgId,
+      name: centreForm.name,
+      location: centreForm.location,
+      code: centreForm.code,
+    });
+
+    setIsCentreModalOpen(false);
+    setEditingCentre(null);
+    setCentreForm({ name: '', location: '', code: '' });
+    await loadDataFromDB(activeOrgId);
+  };
+
+  const handleDeleteCentre = async (id: number) => {
+    if (confirm('Are you sure you want to delete this Campus Centre location?')) {
+      await deleteCentre(id);
+      await loadDataFromDB(activeOrgId);
+    }
   };
 
   const filteredStudents = students.filter((s) => {
@@ -236,10 +315,16 @@ export default function SchoolsPage() {
       s.studentCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       s.groupName.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesGroup = selectedGroupFilter === 'ALL' || s.groupName === selectedGroupFilter;
-    return matchesSearch && matchesGroup;
+    const matchesCentre =
+      selectedCentreFilter === 'ALL' || (s.centreId && s.centreId.toString() === selectedCentreFilter);
+    return matchesSearch && matchesGroup && matchesCentre;
   });
 
-  // Full-screen glassmorphic video background login screen matching Admin Controls
+  const filteredGroups = groupsDetailList.filter((g) => {
+    return selectedCentreFilter === 'ALL' || (g.centreId && g.centreId.toString() === selectedCentreFilter);
+  });
+
+  // Full-screen glassmorphic video background login screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative overflow-hidden">
@@ -269,22 +354,22 @@ export default function SchoolsPage() {
               <span className="text-amber-400 font-medium">Inspiring Young Coders.</span>
             </h1>
             <p className="text-xs text-slate-200/90 mt-3 leading-relaxed font-normal">
-              Manage student access codes, organize classes, and assign interactive coding worlds.
+              Manage school campus centres, student access codes, organize classes, and assign interactive coding worlds.
             </p>
           </div>
 
           <div className="grid grid-cols-2 gap-3 text-xs">
             <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
-              <span className="text-amber-300 font-medium block mb-1">Class Management</span>
-              <span className="text-[11px] text-slate-200/80">Organize students into Grade 5, Robotics, or STEM labs.</span>
+              <span className="text-amber-300 font-medium block mb-1">Centres & Locations</span>
+              <span className="text-[11px] text-slate-200/80">Manage multiple school campuses & learning hubs.</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
+              <span className="text-amber-300 font-medium block mb-1">Class & Group Management</span>
+              <span className="text-[11px] text-slate-200/80">Tie Grade 5, Robotics, or STEM labs to specific centres.</span>
             </div>
             <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
               <span className="text-amber-300 font-medium block mb-1">8-Digit Access Codes</span>
               <span className="text-[11px] text-slate-200/80">Generate & copy instant passwordless access codes.</span>
-            </div>
-            <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
-              <span className="text-amber-300 font-medium block mb-1">World Assignments</span>
-              <span className="text-[11px] text-slate-200/80">Assign Monkey Explorers, HTML, CSS, JS, or Python.</span>
             </div>
             <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
               <span className="text-amber-300 font-medium block mb-1">XP Progress Tracking</span>
@@ -349,33 +434,24 @@ export default function SchoolsPage() {
             <button
               type="submit"
               disabled={isLoggingIn}
-              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500 flex items-center justify-center space-x-2 disabled:opacity-75"
+              className="w-full py-3 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-md border border-amber-500/40 transition-all duration-200 flex items-center justify-center space-x-2 cursor-pointer mt-2"
             >
               {isLoggingIn ? (
-                <>
-                  <IconLoader2 className="w-4 h-4 animate-spin" />
-                  <span>Signing In...</span>
-                </>
+                <IconLoader2 className="w-4 h-4 animate-spin" />
               ) : (
-                <span>Sign In to Schools Portal</span>
+                <span>Sign In to School</span>
               )}
             </button>
           </form>
-
-          <div className="pt-2 border-t border-white/10 md:border-slate-200 text-center text-xs">
-            <Link href="/onboarding" className="text-amber-400 md:text-amber-600 font-medium hover:underline">
-              New Educator / School? Start Onboarding Setup →
-            </Link>
-          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-900 flex flex-col">
-      {/* Light Header */}
-      <header className="bg-white border-b border-slate-200 px-6 py-3.5 flex items-center justify-between shadow-xs">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
+      {/* Top Header */}
+      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs sticky top-0 z-40">
         <div className="flex items-center space-x-3">
           <Image src="/monkey1.svg" alt="PuzzlePro" width={44} height={44} className="object-contain" />
           <div>
@@ -387,7 +463,7 @@ export default function SchoolsPage() {
         <div className="flex items-center space-x-3">
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal flex items-center space-x-1.5 border border-slate-200"
+            className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-normal flex items-center space-x-1.5 border border-slate-200 cursor-pointer"
           >
             <IconLogout className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -397,26 +473,37 @@ export default function SchoolsPage() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 animate-fade-in-up">
         {/* Metric Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Enrolled Students</p>
-              <h3 className="text-2xl font-medium text-slate-900 mt-1">{students.length} Students</h3>
-              <p className="text-[11px] font-normal text-emerald-600 mt-0.5">8-Digit Access Codes Active</p>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Campus Centres</p>
+              <h3 className="text-2xl font-medium text-slate-900 mt-1">{centresList.length} Locations</h3>
+              <p className="text-[11px] font-normal text-emerald-600 mt-0.5">School Campuses Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
-              <IconUsers className="w-6 h-6" />
+            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+              <IconBuildingSkyscraper className="w-6 h-6" />
             </div>
           </div>
 
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">School Classes / Groups</p>
-              <h3 className="text-2xl font-medium text-slate-900 mt-1">{groupsList.length} Active Groups</h3>
-              <p className="text-[11px] font-normal text-purple-600 mt-0.5">Class Assignments</p>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Classes & Groups</p>
+              <h3 className="text-2xl font-medium text-slate-900 mt-1">{groupsDetailList.length} Active Groups</h3>
+              <p className="text-[11px] font-normal text-purple-600 mt-0.5">Tied to Campus Centres</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
               <IconSchool className="w-6 h-6" />
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Enrolled Students</p>
+              <h3 className="text-2xl font-medium text-slate-900 mt-1">{students.length} Students</h3>
+              <p className="text-[11px] font-normal text-blue-600 mt-0.5">8-Digit Access Codes Active</p>
+            </div>
+            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+              <IconUsers className="w-6 h-6" />
             </div>
           </div>
 
@@ -434,10 +521,10 @@ export default function SchoolsPage() {
 
         {/* Navigation Tabs */}
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-3 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="flex items-center space-x-6 w-full sm:w-auto px-2">
+          <div className="flex items-center space-x-6 w-full sm:w-auto px-2 overflow-x-auto">
             <button
               onClick={() => setActiveTab('students')}
-              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 shrink-0 ${
                 activeTab === 'students' ? 'text-amber-600 border-amber-500 font-medium' : 'text-slate-500 border-transparent font-normal'
               }`}
             >
@@ -447,12 +534,22 @@ export default function SchoolsPage() {
 
             <button
               onClick={() => setActiveTab('groups')}
-              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 ${
+              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 shrink-0 ${
                 activeTab === 'groups' ? 'text-amber-600 border-amber-500 font-medium' : 'text-slate-500 border-transparent font-normal'
               }`}
             >
               <IconSchool className="w-4 h-4" />
               <span>School Classes & Groups</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('centres')}
+              className={`py-1.5 text-xs transition flex items-center space-x-2 cursor-pointer border-b-2 shrink-0 ${
+                activeTab === 'centres' ? 'text-amber-600 border-amber-500 font-medium' : 'text-slate-500 border-transparent font-normal'
+              }`}
+            >
+              <IconBuildingSkyscraper className="w-4 h-4" />
+              <span>Campus Centres & Locations</span>
             </button>
           </div>
 
@@ -475,7 +572,7 @@ export default function SchoolsPage() {
               <div>
                 <h2 className="text-base font-medium text-slate-900">Student Roster</h2>
                 <p className="text-xs text-slate-500 font-normal mt-0.5">
-                  Manage 8-digit access codes, assign Learning Worlds, and track student XP.
+                  Manage 8-digit access codes, assign Learning Worlds, and track student XP across Campus Centres.
                 </p>
               </div>
 
@@ -491,62 +588,80 @@ export default function SchoolsPage() {
                   });
                   setIsStudentModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Student</span>
               </button>
             </div>
 
-            {/* Filter by Group */}
-            <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
-              <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider">Filter by Class:</span>
-              <select
-                value={selectedGroupFilter}
-                onChange={(e) => setSelectedGroupFilter(e.target.value)}
-                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none cursor-pointer"
-              >
-                <option value="ALL">All School Classes ({groupsList.length})</option>
-                {groupsList.map((grp) => (
-                  <option key={grp} value={grp}>
-                    {grp}
-                  </option>
-                ))}
-              </select>
+            {/* Filter Controls */}
+            <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider">Campus Centre:</span>
+                <select
+                  value={selectedCentreFilter}
+                  onChange={(e) => setSelectedCentreFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none cursor-pointer"
+                >
+                  <option value="ALL">All Campus Locations ({centresList.length})</option>
+                  {centresList.map((c) => (
+                    <option key={c.id} value={c.id.toString()}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider">Class / Group:</span>
+                <select
+                  value={selectedGroupFilter}
+                  onChange={(e) => setSelectedGroupFilter(e.target.value)}
+                  className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none cursor-pointer"
+                >
+                  <option value="ALL">All School Classes ({groupsList.length})</option>
+                  {groupsList.map((grp) => (
+                    <option key={grp} value={grp}>
+                      {grp}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
+                  <tr className="border-b border-slate-200 text-[10px] font-normal text-slate-400 uppercase tracking-wider">
                     <th className="py-3 px-3">Student Name</th>
                     <th className="py-3 px-3">8-Digit Access Code</th>
-                    <th className="py-3 px-3">Class / Group</th>
+                    <th className="py-3 px-3">Class & Location Centre</th>
                     <th className="py-3 px-3">Assigned World</th>
-                    <th className="py-3 px-3">Total XP</th>
+                    <th className="py-3 px-3">XP Score</th>
                     <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
                   {filteredStudents.map((st) => (
-                    <tr key={st.id} className="hover:bg-slate-50 transition-colors">
+                    <tr key={st.id} className="hover:bg-slate-50/80 transition">
                       <td className="py-3.5 px-3">
-                        <div className="flex items-center space-x-2.5">
-                          <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 relative shrink-0 overflow-hidden shadow-xs">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full relative overflow-hidden border border-slate-200 shrink-0">
                             <Image src={st.avatar} alt={st.name} fill className="object-cover" />
                           </div>
-                          <span className="font-normal text-slate-900">{st.name}</span>
+                          <div>
+                            <span className="font-medium text-slate-900 block">{st.name}</span>
+                          </div>
                         </div>
                       </td>
-                      <td className="py-3.5 px-3">
-                        <div className="flex items-center space-x-2">
-                          <span className="bg-amber-100/80 border border-amber-300 text-amber-950 font-mono text-xs px-2.5 py-1 rounded-xl tracking-widest shadow-xs">
-                            {st.studentCode}
-                          </span>
+                      <td className="py-3.5 px-3 font-mono font-medium text-amber-700">
+                        <div className="flex items-center space-x-1.5">
+                          <span>{st.studentCode}</span>
                           <button
                             onClick={() => copyCode(st.id, st.studentCode)}
-                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition"
+                            className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition"
                             title="Copy 8-Digit Access Code"
                           >
                             {copiedCodeId === st.id ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
@@ -554,9 +669,17 @@ export default function SchoolsPage() {
                         </div>
                       </td>
                       <td className="py-3.5 px-3">
-                        <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px]">
-                          {st.groupName}
-                        </span>
+                        <div className="flex flex-col gap-0.5">
+                          <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px] font-medium w-fit">
+                            {st.groupName}
+                          </span>
+                          {st.centreName && (
+                            <span className="text-[10px] text-emerald-700 flex items-center gap-1 font-normal">
+                              <IconMapPin className="w-3 h-3 text-emerald-600 shrink-0" />
+                              <span>{st.centreName}</span>
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="py-3.5 px-3">
                         <select
@@ -586,13 +709,13 @@ export default function SchoolsPage() {
                               });
                               setIsStudentModalOpen(true);
                             }}
-                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700"
+                            className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
                           >
                             <IconEdit className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteStudent(st.id)}
-                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600"
+                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
                           >
                             <IconTrash className="w-3.5 h-3.5" />
                           </button>
@@ -603,7 +726,7 @@ export default function SchoolsPage() {
                   {filteredStudents.length === 0 && (
                     <tr>
                       <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-normal">
-                        No students found matching class filters.
+                        No students found matching filters.
                       </td>
                     </tr>
                   )}
@@ -616,44 +739,180 @@ export default function SchoolsPage() {
         {/* TAB 2: GROUPS MANAGEMENT */}
         {activeTab === 'groups' && (
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-150">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
                 <h2 className="text-base font-medium text-slate-900">School Classes & Groups</h2>
                 <p className="text-xs text-slate-500 font-normal mt-0.5">
-                  Organize your students into classes and assign learning tracks.
+                  Organize your students into classes and tie each class to a Campus Centre location.
                 </p>
               </div>
               <button
-                onClick={() => setIsGroupModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition"
+                onClick={() => {
+                  setEditingGroup(null);
+                  setGroupForm({
+                    id: 0,
+                    name: '',
+                    centreId: centresList[0]?.id || 0,
+                  });
+                  setIsGroupModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
               >
                 <IconFolderPlus className="w-4 h-4" />
                 <span>Create New Class</span>
               </button>
             </div>
 
+            {/* Centre Filter */}
+            <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
+              <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider">Filter by Centre Location:</span>
+              <select
+                value={selectedCentreFilter}
+                onChange={(e) => setSelectedCentreFilter(e.target.value)}
+                className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none cursor-pointer"
+              >
+                <option value="ALL">All Campus Centres ({centresList.length})</option>
+                {centresList.map((c) => (
+                  <option key={c.id} value={c.id.toString()}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              {groupsList.map((grp) => {
-                const count = students.filter((s) => s.groupName === grp).length;
+              {filteredGroups.map((grp) => {
+                const count = students.filter((s) => s.groupName === grp.name).length;
                 return (
-                  <div key={grp} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between gap-3">
+                  <div key={grp.id || grp.name} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between gap-3 hover:border-amber-300 transition">
                     <div>
-                      <span className="bg-purple-100 text-purple-800 text-[10px] font-medium px-2 py-0.5 rounded-md uppercase">Class</span>
-                      <h3 className="text-base font-medium text-slate-900 mt-2">{grp}</h3>
+                      <div className="flex items-center justify-between">
+                        <span className="bg-purple-100 text-purple-800 text-[10px] font-medium px-2 py-0.5 rounded-md uppercase">Class</span>
+                        {grp.centreName && (
+                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
+                            <IconMapPin className="w-3 h-3 shrink-0" />
+                            <span>{grp.centreName}</span>
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-medium text-slate-900 mt-2">{grp.name}</h3>
                       <p className="text-xs text-slate-500 mt-0.5">{count} Students Enrolled</p>
                     </div>
-                    <button
-                      onClick={() => {
-                        setSelectedGroupFilter(grp);
-                        setActiveTab('students');
-                      }}
-                      className="text-xs text-amber-700 hover:text-amber-800 font-normal text-left cursor-pointer"
-                    >
-                      View Students in Class →
-                    </button>
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
+                      <button
+                        onClick={() => {
+                          setSelectedGroupFilter(grp.name);
+                          setActiveTab('students');
+                        }}
+                        className="text-xs text-amber-700 hover:text-amber-800 font-normal text-left cursor-pointer"
+                      >
+                        View Students →
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingGroup(grp);
+                          setGroupForm({
+                            id: grp.id,
+                            name: grp.name,
+                            centreId: grp.centreId || 0,
+                          });
+                          setIsGroupModalOpen(true);
+                        }}
+                        className="p-1 rounded hover:bg-slate-200 text-slate-600 transition cursor-pointer"
+                      >
+                        <IconEdit className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
                   </div>
                 );
               })}
+              {filteredGroups.length === 0 && (
+                <div className="col-span-full py-8 text-center text-slate-400 text-xs font-normal">
+                  No school classes found for selected campus centre.
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 3: CENTRES MANAGEMENT */}
+        {activeTab === 'centres' && (
+          <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
+              <div>
+                <h2 className="text-base font-medium text-slate-900">Campus Centres & Locations</h2>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  Manage multiple school campuses, branch locations, and physical learning hubs.
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEditingCentre(null);
+                  setCentreForm({ name: '', location: '', code: '' });
+                  setIsCentreModalOpen(true);
+                }}
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
+              >
+                <IconPlus className="w-4 h-4" />
+                <span>Add Campus Centre</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {centresList.map((ctr) => {
+                const tiedGroups = groupsDetailList.filter((g) => g.centreId === ctr.id);
+                return (
+                  <div key={ctr.id} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between gap-3 hover:border-emerald-300 transition">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-medium px-2 py-0.5 rounded-md uppercase flex items-center gap-1">
+                          <IconBuildingSkyscraper className="w-3 h-3 shrink-0" />
+                          <span>Centre Location</span>
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-400">{ctr.code || 'MAIN'}</span>
+                      </div>
+                      <h3 className="text-base font-medium text-slate-900 mt-2">{ctr.name}</h3>
+                      {ctr.location && (
+                        <p className="text-xs text-slate-500 mt-1 flex items-center gap-1 font-normal">
+                          <IconMapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                          <span>{ctr.location}</span>
+                        </p>
+                      )}
+                      <p className="text-[11px] text-purple-700 mt-2 font-medium">
+                        {tiedGroups.length} Tied School Classes
+                      </p>
+                    </div>
+
+                    <div className="flex items-center justify-end space-x-2 pt-2 border-t border-slate-200/60">
+                      <button
+                        onClick={() => {
+                          setEditingCentre(ctr);
+                          setCentreForm({
+                            name: ctr.name,
+                            location: ctr.location || '',
+                            code: ctr.code || '',
+                          });
+                          setIsCentreModalOpen(true);
+                        }}
+                        className="p-1.5 rounded-xl bg-slate-200/70 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                      >
+                        <IconEdit className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteCentre(ctr.id)}
+                        className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 transition cursor-pointer"
+                      >
+                        <IconTrash className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {centresList.length === 0 && (
+                <div className="col-span-full py-8 text-center text-slate-400 text-xs font-normal">
+                  No campus centres added yet. Click "+ Add Campus Centre" to add your first school location.
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -667,7 +926,7 @@ export default function SchoolsPage() {
               <h3 className="font-medium text-slate-900 text-base">{editingStudent ? 'Edit Student' : 'Add New Student'}</h3>
               <button
                 onClick={() => setIsStudentModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition"
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer"
               >
                 <IconX className="w-4 h-4" />
               </button>
@@ -694,7 +953,7 @@ export default function SchoolsPage() {
                       key={avatarPath}
                       type="button"
                       onClick={() => setStudentForm({ ...studentForm, avatar: avatarPath })}
-                      className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition ${
+                      className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition cursor-pointer ${
                         studentForm.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
                       }`}
                     >
@@ -733,7 +992,7 @@ export default function SchoolsPage() {
                   <select
                     value={studentForm.groupName}
                     onChange={(e) => setStudentForm({ ...studentForm, groupName: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none cursor-pointer"
                   >
                     {groupsList.map((grp) => (
                       <option key={grp} value={grp}>
@@ -748,7 +1007,7 @@ export default function SchoolsPage() {
                   <select
                     value={studentForm.assignedWorldId}
                     onChange={(e) => setStudentForm({ ...studentForm, assignedWorldId: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2.5 bg-amber-50 border border-amber-300 font-normal text-amber-950 rounded-xl text-xs outline-none"
+                    className="w-full px-3 py-2.5 bg-amber-50 border border-amber-300 font-normal text-amber-950 rounded-xl text-xs outline-none cursor-pointer"
                   >
                     <option value={1}>World 1 (Monkey Explorers)</option>
                     <option value={2}>World 2 (HTML Architects)</option>
@@ -763,13 +1022,13 @@ export default function SchoolsPage() {
                 <button
                   type="button"
                   onClick={() => setIsStudentModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 font-normal rounded-xl text-xs"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 font-normal rounded-xl text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-sm transition"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-sm transition cursor-pointer"
                 >
                   {editingStudent ? 'Save Changes' : 'Create Student'}
                 </button>
@@ -779,46 +1038,131 @@ export default function SchoolsPage() {
         </div>
       )}
 
-      {/* Add Class Modal */}
+      {/* Add/Edit Group Modal */}
       {isGroupModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
-              <h3 className="font-medium text-slate-900 text-base">Create New School Class</h3>
+              <h3 className="font-medium text-slate-900 text-base">{editingGroup ? 'Edit School Class' : 'Create New School Class'}</h3>
               <button
                 onClick={() => setIsGroupModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition"
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer"
               >
                 <IconX className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddGroup} className="flex flex-col gap-4">
+            <form onSubmit={handleSaveGroupSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Class / Group Name</label>
                 <input
                   type="text"
                   placeholder="e.g. Science Class 6A"
-                  value={newGroupName}
-                  onChange={(e) => setNewGroupName(e.target.value)}
+                  value={groupForm.name}
+                  onChange={(e) => setGroupForm({ ...groupForm, name: e.target.value })}
                   required
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Tie to Campus Centre Location</label>
+                <select
+                  value={groupForm.centreId}
+                  onChange={(e) => setGroupForm({ ...groupForm, centreId: parseInt(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none cursor-pointer"
+                >
+                  <option value={0}>No Specific Centre (General)</option>
+                  {centresList.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name} {c.location ? `(${c.location})` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div className="flex items-center justify-end space-x-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setIsGroupModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 font-normal rounded-xl text-xs"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 font-normal rounded-xl text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-sm transition"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-sm transition cursor-pointer"
                 >
-                  Create Class
+                  {editingGroup ? 'Save Class' : 'Create Class'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add/Edit Centre Modal */}
+      {isCentreModalOpen && (
+        <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-150">
+              <h3 className="font-medium text-slate-900 text-base">{editingCentre ? 'Edit Campus Centre' : 'Add Campus Centre Location'}</h3>
+              <button
+                onClick={() => setIsCentreModalOpen(false)}
+                className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer"
+              >
+                <IconX className="w-4 h-4" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveCentreSubmit} className="flex flex-col gap-4">
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Centre Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Main Campus / Lagos West Hub"
+                  value={centreForm.name}
+                  onChange={(e) => setCentreForm({ ...centreForm, name: e.target.value })}
+                  required
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Location Address</label>
+                <input
+                  type="text"
+                  placeholder="e.g. 12 Central Avenue, Victoria Island"
+                  value={centreForm.location}
+                  onChange={(e) => setCentreForm({ ...centreForm, location: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Centre Code</label>
+                <input
+                  type="text"
+                  placeholder="e.g. main-campus"
+                  value={centreForm.code}
+                  onChange={(e) => setCentreForm({ ...centreForm, code: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none"
+                />
+              </div>
+
+              <div className="flex items-center justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsCentreModalOpen(false)}
+                  className="px-4 py-2 border border-slate-200 text-slate-600 font-normal rounded-xl text-xs cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-sm transition cursor-pointer"
+                >
+                  {editingCentre ? 'Save Location' : 'Create Location'}
                 </button>
               </div>
             </form>

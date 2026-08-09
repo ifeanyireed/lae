@@ -18,12 +18,24 @@ type Organisation struct {
 	Type             string    `json:"type"` // "school" | "family" | "enterprise"
 	ActiveStudents   int       `json:"active_students,omitempty"`
 	Groups           []string  `json:"groups,omitempty"`
+	Centres          []Centre  `json:"centres,omitempty"`
 	CreatedAt        time.Time `json:"created_at,omitempty"`
+}
+
+type Centre struct {
+	ID             int       `json:"id"`
+	OrganisationID string    `json:"organisation_id,omitempty"`
+	Name           string    `json:"name"`
+	Location       string    `json:"location,omitempty"`
+	Code           string    `json:"code,omitempty"`
+	CreatedAt      time.Time `json:"created_at,omitempty"`
 }
 
 type Group struct {
 	ID             int       `json:"id"`
 	OrganisationID string    `json:"organisation_id,omitempty"`
+	CentreID       int       `json:"centre_id,omitempty"`
+	CentreName     string    `json:"centre_name,omitempty"`
 	Name           string    `json:"name"`
 	Code           string    `json:"code"`
 	CreatedAt      time.Time `json:"created_at,omitempty"`
@@ -89,10 +101,22 @@ func (db *DB) InitPlayerServiceSchema() error {
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
+	createCentresTable := `
+	CREATE TABLE IF NOT EXISTS centres (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		organisation_id VARCHAR(100) DEFAULT NULL,
+		name VARCHAR(255) NOT NULL,
+		location VARCHAR(255) DEFAULT '',
+		code VARCHAR(100) DEFAULT '',
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
+
 	createGroupsTable := `
 	CREATE TABLE IF NOT EXISTS groups (
 		id INT AUTO_INCREMENT PRIMARY KEY,
 		organisation_id VARCHAR(100) DEFAULT NULL,
+		centre_id INT DEFAULT NULL,
 		name VARCHAR(255) NOT NULL,
 		code VARCHAR(100) UNIQUE NOT NULL,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -149,10 +173,14 @@ func (db *DB) InitPlayerServiceSchema() error {
 	if _, err := db.ExecContext(ctx, createOrganisationsTable); err != nil {
 		log.Printf("Warning: Organisations table creation error: %v", err)
 	}
+	if _, err := db.ExecContext(ctx, createCentresTable); err != nil {
+		log.Printf("Warning: Centres table creation error: %v", err)
+	}
 	if _, err := db.ExecContext(ctx, createGroupsTable); err != nil {
 		log.Printf("Warning: Groups table creation error: %v", err)
 	}
 	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN organisation_id VARCHAR(100) DEFAULT NULL;")
+	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN centre_id INT DEFAULT NULL;")
 
 	if _, err := db.ExecContext(ctx, createUsersTable); err != nil {
 		log.Printf("Warning: Users table creation error: %v", err)
@@ -184,7 +212,8 @@ func (db *DB) seedAccessCodeUsers(ctx context.Context) {
 		ON DUPLICATE KEY UPDATE name = VALUES(name)
 	`)
 
-	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, name, code) VALUES (1, 'org_001', 'Grade 5 Coding Class', 'grade-5-coding')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO centres (id, organisation_id, name, location, code) VALUES (1, 'org_001', 'Main Campus', 'Central Education Hub', 'main-campus')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (1, 'org_001', 1, 'Grade 5 Coding Class', 'grade-5-coding')")
 
 	seedUsers := []struct {
 		Username       string

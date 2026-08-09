@@ -1183,7 +1183,7 @@ export default function Home() {
   };
 
   return (
-    <main className="min-h-screen text-slate-100 flex flex-col font-sans relative overflow-hidden bg-slate-900">
+    <main className="w-screen h-screen overflow-hidden text-slate-100 flex flex-col font-sans relative bg-slate-900">
       
       {/* Background Image */}
       <div className="fixed inset-0 z-0 overflow-hidden">
@@ -1197,8 +1197,8 @@ export default function Home() {
         <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-sm" />
       </div>
 
-      {/* Top Application Header Bar */}
-      <header className="w-full px-4 sm:px-8 py-3 flex items-center justify-end z-30 relative min-h-[72px] pointer-events-none">
+      {/* Top Application Header Bar - Always Fixed & Sticky on Top */}
+      <header className="fixed top-0 left-0 right-0 z-[100] w-full px-4 sm:px-8 py-3 flex items-center justify-end min-h-[72px] pointer-events-none">
 
         {/* Center Top Header Switcher: ABSOLUTELY DEAD CENTERED HORIZONTALLY */}
         <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-center -space-x-1.5 sm:-space-x-2.5 md:-space-x-3 pointer-events-auto z-30">
@@ -1326,7 +1326,7 @@ export default function Home() {
       </header>
 
       {/* Main View Area */}
-      <div className="flex-1 p-0 flex flex-col items-center justify-center relative z-20">
+      <div className="flex-1 w-full h-full p-0 flex flex-col items-center justify-center relative z-20 overflow-hidden pt-[72px]">
         
         {/* MAZE CANVAS IS PERMANENTLY RENDERED ON-SCREEN AS THE BASE BOARD SCREEN */}
         <div className="w-full h-full relative z-10">
@@ -1448,7 +1448,7 @@ export default function Home() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 z-50 flex flex-col items-center justify-center p-3 sm:p-5 bg-slate-950/80 backdrop-blur-md pointer-events-auto overflow-y-auto"
+              className="fixed inset-0 z-50 flex flex-col items-center justify-between p-3 sm:p-5 pt-20 sm:pt-24 pb-14 bg-slate-950/85 backdrop-blur-md pointer-events-auto overflow-hidden w-screen h-screen"
             >
               {/* Top Left Back Button */}
               <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-50">
@@ -1501,11 +1501,11 @@ export default function Home() {
                 </div>
               )}
 
-              {/* Sticky Map Title Header */}
+              {/* Map Title Header */}
               <motion.div
                 initial={{ opacity: 0, y: -15 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="sticky top-0 z-30 w-full text-center pt-16 sm:pt-24 pb-4 px-4 flex flex-col items-center bg-transparent"
+                className="w-full text-center py-2 px-4 flex flex-col items-center shrink-0 z-30"
               >
                 {selectedAdventureId === null ? (
                   <>
@@ -1535,128 +1535,131 @@ export default function Home() {
 
               {/* TIER 1: TOP LEVEL ADVENTURES DIRECTORY PAGE (Monkeys & Padlocks styling) */}
               {selectedAdventureId === null ? (
-                <motion.div
-                  key="adventures-directory-grid"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
-                    },
-                    exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
-                  }}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 sm:gap-4 max-w-6xl w-full py-6 px-4 z-20"
-                >
-                  {currentWorld.adventures.map((adv) => {
-                    const monkeyNum = (((adv.id + 11) % 23) + 1);
-                    const advMonkeyImg = `/monkey${monkeyNum}.svg`;
-                    const isAdvUnlocked = adv.id === 1 || userContext.role === 'admin';
-                    const isVibrating = lockedVibrateLevelIndex === adv.id;
+                <div className="flex-1 w-full max-w-6xl flex items-center justify-center overflow-hidden my-auto py-2 z-20">
+                  <motion.div
+                    key="adventures-directory-grid"
+                    variants={{
+                      hidden: { opacity: 0 },
+                      visible: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+                      },
+                      exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                    }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-4 w-full max-h-full items-center justify-items-center overflow-hidden"
+                  >
+                    {currentWorld.adventures.map((adv) => {
+                      const monkeyNum = (((adv.id + 11) % 23) + 1);
+                      const advMonkeyImg = `/monkey${monkeyNum}.svg`;
+                      const isAdvUnlocked = adv.id === 1 || userContext.role === 'admin';
+                      const isVibrating = lockedVibrateLevelIndex === adv.id;
 
-                    return (
-                      <motion.div
-                        key={`adv-dir-card-${adv.id}`}
-                        variants={{
-                          hidden: { opacity: 0, y: 50, scale: 0.8 },
-                          visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 350, damping: 22 } },
-                          exit: { opacity: 0, y: 40, scale: 0.8, transition: { duration: 0.15 } },
-                        }}
-                        onClick={() => {
-                          if (isAdvUnlocked) {
-                            soundManager.playClick();
-                            setSelectedAdventureId(adv.id);
-                            setAdventureTitle(adv.title);
-                            setAdventureStory(adv.story);
-                          } else {
-                            soundManager.playError();
-                            setLockedVibrateLevelIndex(adv.id);
-                            setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
-                          }
-                        }}
-                        className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group select-none"
-                      >
-                        {/* Image Container with Bottom-Right Status Badge */}
+                      return (
                         <motion.div
-                          animate={isVibrating ? {
-                            x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
-                            rotate: [-6, 6, -4, 4, -2, 2, 0],
-                          } : {}}
-                          transition={{ duration: 0.6, ease: 'easeInOut' }}
-                          className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 md:h-40 relative flex-shrink-0 mb-1"
+                          key={`adv-dir-card-${adv.id}`}
+                          variants={{
+                            hidden: { opacity: 0, y: 50, scale: 0.8 },
+                            visible: { opacity: 1, y: 0, scale: 1, transition: { type: 'spring', stiffness: 350, damping: 22 } },
+                            exit: { opacity: 0, y: 40, scale: 0.8, transition: { duration: 0.15 } },
+                          }}
+                          onClick={() => {
+                            if (isAdvUnlocked) {
+                              soundManager.playClick();
+                              setSelectedAdventureId(adv.id);
+                              setAdventureTitle(adv.title);
+                              setAdventureStory(adv.story);
+                            } else {
+                              soundManager.playError();
+                              setLockedVibrateLevelIndex(adv.id);
+                              setTimeout(() => setLockedVibrateLevelIndex(null), 1200);
+                            }
+                          }}
+                          className="flex flex-col items-center justify-center cursor-pointer transition transform hover:scale-105 active:scale-95 group select-none"
                         >
-                          <Image 
-                            src={getCdnUrl(advMonkeyImg)} 
-                            alt={`Adventure ${adv.id}: ${adv.title}`} 
-                            fill 
-                            className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'filter grayscale opacity-50'}`} 
-                            priority 
-                          />
-                          
-                          {/* Status Badge: Finish flag or 3x Zooming Locked Icon */}
-                          <div className="absolute -bottom-2 -right-2 w-12 h-12 sm:w-14 sm:h-14 z-10 filter drop-shadow-lg">
-                            {isAdvUnlocked ? (
-                              <Image 
-                                src="/maze_finish.svg" 
-                                alt="Unlocked Adventure" 
-                                fill 
-                                className="object-contain" 
-                              />
-                            ) : (
-                              <motion.div
-                                className="relative w-full h-full"
-                                animate={isVibrating ? {
-                                  scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
-                                } : {}}
-                                transition={{ duration: 0.9, ease: 'easeInOut' }}
-                              >
+                          {/* Image Container with Bottom-Right Status Badge */}
+                          <motion.div
+                            animate={isVibrating ? {
+                              x: [-12, 12, -10, 10, -6, 6, -3, 3, 0],
+                              rotate: [-6, 6, -4, 4, -2, 2, 0],
+                            } : {}}
+                            transition={{ duration: 0.6, ease: 'easeInOut' }}
+                            className="w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 lg:w-36 lg:h-36 relative flex-shrink-0 mb-1"
+                          >
+                            <Image 
+                              src={getCdnUrl(advMonkeyImg)} 
+                              alt={`Adventure ${adv.id}: ${adv.title}`} 
+                              fill 
+                              className={`object-contain transition ${isAdvUnlocked ? 'filter drop-shadow-md group-hover:scale-105' : 'filter grayscale opacity-50'}`} 
+                              priority 
+                            />
+                            
+                            {/* Status Badge: Finish flag or 3x Zooming Locked Icon */}
+                            <div className="absolute -bottom-2 -right-2 w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 z-10 filter drop-shadow-lg">
+                              {isAdvUnlocked ? (
                                 <Image 
-                                  src="/locked.svg" 
-                                  alt="Locked Adventure" 
+                                  src="/maze_finish.svg" 
+                                  alt="Unlocked Adventure" 
                                   fill 
-                                  className="object-contain drop-shadow-xl" 
+                                  className="object-contain" 
                                 />
-                              </motion.div>
-                            )}
+                              ) : (
+                                <motion.div
+                                  className="relative w-full h-full"
+                                  animate={isVibrating ? {
+                                    scale: [1, 2.2, 1, 2.2, 1, 2.2, 1],
+                                  } : {}}
+                                  transition={{ duration: 0.9, ease: 'easeInOut' }}
+                                >
+                                  <Image 
+                                    src="/locked.svg" 
+                                    alt="Locked Adventure" 
+                                    fill 
+                                    className="object-contain drop-shadow-xl" 
+                                  />
+                                </motion.div>
+                              )}
+                            </div>
+                          </motion.div>
+
+                          {/* Title & Concept Name under image */}
+                          <div className="flex flex-col items-center text-center mt-1 max-w-[150px]">
+                            <span className={`text-xs sm:text-sm font-bold tracking-wide transition leading-tight line-clamp-2 ${
+                              isAdvUnlocked ? 'text-amber-300 group-hover:text-amber-200' : 'text-slate-500'
+                            }`}>
+                              {adv.title}
+                            </span>
+                            <span className={`text-[10px] sm:text-xs font-mono font-bold uppercase mt-0.5 ${
+                              isAdvUnlocked ? 'text-emerald-400' : 'text-slate-600'
+                            }`}>
+                              {adv.concept}
+                            </span>
                           </div>
                         </motion.div>
-
-                        {/* Title & Concept Name under image */}
-                        <div className="flex flex-col items-center text-center mt-1 max-w-[150px]">
-                          <span className={`text-xs sm:text-sm font-bold tracking-wide transition leading-tight line-clamp-2 ${
-                            isAdvUnlocked ? 'text-amber-300 group-hover:text-amber-200' : 'text-slate-500'
-                          }`}>
-                            {adv.title}
-                          </span>
-                          <span className={`text-[10px] sm:text-xs font-mono font-bold uppercase mt-0.5 ${
-                            isAdvUnlocked ? 'text-emerald-400' : 'text-slate-600'
-                          }`}>
-                            {adv.concept}
-                          </span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </motion.div>
+                      );
+                    })}
+                  </motion.div>
+                </div>
               ) : (
                 /* TIER 2: SUB-LEVELS GRID FOR SELECTED ADVENTURE */
-                <motion.div
-                  key="treasure-map-grid"
-                  variants={{
-                    hidden: { opacity: 0 },
-                    visible: {
-                      opacity: 1,
-                      transition: { staggerChildren: 0.08, delayChildren: 0.05 },
-                    },
-                    exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
-                  }}
-                  initial="hidden"
-                  animate="visible"
-                  exit="exit"
-                  className="grid grid-cols-6 gap-3 sm:gap-5 max-w-5xl w-full py-4 z-20"
-                >
+                <div className="flex-1 w-full max-w-5xl flex items-center justify-center overflow-hidden my-auto py-2 z-20">
+                  <motion.div
+                    key="treasure-map-grid"
+                    variants={{
+                      hidden: { opacity: 0 },
+                      visible: {
+                        opacity: 1,
+                        transition: { staggerChildren: 0.08, delayChildren: 0.05 },
+                      },
+                      exit: { opacity: 0, transition: { staggerChildren: 0.05, staggerDirection: -1 } },
+                    }}
+                    initial="hidden"
+                    animate="visible"
+                    exit="exit"
+                    className="grid grid-cols-6 gap-2 sm:gap-4 w-full max-h-full items-center justify-items-center overflow-hidden"
+                  >
                   {(currentWorld.adventures.find(a => a.id === selectedAdventureId) || currentWorld.adventures[0]).levels.map((lvlConfig, i) => {
                     const levelNum = i + 1;
                     const monkeyImg = `/monkey${((levelNum - 1) % 23) + 1}.svg`;
@@ -1757,6 +1760,7 @@ export default function Home() {
                     );
                   })}
                 </motion.div>
+                </div>
               )}
             </motion.div>
           )}

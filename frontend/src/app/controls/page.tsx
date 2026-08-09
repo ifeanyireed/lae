@@ -46,6 +46,7 @@ import {
   IconFolderPlus,
   IconRocket,
   IconDeviceLaptop,
+  IconMapPin,
 } from '@tabler/icons-react';
 
 // Character avatar options from public/images
@@ -73,6 +74,14 @@ const AVATAR_OPTIONS = [
 ];
 
 // Types for Admin Platform Modules
+export interface CentreItem {
+  id: number;
+  organisationId: string;
+  name: string;
+  location?: string;
+  code?: string;
+}
+
 export interface Organisation {
   id: string;
   name: string;
@@ -85,6 +94,7 @@ export interface Organisation {
   googleAdsEnabled: boolean;
   activeStudents: number;
   groups: string[]; // Groups/classes tied specifically to this School or Family
+  centres?: CentreItem[]; // Multiple campus / location centres
   createdAt: string;
 }
 
@@ -96,6 +106,8 @@ export interface PlatformUser {
   role: 'student' | 'teacher' | 'org_admin';
   organisationId: string;
   organisationName: string;
+  centreId?: number;
+  centreName?: string;
   groupName: string; // Belongs to school/family's groups
   assignedWorldId: number; // 1 to 5
   totalXP: number;
@@ -777,21 +789,36 @@ export default function AdminControlsPage() {
                           </span>
                         </div>
                       </td>
-                      {/* Tied Groups Badges */}
+                      {/* Tied Groups & Centres Badges */}
                       <td className="py-3.5 px-3">
-                        <div className="flex flex-wrap gap-1 max-w-[200px]">
-                          {org.groups && org.groups.length > 0 ? (
-                            org.groups.map((grp) => (
-                              <span
-                                key={grp}
-                                className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[10px] font-normal"
-                              >
-                                {grp}
-                              </span>
-                            ))
-                          ) : (
-                            <span className="text-slate-400 text-[11px]">No groups assigned</span>
+                        <div className="flex flex-col gap-1.5 max-w-[220px]">
+                          {org.centres && org.centres.length > 0 && (
+                            <div className="flex flex-wrap gap-1">
+                              {org.centres.map((ctr) => (
+                                <span
+                                  key={ctr.id}
+                                  className="bg-emerald-50 text-emerald-700 border border-emerald-200 px-2 py-0.5 rounded-lg text-[10px] font-medium flex items-center gap-1"
+                                >
+                                  <IconMapPin className="w-3 h-3 shrink-0" />
+                                  <span>{ctr.name}</span>
+                                </span>
+                              ))}
+                            </div>
                           )}
+                          <div className="flex flex-wrap gap-1">
+                            {org.groups && org.groups.length > 0 ? (
+                              org.groups.map((grp) => (
+                                <span
+                                  key={grp}
+                                  className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[10px] font-normal"
+                                >
+                                  {grp}
+                                </span>
+                              ))
+                            ) : (
+                              <span className="text-slate-400 text-[11px]">No groups assigned</span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="py-3.5 px-3">
