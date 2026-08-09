@@ -360,21 +360,16 @@ export default function Home() {
 
     if (savedToken || savedCode) {
       setIsGlobalLoading(true);
-      setLoadingMessage('Restoring Session & Loading Adventure...');
-
-      const minTimer = new Promise((resolve) => setTimeout(resolve, 1500));
+      setLoadingMessage('Restoring Session...');
       const verifyUrl = savedToken
         ? `${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?token=${encodeURIComponent(savedToken)}`
         : `${PLAYER_SERVICE_API_URL}/api/v1/player/verify-session?code=${encodeURIComponent(savedCode || '')}`;
 
-      const fetchPromise = fetch(verifyUrl, {
+      fetch(verifyUrl, {
         headers: savedToken ? { Authorization: `Bearer ${savedToken}` } : {},
       })
         .then((res) => res.json())
-        .catch(() => null);
-
-      Promise.all([fetchPromise, minTimer])
-        .then(([data]) => {
+        .then((data) => {
           if (data && data.success && data.valid && data.user) {
             if (data.token) {
               try {
@@ -412,16 +407,16 @@ export default function Home() {
             }
             setShowSplash(false);
             setShowWelcomeModal(false);
-            setActiveTab('map');
           }
         })
+        .catch(() => {})
         .finally(() => {
           setIsGlobalLoading(false);
         });
     } else {
       const timer = setTimeout(() => {
         setIsGlobalLoading(false);
-      }, 1500);
+      }, 250);
       return () => clearTimeout(timer);
     }
   }, []);
@@ -697,9 +692,6 @@ export default function Home() {
 
   const handleSelectLevel = (index: number) => {
     soundManager.playClick();
-    setIsGlobalLoading(true);
-    setLoadingMessage(`Loading Level #${index + 1}...`);
-    setTimeout(() => setIsGlobalLoading(false), 800);
     setCurrentLevelIndex(index);
     try {
       if (typeof window !== 'undefined') {
@@ -1233,7 +1225,6 @@ export default function Home() {
         isLoading={isGlobalLoading}
         spriteSrc={loadingSpriteSrc}
         isQuickZoom={isZoomingQuickly}
-        message={loadingMessage}
       />
       
       {/* Refuse game load if iFrame Embed Token is invalid, expired, or domain mismatch */}
@@ -2057,17 +2048,12 @@ export default function Home() {
         {showSplash && (
           <SplashScreen
             onStartGame={() => {
-              setIsGlobalLoading(true);
-              setLoadingMessage('Preparing Adventure Map...');
               setShowSplash(false);
               setShowWelcomeModal(false);
               setSelectedAdventureId(null);
               setActiveTab('map');
-              setTimeout(() => setIsGlobalLoading(false), 1200);
             }}
             onCodeSubmit={async (code) => {
-              setIsGlobalLoading(true);
-              setLoadingMessage('Authenticating Student Code...');
               const ok = await handleCodeSubmit(code);
               if (ok) {
                 setShowSplash(false);
@@ -2075,7 +2061,6 @@ export default function Home() {
                 setSelectedAdventureId(null);
                 setActiveTab('map');
               }
-              setTimeout(() => setIsGlobalLoading(false), 1200);
               return ok;
             }}
             username={userContext.username}
