@@ -28,6 +28,7 @@ import {
   IconMail,
   IconFilter,
   IconLoader2,
+  IconFolderPlus,
 } from '@tabler/icons-react';
 
 // Character avatar options from public/images
@@ -68,6 +69,7 @@ export interface Organisation {
   token: string;
   googleAdsEnabled: boolean;
   activeStudents: number;
+  groups: string[]; // Groups/classes tied specifically to this School or Family
   createdAt: string;
 }
 
@@ -79,7 +81,7 @@ export interface PlatformUser {
   role: 'student' | 'teacher' | 'org_admin';
   organisationId: string;
   organisationName: string;
-  groupName: string; // e.g. "Class 5A", "Jungle Explorers Group B"
+  groupName: string; // Belongs to school/family's groups
   assignedWorldId: number; // 1 to 5
   totalXP: number;
   status: 'active' | 'suspended';
@@ -154,6 +156,7 @@ export default function AdminControlsPage() {
     contactEmail: '',
     contactPhone: '',
     googleAdsEnabled: true,
+    groupsText: '', // Comma-separated list of groups
   });
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
@@ -165,17 +168,8 @@ export default function AdminControlsPage() {
     role: 'student' as 'student' | 'teacher' | 'org_admin',
     organisationId: '',
     groupName: '',
+    customGroupName: '',
     assignedWorldId: 1,
-  });
-
-  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
-  const [subForm, setSubForm] = useState({
-    organisationName: '',
-    userEmail: '',
-    planName: 'Pro Explorer' as 'Free Starter' | 'Pro Explorer' | 'School Enterprise',
-    seats: 25,
-    price: '$99/mo',
-    renewalDate: '2026-12-31',
   });
 
   // Helper to generate a unique 8-digit access code for students
@@ -191,7 +185,7 @@ export default function AdminControlsPage() {
         setIsAuthenticated(true);
       }
 
-      // Seed Organisations
+      // Seed Schools & Families with Tied Groups
       const savedOrgs = localStorage.getItem('puzzlepro_admin_orgs');
       if (savedOrgs) {
         setOrganisations(JSON.parse(savedOrgs));
@@ -206,6 +200,7 @@ export default function AdminControlsPage() {
             token: 'TOKEN_STEM_9932A',
             googleAdsEnabled: false,
             activeStudents: 140,
+            groups: ['Grade 5 Coding Class', 'Senior Coders Club', 'STEM Lab 1'],
             createdAt: '2026-01-15',
           },
           {
@@ -217,6 +212,7 @@ export default function AdminControlsPage() {
             token: 'TOKEN_METRO_8821B',
             googleAdsEnabled: true,
             activeStudents: 480,
+            groups: ['Robotics Group A', 'Class 4B', 'Middle School Tech'],
             createdAt: '2026-02-01',
           },
           {
@@ -228,6 +224,7 @@ export default function AdminControlsPage() {
             token: 'TOKEN_JUNGLE_7714C',
             googleAdsEnabled: true,
             activeStudents: 65,
+            groups: ['Junior Explorers', 'Jungle Adventurers'],
             createdAt: '2026-03-10',
           },
         ];
@@ -314,7 +311,7 @@ export default function AdminControlsPage() {
             role: 'student',
             organisationId: 'org_001',
             organisationName: 'STEM Explorers Academy',
-            groupName: 'Grade 5 Coding Class',
+            groupName: 'Senior Coders Club',
             assignedWorldId: 5,
             totalXP: 1350,
             status: 'active',
@@ -327,7 +324,7 @@ export default function AdminControlsPage() {
             role: 'student',
             organisationId: 'org_003',
             organisationName: 'Jungle Coders Kids Club',
-            groupName: 'Junior Explorers',
+            groupName: 'Jungle Adventurers',
             assignedWorldId: 2,
             totalXP: 670,
             status: 'active',
@@ -340,7 +337,7 @@ export default function AdminControlsPage() {
             role: 'student',
             organisationId: 'org_002',
             organisationName: 'Metro City Unified Schools',
-            groupName: 'Robotics Group A',
+            groupName: 'Class 4B',
             assignedWorldId: 3,
             totalXP: 1100,
             status: 'active',
@@ -353,7 +350,7 @@ export default function AdminControlsPage() {
             role: 'student',
             organisationId: 'org_001',
             organisationName: 'STEM Explorers Academy',
-            groupName: 'Grade 5 Coding Class',
+            groupName: 'STEM Lab 1',
             assignedWorldId: 1,
             totalXP: 880,
             status: 'active',
@@ -494,10 +491,15 @@ export default function AdminControlsPage() {
     saveOrgs(updated);
   };
 
-  // Create/Update Org
+  // Create/Update Org with Tied Groups
   const handleSaveOrg = (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgForm.name) return;
+
+    const parsedGroups = orgForm.groupsText
+      .split(',')
+      .map((g) => g.trim())
+      .filter((g) => g.length > 0);
 
     if (editingOrg) {
       const updated = organisations.map((org) =>
@@ -509,6 +511,7 @@ export default function AdminControlsPage() {
               contactEmail: orgForm.contactEmail,
               contactPhone: orgForm.contactPhone,
               googleAdsEnabled: orgForm.googleAdsEnabled,
+              groups: parsedGroups.length > 0 ? parsedGroups : org.groups,
             }
           : org
       );
@@ -524,6 +527,7 @@ export default function AdminControlsPage() {
         token: `TOKEN_${orgForm.name.substring(0, 4).toUpperCase()}_${tokenRandom}`,
         googleAdsEnabled: orgForm.googleAdsEnabled,
         activeStudents: 0,
+        groups: parsedGroups.length > 0 ? parsedGroups : ['Default Group A'],
         createdAt: new Date().toISOString().split('T')[0],
       };
       saveOrgs([...organisations, newOrg]);
@@ -531,22 +535,29 @@ export default function AdminControlsPage() {
 
     setIsOrgModalOpen(false);
     setEditingOrg(null);
-    setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true });
+    setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true, groupsText: '' });
   };
 
   const handleDeleteOrg = (id: string) => {
-    if (confirm('Are you sure you want to delete this organisation?')) {
+    if (confirm('Are you sure you want to delete this school / family?')) {
       saveOrgs(organisations.filter((o) => o.id !== id));
     }
   };
 
-  // Create/Update User
+  // Create/Update User with School/Family-Tied Group
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
     if (!userForm.name) return;
 
-    const orgObj = organisations.find((o) => o.id === userForm.organisationId) || organisations[0];
+    const targetOrg = organisations.find((o) => o.id === userForm.organisationId) || organisations[0];
+    const finalGroup = userForm.groupName === '__NEW_CUSTOM_GROUP__' ? userForm.customGroupName : userForm.groupName;
     const finalStudentCode = userForm.studentCode || generate8DigitCode();
+
+    // Ensure the new group is attached to the School/Family's groups array
+    if (targetOrg && finalGroup && !targetOrg.groups.includes(finalGroup)) {
+      const updatedOrgs = organisations.map((o) => (o.id === targetOrg.id ? { ...o, groups: [...o.groups, finalGroup] } : o));
+      saveOrgs(updatedOrgs);
+    }
 
     if (editingUser) {
       const updated = usersList.map((u) =>
@@ -557,9 +568,9 @@ export default function AdminControlsPage() {
               avatar: userForm.avatar,
               studentCode: finalStudentCode,
               role: userForm.role,
-              organisationId: orgObj.id,
-              organisationName: orgObj.name,
-              groupName: userForm.groupName,
+              organisationId: targetOrg.id,
+              organisationName: targetOrg.name,
+              groupName: finalGroup || 'Default Group A',
               assignedWorldId: userForm.assignedWorldId,
             }
           : u
@@ -572,9 +583,9 @@ export default function AdminControlsPage() {
         avatar: userForm.avatar || AVATAR_OPTIONS[0],
         studentCode: finalStudentCode,
         role: userForm.role,
-        organisationId: orgObj.id,
-        organisationName: orgObj.name,
-        groupName: userForm.groupName || 'Default Group A',
+        organisationId: targetOrg.id,
+        organisationName: targetOrg.name,
+        groupName: finalGroup || 'Default Group A',
         assignedWorldId: userForm.assignedWorldId || 1,
         totalXP: 100,
         status: 'active',
@@ -584,7 +595,7 @@ export default function AdminControlsPage() {
 
     setIsUserModalOpen(false);
     setEditingUser(null);
-    setUserForm({ name: '', avatar: AVATAR_OPTIONS[0], studentCode: '', role: 'student', organisationId: '', groupName: '', assignedWorldId: 1 });
+    setUserForm({ name: '', avatar: AVATAR_OPTIONS[0], studentCode: '', role: 'student', organisationId: '', groupName: '', customGroupName: '', assignedWorldId: 1 });
   };
 
   const handleDeleteUser = (id: string) => {
@@ -600,6 +611,17 @@ export default function AdminControlsPage() {
   };
 
   // Create Subscription
+  const [subForm, setSubForm] = useState({
+    organisationName: '',
+    userEmail: '',
+    planName: 'Pro Explorer' as 'Free Starter' | 'Pro Explorer' | 'School Enterprise',
+    seats: 25,
+    price: '$99/mo',
+    renewalDate: '2026-12-31',
+  });
+
+  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+
   const handleSaveSubscription = (e: React.FormEvent) => {
     e.preventDefault();
     if (!subForm.organisationName || !subForm.userEmail) return;
@@ -618,13 +640,32 @@ export default function AdminControlsPage() {
     setIsSubModalOpen(false);
   };
 
+  // Dynamically calculate groups tied to selected School/Family for filtering
+  const selectedOrgObj = organisations.find((o) => o.id === userOrgFilter);
+  const availableGroupsForFilter = userOrgFilter === 'ALL'
+    ? Array.from(new Set(organisations.flatMap((o) => o.groups || []).concat(usersList.map((u) => u.groupName))))
+    : (selectedOrgObj?.groups || Array.from(new Set(usersList.filter((u) => u.organisationId === userOrgFilter).map((u) => u.groupName))));
+
+  // Handle Org Filter Change and reset group if not tied to org
+  const handleOrgFilterChange = (orgId: string) => {
+    setUserOrgFilter(orgId);
+    if (orgId === 'ALL') return;
+    const org = organisations.find((o) => o.id === orgId);
+    if (org && userGroupFilter !== 'ALL' && !org.groups.includes(userGroupFilter)) {
+      setUserGroupFilter('ALL');
+    }
+  };
+
+  // Dynamically calculate groups tied to selected School/Family for User Modal
+  const modalSelectedOrg = organisations.find((o) => o.id === (userForm.organisationId || organisations[0]?.id));
+  const modalGroups = modalSelectedOrg?.groups || ['Default Group A'];
+
   // ==========================================
-  // UNAUTHENTICATED LOGIN SCREEN (NETS ERP STYLE WITH ANIMATIONS)
+  // UNAUTHENTICATED LOGIN SCREEN
   // ==========================================
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative overflow-hidden">
-        {/* Background Video */}
         <video
           autoPlay
           loop
@@ -636,7 +677,6 @@ export default function AdminControlsPage() {
           <source src="/login_bg.mov" type="video/mp4" />
         </video>
 
-        {/* Rich dark gradient overlay matching NETS ERP */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
 
         <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white animate-fade-in-up">
@@ -652,7 +692,7 @@ export default function AdminControlsPage() {
               <span className="text-amber-400 font-medium">Driving Platform Growth.</span>
             </h1>
             <p className="text-xs text-slate-200/80 mt-4 leading-relaxed font-normal">
-              Welcome to the PuzzlePro Controls Dashboard. Manage organisation iFrame embeds, turn Google Ads monetization on/off, assign 8-digit student access codes, and manage paid subscriptions.
+              Welcome to the PuzzlePro Controls Dashboard. Manage schools & families, turn Google Ads monetization on/off, assign 8-digit student access codes, and manage paid subscriptions.
             </p>
           </div>
           <div className="text-[10px] text-slate-400 font-normal uppercase tracking-wider mt-4">
@@ -734,14 +774,15 @@ export default function AdminControlsPage() {
   }
 
   // ==========================================
-  // AUTHENTICATED DASHBOARD (NETS ERP LAYOUT WITH FLOWING ANIMATIONS)
+  // AUTHENTICATED DASHBOARD
   // ==========================================
   const filteredOrgs = organisations.filter(
     (o) =>
       o.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.contactEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.contactPhone.toLowerCase().includes(searchQuery.toLowerCase())
+      o.contactPhone.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (o.groups && o.groups.some((g) => g.toLowerCase().includes(searchQuery.toLowerCase())))
   );
 
   const filteredUsers = usersList.filter((u) => {
@@ -756,8 +797,6 @@ export default function AdminControlsPage() {
 
     return matchesSearch && matchesOrg && matchesGroup;
   });
-
-  const uniqueGroupNames = Array.from(new Set(usersList.map((u) => u.groupName).filter(Boolean)));
 
   const filteredSubs = subscriptionsList.filter(
     (s) =>
@@ -811,13 +850,13 @@ export default function AdminControlsPage() {
         </div>
       </header>
 
-      {/* Main Admin Dashboard Body (Flows Up on Load) */}
+      {/* Main Admin Dashboard Body */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 animate-fade-in-up">
         {/* Metric Summary Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between transition-all duration-200 hover:shadow-md hover:-translate-y-0.5">
             <div>
-              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Organisations</p>
+              <p className="text-[10px] font-medium text-slate-400 uppercase tracking-wider">Schools & Families</p>
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{organisations.length} Active</h3>
               <p className="text-[11px] font-normal text-emerald-600 mt-0.5">
                 {organisations.filter((o) => o.googleAdsEnabled).length} Monetized via Ads
@@ -863,7 +902,7 @@ export default function AdminControlsPage() {
               }`}
             >
               <IconBuildingSkyscraper className="w-4 h-4" />
-              <span>Organisation Management</span>
+              <span>Schools & Families</span>
             </button>
 
             <button
@@ -904,27 +943,27 @@ export default function AdminControlsPage() {
           </div>
         </div>
 
-        {/* MODULE 1: ORGANISATION MANAGEMENT */}
+        {/* MODULE 1: SCHOOLS & FAMILIES */}
         {activeTab === 'organisations' && (
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4 animate-fade-in-up">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
-                <h2 className="text-base font-medium text-slate-900 tracking-tight">Organisation Management</h2>
+                <h2 className="text-base font-medium text-slate-900 tracking-tight">Schools & Families</h2>
                 <p className="text-xs text-slate-500 font-normal mt-0.5">
-                  Create organisations, manage contact emails & phone numbers, generate iFrame embed tokens, and toggle Google Ads.
+                  Create schools & family accounts, manage contact emails & phone numbers, assign tied groups, generate iFrame embed tokens, and toggle Google Ads.
                 </p>
               </div>
 
               <button
                 onClick={() => {
                   setEditingOrg(null);
-                  setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true });
+                  setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true, groupsText: 'Default Group A' });
                   setIsOrgModalOpen(true);
                 }}
                 className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition-all duration-200 hover:scale-[1.02] active:scale-95 cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
-                <span>Add Organisation</span>
+                <span>Add School / Family</span>
               </button>
             </div>
 
@@ -933,9 +972,10 @@ export default function AdminControlsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-                    <th className="py-3 px-3">Organisation Name</th>
+                    <th className="py-3 px-3">School / Family Name</th>
                     <th className="py-3 px-3">Domain</th>
                     <th className="py-3 px-3">Contact Details</th>
+                    <th className="py-3 px-3">Tied Groups / Classes</th>
                     <th className="py-3 px-3">Unique Embed Token</th>
                     <th className="py-3 px-3">Google Ads</th>
                     <th className="py-3 px-3">Students</th>
@@ -961,6 +1001,23 @@ export default function AdminControlsPage() {
                             <IconPhone className="w-3 h-3 text-slate-400" />
                             <span>{org.contactPhone}</span>
                           </span>
+                        </div>
+                      </td>
+                      {/* Tied Groups Badges */}
+                      <td className="py-3.5 px-3">
+                        <div className="flex flex-wrap gap-1 max-w-[200px]">
+                          {org.groups && org.groups.length > 0 ? (
+                            org.groups.map((grp) => (
+                              <span
+                                key={grp}
+                                className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[10px] font-normal"
+                              >
+                                {grp}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="text-slate-400 text-[11px]">No groups assigned</span>
+                          )}
                         </div>
                       </td>
                       <td className="py-3.5 px-3">
@@ -1023,18 +1080,19 @@ export default function AdminControlsPage() {
                                 contactEmail: org.contactEmail,
                                 contactPhone: org.contactPhone,
                                 googleAdsEnabled: org.googleAdsEnabled,
+                                groupsText: (org.groups || []).join(', '),
                               });
                               setIsOrgModalOpen(true);
                             }}
                             className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                            title="Edit Organisation"
+                            title="Edit School / Family & Groups"
                           >
                             <IconEdit className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteOrg(org.id)}
                             className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer transition-transform hover:scale-105 active:scale-95"
-                            title="Delete Organisation"
+                            title="Delete School / Family"
                           >
                             <IconTrash className="w-3.5 h-3.5" />
                           </button>
@@ -1044,8 +1102,8 @@ export default function AdminControlsPage() {
                   ))}
                   {filteredOrgs.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-normal animate-fade-in-up">
-                        No organisations found.
+                      <td colSpan={8} className="py-8 text-center text-slate-400 text-xs font-normal animate-fade-in-up">
+                        No schools or families found.
                       </td>
                     </tr>
                   )}
@@ -1056,7 +1114,7 @@ export default function AdminControlsPage() {
             {/* Pagination Controls Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between border-t border-slate-150 pt-4 mt-1 gap-3">
               <span className="text-[11px] text-slate-500 font-normal">
-                Showing {filteredOrgs.length > 0 ? orgStartIndex + 1 : 0} to {Math.min(orgStartIndex + itemsPerPage, filteredOrgs.length)} of {filteredOrgs.length} organisations
+                Showing {filteredOrgs.length > 0 ? orgStartIndex + 1 : 0} to {Math.min(orgStartIndex + itemsPerPage, filteredOrgs.length)} of {filteredOrgs.length} accounts
               </span>
               <div className="flex items-center space-x-1.5">
                 <button
@@ -1088,20 +1146,22 @@ export default function AdminControlsPage() {
               <div>
                 <h2 className="text-base font-medium text-slate-900 tracking-tight">User & World Assignment</h2>
                 <p className="text-xs text-slate-500 font-normal mt-0.5">
-                  Manage student 8-digit access codes, view groups/classes across organisations, and assign Learning Worlds.
+                  Manage student 8-digit access codes, view groups/classes tied specifically to their school or family, and assign Learning Worlds.
                 </p>
               </div>
 
               <button
                 onClick={() => {
+                  const defaultOrg = organisations[0];
                   setEditingUser(null);
                   setUserForm({
                     name: '',
                     avatar: AVATAR_OPTIONS[Math.floor(Math.random() * AVATAR_OPTIONS.length)],
                     studentCode: generate8DigitCode(),
                     role: 'student',
-                    organisationId: organisations[0]?.id || '',
-                    groupName: '',
+                    organisationId: defaultOrg?.id || '',
+                    groupName: defaultOrg?.groups[0] || 'Default Group A',
+                    customGroupName: '',
                     assignedWorldId: 1,
                   });
                   setIsUserModalOpen(true);
@@ -1113,21 +1173,22 @@ export default function AdminControlsPage() {
               </button>
             </div>
 
-            {/* Organisation & Group Dropdown Filters */}
+            {/* School/Family & Tied Group Dropdown Filters */}
             <div className="flex flex-wrap items-center gap-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
               <span className="text-xs font-normal text-slate-500 uppercase tracking-wider text-[10px] flex items-center space-x-1">
                 <IconFilter className="w-3.5 h-3.5 text-slate-400" />
                 <span>Filter By:</span>
               </span>
 
+              {/* School / Family Dropdown */}
               <div className="flex items-center space-x-2">
-                <label className="text-xs font-normal text-slate-700">Organisation:</label>
+                <label className="text-xs font-normal text-slate-700">School / Family:</label>
                 <select
                   value={userOrgFilter}
-                  onChange={(e) => setUserOrgFilter(e.target.value)}
+                  onChange={(e) => handleOrgFilterChange(e.target.value)}
                   className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs transition-all duration-200"
                 >
-                  <option value="ALL">All Organisations ({organisations.length})</option>
+                  <option value="ALL">All Schools & Families ({organisations.length})</option>
                   {organisations.map((o) => (
                     <option key={o.id} value={o.id}>
                       {o.name}
@@ -1136,6 +1197,7 @@ export default function AdminControlsPage() {
                 </select>
               </div>
 
+              {/* Tied Groups Dropdown (Updates dynamically when School/Family changes) */}
               <div className="flex items-center space-x-2">
                 <label className="text-xs font-normal text-slate-700">Group / Class:</label>
                 <select
@@ -1143,8 +1205,12 @@ export default function AdminControlsPage() {
                   onChange={(e) => setUserGroupFilter(e.target.value)}
                   className="px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-normal text-slate-800 outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs transition-all duration-200"
                 >
-                  <option value="ALL">All Groups ({uniqueGroupNames.length})</option>
-                  {uniqueGroupNames.map((grp) => (
+                  <option value="ALL">
+                    {userOrgFilter === 'ALL'
+                      ? `All Groups (${availableGroupsForFilter.length})`
+                      : `All Groups in ${selectedOrgObj?.name || 'Account'} (${availableGroupsForFilter.length})`}
+                  </option>
+                  {availableGroupsForFilter.map((grp) => (
                     <option key={grp} value={grp}>
                       {grp}
                     </option>
@@ -1172,8 +1238,8 @@ export default function AdminControlsPage() {
                   <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
                     <th className="py-3 px-3">Student Name</th>
                     <th className="py-3 px-3">8-Digit Access Code</th>
-                    <th className="py-3 px-3">Organisation</th>
-                    <th className="py-3 px-3">Group / Class</th>
+                    <th className="py-3 px-3">School / Family</th>
+                    <th className="py-3 px-3">Tied Group / Class</th>
                     <th className="py-3 px-3">Assigned World</th>
                     <th className="py-3 px-3">Role</th>
                     <th className="py-3 px-3 text-right">Actions</th>
@@ -1218,7 +1284,7 @@ export default function AdminControlsPage() {
                           </button>
                         </div>
                       </td>
-                      <td className="py-3.5 px-3 text-slate-700">{usr.organisationName}</td>
+                      <td className="py-3.5 px-3 text-slate-700 font-normal">{usr.organisationName}</td>
                       <td className="py-3.5 px-3">
                         <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px] font-normal">
                           {usr.groupName}
@@ -1255,6 +1321,7 @@ export default function AdminControlsPage() {
                                 role: usr.role,
                                 organisationId: usr.organisationId,
                                 groupName: usr.groupName,
+                                customGroupName: '',
                                 assignedWorldId: usr.assignedWorldId,
                               });
                               setIsUserModalOpen(true);
@@ -1349,7 +1416,7 @@ export default function AdminControlsPage() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-medium">
-                    <th className="py-3 px-3">Organisation / Account</th>
+                    <th className="py-3 px-3">School / Family / Account</th>
                     <th className="py-3 px-3">User Email</th>
                     <th className="py-3 px-3">Plan Type</th>
                     <th className="py-3 px-3">Seats</th>
@@ -1471,13 +1538,13 @@ export default function AdminControlsPage() {
         </div>
       )}
 
-      {/* MODAL 2: Add/Edit Organisation Modal */}
+      {/* MODAL 2: Add/Edit School/Family Modal (with Tied Groups Input) */}
       {isOrgModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <h3 className="font-medium text-slate-900 text-base">
-                {editingOrg ? 'Edit Organisation' : 'Add New Organisation'}
+                {editingOrg ? 'Edit School / Family & Tied Groups' : 'Add New School / Family'}
               </h3>
               <button
                 onClick={() => setIsOrgModalOpen(false)}
@@ -1490,7 +1557,7 @@ export default function AdminControlsPage() {
             <form onSubmit={handleSaveOrg} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                  Organisation Name
+                  School / Family Name
                 </label>
                 <input
                   type="text"
@@ -1511,6 +1578,21 @@ export default function AdminControlsPage() {
                   onChange={(e) => setOrgForm({ ...orgForm, domain: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-normal text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
+              </div>
+
+              {/* Tied Groups Input */}
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
+                  Tied Groups / Classes (Comma Separated)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Grade 5 Coding Class, Senior Coders Club, STEM Lab 1"
+                  value={orgForm.groupsText}
+                  onChange={(e) => setOrgForm({ ...orgForm, groupsText: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-purple-50/60 border border-purple-200 rounded-xl text-xs font-normal text-purple-950 focus:ring-2 focus:ring-purple-500 outline-none"
+                />
+                <p className="text-[10px] text-slate-400 mt-1">Separate multiple groups with commas. These groups belong exclusively to this School or Family.</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
@@ -1550,7 +1632,7 @@ export default function AdminControlsPage() {
                   className="w-4 h-4 accent-amber-500 cursor-pointer"
                 />
                 <label htmlFor="googleAdsToggle" className="text-xs font-normal text-slate-800 cursor-pointer">
-                  Enable Google Ads Monetization for this Organisation
+                  Enable Google Ads Monetization for this Account
                 </label>
               </div>
 
@@ -1566,7 +1648,7 @@ export default function AdminControlsPage() {
                   type="submit"
                   className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-95"
                 >
-                  {editingOrg ? 'Save Changes' : 'Create Organisation'}
+                  {editingOrg ? 'Save Changes' : 'Create School / Family'}
                 </button>
               </div>
             </form>
@@ -1574,7 +1656,7 @@ export default function AdminControlsPage() {
         </div>
       )}
 
-      {/* MODAL 3: Add/Edit User Modal */}
+      {/* MODAL 3: Add/Edit User Modal (with School/Family-Tied Group Selection) */}
       {isUserModalOpen && (
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-fade-in-up">
@@ -1651,14 +1733,23 @@ export default function AdminControlsPage() {
                 />
               </div>
 
+              {/* School/Family and Dynamic Tied Group Selection */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                    Organisation
+                    School / Family
                   </label>
                   <select
                     value={userForm.organisationId}
-                    onChange={(e) => setUserForm({ ...userForm, organisationId: e.target.value })}
+                    onChange={(e) => {
+                      const newOrgId = e.target.value;
+                      const newOrgObj = organisations.find((o) => o.id === newOrgId);
+                      setUserForm({
+                        ...userForm,
+                        organisationId: newOrgId,
+                        groupName: newOrgObj?.groups[0] || 'Default Group A',
+                      });
+                    }}
                     className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-normal text-slate-900 outline-none"
                   >
                     {organisations.map((o) => (
@@ -1671,17 +1762,39 @@ export default function AdminControlsPage() {
 
                 <div>
                   <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                    Group / Class
+                    Group / Class (Tied to Account)
+                  </label>
+                  <select
+                    value={userForm.groupName}
+                    onChange={(e) => setUserForm({ ...userForm, groupName: e.target.value })}
+                    className="w-full px-3 py-2.5 bg-purple-50/60 border border-purple-200 text-purple-950 font-normal rounded-xl text-xs outline-none"
+                  >
+                    {modalGroups.map((grp) => (
+                      <option key={grp} value={grp}>
+                        {grp}
+                      </option>
+                    ))}
+                    <option value="__NEW_CUSTOM_GROUP__">+ Create New Group for Account</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Custom Group Name Input if selected */}
+              {userForm.groupName === '__NEW_CUSTOM_GROUP__' && (
+                <div>
+                  <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
+                    New Group Name
                   </label>
                   <input
                     type="text"
-                    placeholder="Grade 5 Coding Class"
-                    value={userForm.groupName}
-                    onChange={(e) => setUserForm({ ...userForm, groupName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-normal text-slate-900 outline-none"
+                    placeholder="Enter new group name (e.g. Science Class 6B)"
+                    value={userForm.customGroupName}
+                    onChange={(e) => setUserForm({ ...userForm, customGroupName: e.target.value })}
+                    required
+                    className="w-full px-3.5 py-2.5 bg-purple-50 border border-purple-300 rounded-xl text-xs font-normal text-purple-950 outline-none"
                   />
                 </div>
-              </div>
+              )}
 
               <div>
                 <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
@@ -1737,7 +1850,7 @@ export default function AdminControlsPage() {
             <form onSubmit={handleSaveSubscription} className="flex flex-col gap-4">
               <div>
                 <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                  Organisation Name
+                  School / Family Name
                 </label>
                 <input
                   type="text"
