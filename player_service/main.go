@@ -116,7 +116,6 @@ func main() {
 	mux.HandleFunc("/api/v1/engine/events", h.EventHandler)
 	mux.HandleFunc("/api/v1/engine/progress", h.GetProgressHandler)
 	mux.HandleFunc("/api/v1/leaderboard", h.GetLeaderboardHandler)
-	mux.HandleFunc("/api/v1/groups", h.GetGroupsHandler)
 
 	corsMiddleware := middleware.CORS(cfg.AllowedCORS)
 	handler := corsMiddleware(mux)
