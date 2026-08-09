@@ -64,6 +64,7 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/api/v1/users/world", h.AssignWorldHandler)
+	mux.HandleFunc("/api/v1/users/batch", h.BatchSaveUsersHandler)
 
 	mux.HandleFunc("/api/v1/subscriptions", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {

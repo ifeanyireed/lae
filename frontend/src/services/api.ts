@@ -3,9 +3,13 @@ import { Organisation, PlatformUser, Subscription } from '@/app/controls/page';
 const PLAYER_SERVICE_URL = process.env.NEXT_PUBLIC_PLAYER_SERVICE_URL || 'http://localhost:8081';
 
 // ORGANISATIONS / SCHOOLS & FAMILIES
-export async function fetchOrganisations(type?: string): Promise<Organisation[]> {
+export async function fetchOrganisations(type?: string, id?: string): Promise<Organisation[]> {
   try {
-    const url = type ? `${PLAYER_SERVICE_URL}/api/v1/organisations?type=${type}` : `${PLAYER_SERVICE_URL}/api/v1/organisations`;
+    const params = new URLSearchParams();
+    if (type) params.append('type', type);
+    if (id) params.append('id', id);
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    const url = `${PLAYER_SERVICE_URL}/api/v1/organisations${queryString}`;
     const res = await fetch(url);
     const data = await res.json();
     if (data && data.success && Array.isArray(data.organisations)) {
@@ -117,6 +121,28 @@ export async function saveUser(user: Partial<PlatformUser>): Promise<PlatformUse
     }
   } catch (e) {}
   return null;
+}
+
+export async function saveBatchUsers(organisationId: string, users: Partial<PlatformUser>[]): Promise<boolean> {
+  try {
+    const formattedUsers = users.map((u) => ({
+      username: u.name,
+      access_code: u.studentCode,
+      role: 'student',
+      organisation_id: organisationId,
+      group_name: u.groupName || 'Default Group A',
+      avatar: u.avatar || '/images/character1.jpg',
+      assigned_world_id: u.assignedWorldId || 1,
+    }));
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/users/batch`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ organisation_id: organisationId, users: formattedUsers }),
+    });
+    const data = await res.json();
+    return data && data.success;
+  } catch (e) {}
+  return false;
 }
 
 export async function assignWorld(userId: string, assignedWorldId: number): Promise<boolean> {

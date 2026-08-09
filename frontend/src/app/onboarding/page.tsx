@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { saveOrganisation, saveUser } from '@/services/api';
+import { saveOrganisation, saveUser, saveBatchUsers } from '@/services/api';
 import {
   IconSchool,
   IconHeartHandshake,
@@ -17,6 +17,8 @@ import {
   IconCopy,
   IconSparkles,
   IconShieldCheck,
+  IconPlus,
+  IconTrash,
 } from '@tabler/icons-react';
 
 const AVATAR_OPTIONS = [
@@ -28,10 +30,6 @@ const AVATAR_OPTIONS = [
   '/images/character6.jpg',
   '/images/character7.jpg',
   '/images/character8.jpg',
-  '/images/cowboy_avatar.jpg',
-  '/images/pirate_avatar.jpg',
-  '/images/viking_avatar.jpg',
-  '/images/indie_character.jpg',
 ];
 
 export default function OnboardingPage() {
@@ -48,50 +46,92 @@ export default function OnboardingPage() {
     email: '',
     phone: '',
     domain: '',
+    password: '',
   });
 
   const [familyData, setFamilyData] = useState({
     parentName: '',
     email: '',
     phone: '',
+    password: '',
   });
 
-  // Step 3 Form - First Student / Child
-  const [initialAccount, setInitialAccount] = useState({
-    name: '',
-    avatar: AVATAR_OPTIONS[0],
-    studentCode: Math.floor(10000000 + Math.random() * 90000000).toString(),
-    className: 'Grade 5 Coding Class',
-    assignedWorldId: 1,
-  });
+  // Step 3 Form - Multiple Children / Students
+  const [childrenList, setChildrenList] = useState<Array<{
+    id: string;
+    name: string;
+    avatar: string;
+    studentCode: string;
+    className: string;
+    assignedWorldId: number;
+  }>>([
+    {
+      id: 'child_1',
+      name: '',
+      avatar: AVATAR_OPTIONS[0],
+      studentCode: Math.floor(10000000 + Math.random() * 90000000).toString(),
+      className: 'Grade 5 Coding Class',
+      assignedWorldId: 1,
+    },
+  ]);
 
-  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
   const generate8DigitCode = () => {
     return Math.floor(10000000 + Math.random() * 90000000).toString();
   };
 
-  const copyCode = () => {
-    navigator.clipboard.writeText(initialAccount.studentCode);
-    setCopiedCode(true);
-    setTimeout(() => setCopiedCode(false), 2000);
+  const addChild = () => {
+    const nextIdx = childrenList.length + 1;
+    setChildrenList((prev) => [
+      ...prev,
+      {
+        id: `child_${Date.now()}_${nextIdx}`,
+        name: '',
+        avatar: AVATAR_OPTIONS[(nextIdx - 1) % AVATAR_OPTIONS.length],
+        studentCode: generate8DigitCode(),
+        className: role === 'school' ? `Grade 5 Class ${nextIdx}` : 'Kids Group',
+        assignedWorldId: 1,
+      },
+    ]);
+  };
+
+  const updateChild = (id: string, fields: Partial<(typeof childrenList)[0]>) => {
+    setChildrenList((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, ...fields } : item))
+    );
+  };
+
+  const removeChild = (id: string) => {
+    if (childrenList.length <= 1) {
+      alert('At least one child / student account is required.');
+      return;
+    }
+    setChildrenList((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const copyCode = (id: string, code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedCodeId(id);
+    setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
   // Step Navigation
   const handleNext = () => {
     if (step === 2) {
-      if (role === 'school' && (!schoolData.name || !schoolData.email)) {
-        alert('Please fill in school name and educator email.');
+      if (role === 'school' && (!schoolData.name || !schoolData.email || !schoolData.password)) {
+        alert('Please fill in school name, educator email, and create a password.');
         return;
       }
-      if (role === 'family' && (!familyData.parentName || !familyData.email)) {
-        alert('Please fill in parent name and email.');
+      if (role === 'family' && (!familyData.parentName || !familyData.email || !familyData.password)) {
+        alert('Please fill in parent name, email, and create a password.');
         return;
       }
     }
     if (step === 3) {
-      if (!initialAccount.name) {
-        alert(role === 'school' ? 'Please enter student name.' : 'Please enter child name.');
+      const emptyChild = childrenList.find((c) => !c.name.trim());
+      if (emptyChild) {
+        alert(role === 'school' ? 'Please enter names for all students.' : 'Please enter names for all children.');
         return;
       }
     }
@@ -102,39 +142,48 @@ export default function OnboardingPage() {
     setStep((prev) => Math.max(prev - 1, 1));
   };
 
-  const handleCompleteOnboarding = () => {
+  const handleCompleteOnboarding = async () => {
     const orgId = `org_${Date.now().toString().slice(-4)}`;
     const name = role === 'school' ? (schoolData.name || 'New School Academy') : (familyData.parentName || 'Happy Family Account');
     const email = role === 'school' ? schoolData.email : familyData.email;
     const phone = role === 'school' ? schoolData.phone : familyData.phone;
     const domain = role === 'school' ? schoolData.domain : '';
+    const pwd = role === 'school' ? (schoolData.password || 'school123') : (familyData.password || 'parent123');
 
-    saveOrganisation({
+    await saveOrganisation({
       id: orgId,
       name: name,
       domain: domain || `${name.toLowerCase().replace(/\s+/g, '')}.com`,
       contactEmail: email || 'contact@puzzlepro.ng',
       contactPhone: phone || '+1 (555) 000-0000',
+      password: pwd,
+      type: role,
       token: `TOKEN_${name.substring(0, Math.min(4, name.length)).toUpperCase()}_9901`,
-      groups: role === 'school' ? [initialAccount.className || 'Grade 5 Coding Class'] : ['Kids Group'],
+      groups: role === 'school' ? [childrenList[0]?.className || 'Grade 5 Coding Class'] : ['Kids Group'],
     });
 
-    saveUser({
-      name: initialAccount.name || (role === 'school' ? 'First Student' : 'Child Account'),
-      avatar: initialAccount.avatar,
-      studentCode: initialAccount.studentCode,
-      role: 'student',
-      organisationId: orgId,
-      groupName: role === 'school' ? (initialAccount.className || 'Grade 5 Coding Class') : 'Kids Group',
-      assignedWorldId: initialAccount.assignedWorldId,
-    });
+    await saveBatchUsers(
+      orgId,
+      childrenList.map((c, idx) => ({
+        name: c.name || (role === 'school' ? `Student ${idx + 1}` : `Child ${idx + 1}`),
+        avatar: c.avatar,
+        studentCode: c.studentCode,
+        role: 'student',
+        organisationId: orgId,
+        groupName: role === 'school' ? (c.className || 'Grade 5 Coding Class') : 'Kids Group',
+        assignedWorldId: c.assignedWorldId,
+      }))
+    );
+
+    sessionStorage.setItem('puzzlepro_active_org_id', orgId);
+    localStorage.setItem('puzzlepro_active_org_id', orgId);
 
     if (role === 'school') {
       localStorage.setItem('puzzlepro_school_session', 'authenticated');
-      router.push('/schools');
+      router.push(`/schools?orgId=${orgId}`);
     } else {
       localStorage.setItem('puzzlepro_family_session', 'authenticated');
-      router.push('/families');
+      router.push(`/families?orgId=${orgId}`);
     }
   };
 
@@ -284,15 +333,28 @@ export default function OnboardingPage() {
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Phone Number</label>
-                  <input
-                    type="text"
-                    placeholder="+1 (555) 234-5678"
-                    value={schoolData.phone}
-                    onChange={(e) => setSchoolData({ ...schoolData, phone: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
-                  />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      placeholder="+1 (555) 234-5678"
+                      value={schoolData.phone}
+                      onChange={(e) => setSchoolData({ ...schoolData, phone: e.target.value })}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Create Educator Password</label>
+                    <input
+                      type="password"
+                      placeholder="••••••••"
+                      value={schoolData.password}
+                      onChange={(e) => setSchoolData({ ...schoolData, password: e.target.value })}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
                 </div>
               </div>
             ) : (
@@ -321,12 +383,13 @@ export default function OnboardingPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Phone Number</label>
+                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Create Parent Password</label>
                     <input
-                      type="text"
-                      placeholder="+1 (555) 987-6543"
-                      value={familyData.phone}
-                      onChange={(e) => setFamilyData({ ...familyData, phone: e.target.value })}
+                      type="password"
+                      placeholder="••••••••"
+                      value={familyData.password}
+                      onChange={(e) => setFamilyData({ ...familyData, password: e.target.value })}
+                      required
                       className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
                     />
                   </div>
@@ -339,102 +402,122 @@ export default function OnboardingPage() {
         {/* STEP 3: INITIAL ACCOUNT & WORLD SETUP */}
         {step === 3 && (
           <div className="flex flex-col gap-5 animate-fade-in-up">
-            <div>
-              <h2 className="text-xl font-medium text-slate-900 tracking-tight">
-                {role === 'school' ? 'First Student & Class Setup' : 'Child Account Setup'}
-              </h2>
-              <p className="text-xs text-slate-500 font-normal mt-1">
-                {role === 'school'
-                  ? 'Add your first student to generate an 8-digit access code and assign a Learning World.'
-                  : 'Add your child account to generate their 8-digit access code and select their starting world.'}
-              </p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-medium text-slate-900 tracking-tight">
+                  {role === 'school' ? 'Student Roster & Class Setup' : 'Children Account Setup'}
+                </h2>
+                <p className="text-xs text-slate-500 font-normal mt-1">
+                  {role === 'school'
+                    ? 'Add students, assign avatars, auto-generate 8-digit access codes, and pick starting worlds.'
+                    : 'Add one or more children, assign character avatars, generate 8-digit access codes, and choose starting worlds.'}
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={addChild}
+                className="px-3 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-normal rounded-xl text-xs border border-amber-500 shadow-xs flex items-center space-x-1.5 transition shrink-0 cursor-pointer"
+              >
+                <IconPlus className="w-4 h-4" />
+                <span>{role === 'school' ? 'Add Student' : 'Add Child'}</span>
+              </button>
             </div>
 
-            <div className="space-y-3.5">
-              <div>
-                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                  {role === 'school' ? 'Student Name' : 'Child Name'}
-                </label>
-                <input
-                  type="text"
-                  placeholder={role === 'school' ? 'e.g. Alex Johnson' : 'e.g. Leo Johnson'}
-                  value={initialAccount.name}
-                  onChange={(e) => setInitialAccount({ ...initialAccount, name: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
-                />
-              </div>
+            <div className="space-y-4 max-h-[440px] overflow-y-auto pr-1">
+              {childrenList.map((child, idx) => (
+                <div key={child.id} className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-3 relative">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-slate-700">
+                      {role === 'school' ? `Student #${idx + 1}` : `Child #${idx + 1}`}
+                    </span>
+                    {childrenList.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeChild(child.id)}
+                        className="text-red-500 hover:text-red-700 text-xs font-normal flex items-center space-x-1 cursor-pointer"
+                      >
+                        <IconTrash className="w-3.5 h-3.5" />
+                        <span>Remove</span>
+                      </button>
+                    )}
+                  </div>
 
-              {/* Character Avatar Picker */}
-              <div>
-                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1.5">
-                  Pick Character Avatar
-                </label>
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
-                  {AVATAR_OPTIONS.map((avatarPath) => (
-                    <button
-                      key={avatarPath}
-                      type="button"
-                      onClick={() => setInitialAccount({ ...initialAccount, avatar: avatarPath })}
-                      className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition ${
-                        initialAccount.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
-                      }`}
-                    >
-                      <Image src={avatarPath} alt="Avatar" fill className="object-cover" />
-                    </button>
-                  ))}
+                  <div>
+                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
+                      {role === 'school' ? 'Student Name' : 'Child Name'}
+                    </label>
+                    <input
+                      type="text"
+                      placeholder={role === 'school' ? `e.g. Student ${idx + 1}` : `e.g. Child ${idx + 1}`}
+                      value={child.name}
+                      onChange={(e) => updateChild(child.id, { name: e.target.value })}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Character Avatar Picker */}
+                  <div>
+                    <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1.5">
+                      Pick Character Avatar
+                    </label>
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                      {AVATAR_OPTIONS.map((avatarPath) => (
+                        <button
+                          key={avatarPath}
+                          type="button"
+                          onClick={() => updateChild(child.id, { avatar: avatarPath })}
+                          className={`w-9 h-9 rounded-full relative shrink-0 overflow-hidden border-2 transition ${
+                            child.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
+                          }`}
+                        >
+                          <Image src={avatarPath} alt="Avatar" fill className="object-cover" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-[10px] font-normal text-slate-500 uppercase">8-Digit Access Code</label>
+                        <button
+                          type="button"
+                          onClick={() => updateChild(child.id, { studentCode: generate8DigitCode() })}
+                          className="text-[10px] text-amber-700 font-normal flex items-center space-x-1 cursor-pointer"
+                        >
+                          <IconRefresh className="w-3 h-3" />
+                          <span>Refresh</span>
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        maxLength={8}
+                        value={child.studentCode}
+                        onChange={(e) => updateChild(child.id, { studentCode: e.target.value })}
+                        required
+                        className="w-full px-3.5 py-2 bg-amber-50 border border-amber-300 rounded-xl text-xs font-mono text-amber-950 tracking-widest outline-none"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Assigned World</label>
+                      <select
+                        value={child.assignedWorldId}
+                        onChange={(e) => updateChild(child.id, { assignedWorldId: parseInt(e.target.value) })}
+                        className="w-full px-3.5 py-2 bg-amber-50 border border-amber-300 text-amber-950 font-normal rounded-xl text-xs outline-none"
+                      >
+                        <option value={1}>World 1 (Scratch)</option>
+                        <option value={2}>World 2 (HTML)</option>
+                        <option value={3}>World 3 (CSS)</option>
+                        <option value={4}>World 4 (JS)</option>
+                        <option value={5}>World 5 (Python)</option>
+                      </select>
+                    </div>
+                  </div>
                 </div>
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-[10px] font-normal text-slate-500 uppercase">8-Digit Access Code</label>
-                  <button
-                    type="button"
-                    onClick={() => setInitialAccount({ ...initialAccount, studentCode: generate8DigitCode() })}
-                    className="text-[10px] text-amber-700 font-normal flex items-center space-x-1 cursor-pointer"
-                  >
-                    <IconRefresh className="w-3 h-3" />
-                    <span>Auto Generate</span>
-                  </button>
-                </div>
-                <input
-                  type="text"
-                  maxLength={8}
-                  value={initialAccount.studentCode}
-                  onChange={(e) => setInitialAccount({ ...initialAccount, studentCode: e.target.value })}
-                  required
-                  className="w-full px-3.5 py-2.5 bg-amber-50 border border-amber-300 rounded-xl text-xs font-mono text-amber-950 tracking-widest outline-none"
-                />
-              </div>
-
-              {role === 'school' && (
-                <div>
-                  <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Class / Group Name</label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Grade 5 Coding Class"
-                    value={initialAccount.className}
-                    onChange={(e) => setInitialAccount({ ...initialAccount, className: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
-                  />
-                </div>
-              )}
-
-              <div>
-                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Assigned Learning World</label>
-                <select
-                  value={initialAccount.assignedWorldId}
-                  onChange={(e) => setInitialAccount({ ...initialAccount, assignedWorldId: parseInt(e.target.value) })}
-                  className="w-full px-3.5 py-2.5 bg-amber-50 border border-amber-300 text-amber-950 font-normal rounded-xl text-xs outline-none"
-                >
-                  <option value={1}>World 1 (Monkey Explorers - Scratch Blocks)</option>
-                  <option value={2}>World 2 (HTML Architects - Web Structure)</option>
-                  <option value={3}>World 3 (CSS Stylists - Web Design)</option>
-                  <option value={4}>World 4 (JS Logic Wizards - Interactivity)</option>
-                  <option value={5}>World 5 (Python Masters - Algorithms)</option>
-                </select>
-              </div>
+              ))}
             </div>
           </div>
         )}
@@ -449,41 +532,65 @@ export default function OnboardingPage() {
             <div>
               <h2 className="text-2xl font-medium text-slate-900 tracking-tight">You're All Set!</h2>
               <p className="text-xs text-slate-500 font-normal mt-1 max-w-md mx-auto">
-                Your {role === 'school' ? 'school educator' : 'family parent'} profile has been configured successfully.
+                Your {role === 'school' ? 'school educator' : 'family parent'} profile and {childrenList.length} {role === 'school' ? 'student' : 'child'} account(s) have been configured.
               </p>
             </div>
 
-            {/* Access Code Card */}
-            <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl max-w-md w-full flex flex-col gap-3 text-left">
+            {/* Portal Login Credentials Box */}
+            <div className="bg-amber-50 border border-amber-300 p-4 rounded-2xl max-w-lg w-full text-left space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[10px] uppercase text-slate-500 font-normal tracking-wider">
-                  Initial Account Details
-                </span>
-                <span className="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-md font-medium">Active</span>
+                <span className="text-[10px] uppercase text-amber-800 font-medium tracking-wider">Your Portal Credentials</span>
+                <span className="bg-amber-200 text-amber-900 text-[10px] px-2 py-0.5 rounded-md font-medium">Use for Login</span>
               </div>
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-slate-200 relative overflow-hidden border border-slate-300">
-                  <Image src={initialAccount.avatar} alt="Avatar" fill className="object-cover" />
+              <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+                <div>
+                  <p className="text-[10px] text-amber-700 uppercase">Login Email</p>
+                  <p className="font-mono text-slate-900 font-medium truncate">{role === 'school' ? schoolData.email : familyData.email}</p>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-slate-900">{initialAccount.name || 'Student Account'}</h4>
-                  <p className="text-[11px] text-slate-500">{role === 'school' ? initialAccount.className : 'Child Account'}</p>
+                  <p className="text-[10px] text-amber-700 uppercase">Password</p>
+                  <p className="font-mono text-slate-900 font-medium">{role === 'school' ? schoolData.password : familyData.password}</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Access Code Cards List */}
+            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl max-w-lg w-full flex flex-col gap-3 text-left max-h-[220px] overflow-y-auto">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] uppercase text-slate-500 font-normal tracking-wider">
+                  Configured Accounts ({childrenList.length})
+                </span>
+                <span className="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-md font-medium">Ready</span>
               </div>
 
-              <div className="flex items-center justify-between bg-amber-50 border border-amber-300 p-2.5 rounded-xl mt-1">
-                <div className="flex flex-col">
-                  <span className="text-[9px] uppercase text-amber-700 font-normal">8-Digit Student Code</span>
-                  <span className="font-mono text-sm font-medium text-amber-950 tracking-widest">{initialAccount.studentCode}</span>
+              {childrenList.map((c) => (
+                <div key={c.id} className="p-3 bg-white border border-slate-200 rounded-xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-8 h-8 rounded-full bg-slate-100 relative overflow-hidden border border-slate-200">
+                        <Image src={c.avatar} alt="Avatar" fill className="object-cover" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-medium text-slate-900">{c.name || 'Child Account'}</h4>
+                        <p className="text-[10px] text-slate-500">World {c.assignedWorldId}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center space-x-2">
+                      <span className="font-mono text-xs font-medium text-amber-950 bg-amber-50 px-2 py-1 rounded-md border border-amber-200 tracking-wider">
+                        {c.studentCode}
+                      </span>
+                      <button
+                        onClick={() => copyCode(c.id, c.studentCode)}
+                        className="p-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-normal border border-slate-200"
+                        title="Copy Code"
+                      >
+                        {copiedCodeId === c.id ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <button
-                  onClick={copyCode}
-                  className="px-3 py-1.5 bg-white border border-amber-300 text-amber-900 rounded-lg text-xs font-normal flex items-center space-x-1 shadow-xs hover:bg-amber-100 transition"
-                >
-                  {copiedCode ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
-                  <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
-                </button>
-              </div>
+              ))}
             </div>
 
             <button

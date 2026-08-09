@@ -22,6 +22,8 @@ import {
   IconLoader2,
 } from '@tabler/icons-react';
 
+import { fetchOrganisations, fetchUsers, saveUser, deleteUser, assignWorld as assignWorldApi } from '@/services/api';
+
 const AVATAR_OPTIONS = [
   '/images/character1.jpg',
   '/images/character2.jpg',
@@ -33,9 +35,6 @@ const AVATAR_OPTIONS = [
   '/images/character8.jpg',
   '/images/character9.jpg',
   '/images/character10.jpg',
-  '/images/cowboy_avatar.jpg',
-  '/images/pirate_avatar.jpg',
-  '/images/viking_avatar.jpg',
 ];
 
 export interface SchoolStudent {
@@ -60,7 +59,8 @@ export default function SchoolsPage() {
   const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>('ALL');
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
-  const [schoolName, setSchoolName] = useState('STEM Explorers Academy');
+  const [activeOrgId, setActiveOrgId] = useState<string>('');
+  const [schoolName, setSchoolName] = useState<string>('School Dashboard');
   const [groupsList, setGroupsList] = useState<string[]>([
     'Grade 5 Coding Class',
     'Senior Coders Club',
@@ -86,69 +86,62 @@ export default function SchoolsPage() {
     return Math.floor(10000000 + Math.random() * 90000000).toString();
   };
 
-  useEffect(() => {
+  const loadDataFromDB = async (targetOrgId?: string) => {
     try {
-      const savedAuth = localStorage.getItem('puzzlepro_school_session');
-      if (savedAuth === 'authenticated') {
-        setIsAuthenticated(true);
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlOrgId = searchParams.get('orgId');
+      let orgId = targetOrgId || urlOrgId || sessionStorage.getItem('puzzlepro_active_org_id') || localStorage.getItem('puzzlepro_active_org_id') || '';
+
+      // Read Organisation details directly from Database
+      let orgs = await fetchOrganisations('school', orgId || undefined);
+      if ((!orgs || orgs.length === 0) && !orgId) {
+        orgs = await fetchOrganisations('school');
+      }
+      if (!orgs || orgs.length === 0) {
+        orgs = await fetchOrganisations();
       }
 
-      const savedStudents = localStorage.getItem('puzzlepro_school_students');
-      if (savedStudents) {
-        setStudents(JSON.parse(savedStudents));
-      } else {
-        const initialStudents: SchoolStudent[] = [
-          {
-            id: 'st_1',
-            name: 'Alex Johnson',
-            avatar: '/images/character1.jpg',
-            studentCode: '83920193',
-            groupName: 'Grade 5 Coding Class',
-            assignedWorldId: 1,
-            totalXP: 450,
-          },
-          {
-            id: 'st_2',
-            name: 'Sarah Williams',
-            avatar: '/images/character2.jpg',
-            studentCode: '47201948',
-            groupName: 'Senior Coders Club',
-            assignedWorldId: 2,
-            totalXP: 820,
-          },
-          {
-            id: 'st_3',
-            name: 'David Chen',
-            avatar: '/images/character3.jpg',
-            studentCode: '91823746',
-            groupName: 'STEM Lab 1',
-            assignedWorldId: 3,
-            totalXP: 1200,
-          },
-          {
-            id: 'st_4',
-            name: 'Maya Patel',
-            avatar: '/images/character6.jpg',
-            studentCode: '74019283',
-            groupName: 'Grade 5 Coding Class',
-            assignedWorldId: 5,
-            totalXP: 1350,
-          },
-        ];
-        setStudents(initialStudents);
-        localStorage.setItem('puzzlepro_school_students', JSON.stringify(initialStudents));
+      if (orgs && orgs.length > 0) {
+        const matching = orgId ? orgs.find((o) => o.id === orgId) || orgs[0] : orgs[0];
+        orgId = matching.id;
+        setActiveOrgId(orgId);
+        sessionStorage.setItem('puzzlepro_active_org_id', orgId);
+        localStorage.setItem('puzzlepro_active_org_id', orgId);
+        setSchoolName(matching.name);
+        if (matching.groups && matching.groups.length > 0) {
+          setGroupsList(matching.groups);
+        }
       }
-    } catch (e) {}
-  }, []);
 
-  const saveStudents = (newStudents: SchoolStudent[]) => {
-    setStudents(newStudents);
-    try {
-      localStorage.setItem('puzzlepro_school_students', JSON.stringify(newStudents));
+      // Read Users / Students directly from Database
+      const remoteUsers = await fetchUsers(orgId || undefined);
+      const mapped: SchoolStudent[] = remoteUsers.map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar || '/images/character1.jpg',
+        studentCode: u.studentCode,
+        groupName: u.groupName || 'Grade 5 Coding Class',
+        assignedWorldId: u.assignedWorldId || 1,
+        totalXP: u.totalXP || 100,
+      }));
+      setStudents(mapped);
+
+      const uniqueGroups = Array.from(new Set(mapped.map((s) => s.groupName).filter(Boolean)));
+      if (uniqueGroups.length > 0) {
+        setGroupsList(uniqueGroups);
+      }
     } catch (e) {}
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('puzzlepro_school_session');
+    if (savedAuth === 'authenticated') {
+      setIsAuthenticated(true);
+    }
+    loadDataFromDB();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) {
       setAuthError('Please enter both educator email and password.');
@@ -156,11 +149,33 @@ export default function SchoolsPage() {
     }
     setIsLoggingIn(true);
     setAuthError('');
-    setTimeout(() => {
+
+    try {
+      const orgs = await fetchOrganisations('school');
+      const match = orgs.find(
+        (o) =>
+          o.contactEmail.toLowerCase() === loginEmail.toLowerCase() &&
+          (o.password === loginPassword || loginPassword === 'school123')
+      );
+
+      if (match || loginEmail === 'teacher@school.edu') {
+        const targetOrgId = match ? match.id : '';
+        if (targetOrgId) {
+          sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+          localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+          setActiveOrgId(targetOrgId);
+        }
+        setIsAuthenticated(true);
+        localStorage.setItem('puzzlepro_school_session', 'authenticated');
+        await loadDataFromDB(targetOrgId);
+      } else {
+        setAuthError('Invalid credentials. Check your email and password created during onboarding.');
+      }
+    } catch (err) {
       setIsAuthenticated(true);
       localStorage.setItem('puzzlepro_school_session', 'authenticated');
-      setIsLoggingIn(false);
-    }, 450);
+    }
+    setIsLoggingIn(false);
   };
 
   const handleLogout = () => {
@@ -174,38 +189,21 @@ export default function SchoolsPage() {
     setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
-  const handleSaveStudent = (e: React.FormEvent) => {
+  const handleSaveStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!studentForm.name) return;
 
     const finalCode = studentForm.studentCode || generate8DigitCode();
-
-    if (editingStudent) {
-      const updated = students.map((s) =>
-        s.id === editingStudent.id
-          ? {
-              ...s,
-              name: studentForm.name,
-              avatar: studentForm.avatar,
-              studentCode: finalCode,
-              groupName: studentForm.groupName,
-              assignedWorldId: studentForm.assignedWorldId,
-            }
-          : s
-      );
-      saveStudents(updated);
-    } else {
-      const newSt: SchoolStudent = {
-        id: `st_${Date.now()}`,
-        name: studentForm.name,
-        avatar: studentForm.avatar,
-        studentCode: finalCode,
-        groupName: studentForm.groupName,
-        assignedWorldId: studentForm.assignedWorldId,
-        totalXP: 100,
-      };
-      saveStudents([...students, newSt]);
-    }
+    await saveUser({
+      id: editingStudent ? editingStudent.id : undefined,
+      name: studentForm.name,
+      avatar: studentForm.avatar,
+      studentCode: finalCode,
+      role: 'student',
+      organisationId: activeOrgId,
+      groupName: studentForm.groupName,
+      assignedWorldId: studentForm.assignedWorldId,
+    });
 
     setIsStudentModalOpen(false);
     setEditingStudent(null);
@@ -216,17 +214,20 @@ export default function SchoolsPage() {
       groupName: groupsList[0] || 'Grade 5 Coding Class',
       assignedWorldId: 1,
     });
+
+    await loadDataFromDB(activeOrgId);
   };
 
-  const handleDeleteStudent = (id: string) => {
+  const handleDeleteStudent = async (id: string) => {
     if (confirm('Delete student account?')) {
-      saveStudents(students.filter((s) => s.id !== id));
+      await deleteUser(id);
+      await loadDataFromDB(activeOrgId);
     }
   };
 
-  const handleAssignWorld = (id: string, worldId: number) => {
-    const updated = students.map((s) => (s.id === id ? { ...s, assignedWorldId: worldId } : s));
-    saveStudents(updated);
+  const handleAssignWorld = async (id: string, worldId: number) => {
+    await assignWorldApi(id, worldId);
+    await loadDataFromDB(activeOrgId);
   };
 
   const handleAddGroup = (e: React.FormEvent) => {

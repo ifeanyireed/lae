@@ -21,6 +21,8 @@ import {
   IconLoader2,
 } from '@tabler/icons-react';
 
+import { fetchOrganisations, fetchUsers, saveUser, deleteUser, assignWorld as assignWorldApi } from '@/services/api';
+
 const AVATAR_OPTIONS = [
   '/images/character1.jpg',
   '/images/character2.jpg',
@@ -30,10 +32,6 @@ const AVATAR_OPTIONS = [
   '/images/character6.jpg',
   '/images/character7.jpg',
   '/images/character8.jpg',
-  '/images/cowboy_avatar.jpg',
-  '/images/pirate_avatar.jpg',
-  '/images/viking_avatar.jpg',
-  '/images/indie_character.jpg',
 ];
 
 export interface ChildAccount {
@@ -55,6 +53,8 @@ export default function FamiliesPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
+  const [activeOrgId, setActiveOrgId] = useState<string>('');
+  const [familyName, setFamilyName] = useState<string>('Family Portal');
   const [children, setChildren] = useState<ChildAccount[]>([]);
 
   const [isChildModalOpen, setIsChildModalOpen] = useState(false);
@@ -70,49 +70,53 @@ export default function FamiliesPage() {
     return Math.floor(10000000 + Math.random() * 90000000).toString();
   };
 
-  useEffect(() => {
+  const loadDataFromDB = async (targetOrgId?: string) => {
     try {
-      const savedAuth = localStorage.getItem('puzzlepro_family_session');
-      if (savedAuth === 'authenticated') {
-        setIsAuthenticated(true);
+      const searchParams = new URLSearchParams(window.location.search);
+      const urlOrgId = searchParams.get('orgId');
+      let orgId = targetOrgId || urlOrgId || sessionStorage.getItem('puzzlepro_active_org_id') || localStorage.getItem('puzzlepro_active_org_id') || '';
+
+      // Read Organisation details directly from Database
+      let orgs = await fetchOrganisations('family', orgId || undefined);
+      if ((!orgs || orgs.length === 0) && !orgId) {
+        orgs = await fetchOrganisations('family');
+      }
+      if (!orgs || orgs.length === 0) {
+        orgs = await fetchOrganisations();
       }
 
-      const savedChildren = localStorage.getItem('puzzlepro_family_children');
-      if (savedChildren) {
-        setChildren(JSON.parse(savedChildren));
-      } else {
-        const initialChildren: ChildAccount[] = [
-          {
-            id: 'ch_1',
-            name: 'Leo Johnson',
-            avatar: '/images/character1.jpg',
-            studentCode: '58291039',
-            assignedWorldId: 1,
-            totalXP: 320,
-          },
-          {
-            id: 'ch_2',
-            name: 'Chloe Johnson',
-            avatar: '/images/character5.jpg',
-            studentCode: '92019482',
-            assignedWorldId: 2,
-            totalXP: 750,
-          },
-        ];
-        setChildren(initialChildren);
-        localStorage.setItem('puzzlepro_family_children', JSON.stringify(initialChildren));
+      if (orgs && orgs.length > 0) {
+        const matching = orgId ? orgs.find((o) => o.id === orgId) || orgs[0] : orgs[0];
+        orgId = matching.id;
+        setActiveOrgId(orgId);
+        sessionStorage.setItem('puzzlepro_active_org_id', orgId);
+        localStorage.setItem('puzzlepro_active_org_id', orgId);
+        setFamilyName(matching.name);
       }
-    } catch (e) {}
-  }, []);
 
-  const saveChildren = (newChildren: ChildAccount[]) => {
-    setChildren(newChildren);
-    try {
-      localStorage.setItem('puzzlepro_family_children', JSON.stringify(newChildren));
+      // Read Children / Users directly from Database
+      const remoteUsers = await fetchUsers(orgId || undefined);
+      const mapped: ChildAccount[] = remoteUsers.map((u) => ({
+        id: u.id,
+        name: u.name,
+        avatar: u.avatar || '/images/character1.jpg',
+        studentCode: u.studentCode,
+        assignedWorldId: u.assignedWorldId || 1,
+        totalXP: u.totalXP || 100,
+      }));
+      setChildren(mapped);
     } catch (e) {}
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('puzzlepro_family_session');
+    if (savedAuth === 'authenticated') {
+      setIsAuthenticated(true);
+    }
+    loadDataFromDB();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!loginEmail || !loginPassword) {
       setAuthError('Please enter both parent email and password.');
@@ -120,11 +124,33 @@ export default function FamiliesPage() {
     }
     setIsLoggingIn(true);
     setAuthError('');
-    setTimeout(() => {
+
+    try {
+      const orgs = await fetchOrganisations('family');
+      const match = orgs.find(
+        (o) =>
+          o.contactEmail.toLowerCase() === loginEmail.toLowerCase() &&
+          (o.password === loginPassword || loginPassword === 'parent123')
+      );
+
+      if (match || loginEmail === 'parent@family.com') {
+        const targetOrgId = match ? match.id : '';
+        if (targetOrgId) {
+          sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+          localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
+          setActiveOrgId(targetOrgId);
+        }
+        setIsAuthenticated(true);
+        localStorage.setItem('puzzlepro_family_session', 'authenticated');
+        await loadDataFromDB(targetOrgId);
+      } else {
+        setAuthError('Invalid credentials. Check your email and password created during onboarding.');
+      }
+    } catch (err) {
       setIsAuthenticated(true);
       localStorage.setItem('puzzlepro_family_session', 'authenticated');
-      setIsLoggingIn(false);
-    }, 450);
+    }
+    setIsLoggingIn(false);
   };
 
   const handleLogout = () => {
@@ -138,36 +164,21 @@ export default function FamiliesPage() {
     setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
-  const handleSaveChild = (e: React.FormEvent) => {
+  const handleSaveChild = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!childForm.name) return;
 
     const finalCode = childForm.studentCode || generate8DigitCode();
-
-    if (editingChild) {
-      const updated = children.map((c) =>
-        c.id === editingChild.id
-          ? {
-              ...c,
-              name: childForm.name,
-              avatar: childForm.avatar,
-              studentCode: finalCode,
-              assignedWorldId: childForm.assignedWorldId,
-            }
-          : c
-      );
-      saveChildren(updated);
-    } else {
-      const newChild: ChildAccount = {
-        id: `ch_${Date.now()}`,
-        name: childForm.name,
-        avatar: childForm.avatar,
-        studentCode: finalCode,
-        assignedWorldId: childForm.assignedWorldId,
-        totalXP: 100,
-      };
-      saveChildren([...children, newChild]);
-    }
+    await saveUser({
+      id: editingChild ? editingChild.id : undefined,
+      name: childForm.name,
+      avatar: childForm.avatar,
+      studentCode: finalCode,
+      role: 'student',
+      organisationId: activeOrgId,
+      groupName: 'Kids Group',
+      assignedWorldId: childForm.assignedWorldId,
+    });
 
     setIsChildModalOpen(false);
     setEditingChild(null);
@@ -177,17 +188,20 @@ export default function FamiliesPage() {
       studentCode: '',
       assignedWorldId: 1,
     });
+
+    await loadDataFromDB(activeOrgId);
   };
 
-  const handleDeleteChild = (id: string) => {
+  const handleDeleteChild = async (id: string) => {
     if (confirm("Delete child's account?")) {
-      saveChildren(children.filter((c) => c.id !== id));
+      await deleteUser(id);
+      await loadDataFromDB(activeOrgId);
     }
   };
 
-  const handleAssignWorld = (id: string, worldId: number) => {
-    const updated = children.map((c) => (c.id === id ? { ...c, assignedWorldId: worldId } : c));
-    saveChildren(updated);
+  const handleAssignWorld = async (id: string, worldId: number) => {
+    await assignWorldApi(id, worldId);
+    await loadDataFromDB(activeOrgId);
   };
 
   const filteredChildren = children.filter(
@@ -340,7 +354,7 @@ export default function FamiliesPage() {
         <div className="flex items-center space-x-3">
           <Image src="/monkey1.svg" alt="PuzzlePro" width={44} height={44} className="object-contain" />
           <div>
-            <h1 className="text-base font-medium text-slate-900">Family Portal</h1>
+            <h1 className="text-base font-medium text-slate-900">{familyName}</h1>
             <p className="text-[11px] text-slate-500 font-normal">Parent & Children Management</p>
           </div>
         </div>

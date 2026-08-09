@@ -68,10 +68,6 @@ const AVATAR_OPTIONS = [
   '/images/character18.jpg',
   '/images/character19.jpg',
   '/images/character20.jpg',
-  '/images/cowboy_avatar.jpg',
-  '/images/pirate_avatar.jpg',
-  '/images/viking_avatar.jpg',
-  '/images/indie_character.jpg',
 ];
 
 // Types for Admin Platform Modules
@@ -81,6 +77,8 @@ export interface Organisation {
   domain: string;
   contactEmail: string;
   contactPhone: string;
+  password?: string;
+  type?: string;
   token: string;
   googleAdsEnabled: boolean;
   activeStudents: number;
@@ -193,267 +191,26 @@ export default function AdminControlsPage() {
   };
 
   // Check auth session on load & seed defaults
-  useEffect(() => {
+  const loadControlsDBData = async () => {
     try {
-      const savedAuth = localStorage.getItem('puzzlepro_admin_session');
-      if (savedAuth === 'authenticated') {
-        setIsAuthenticated(true);
-      }
+      const [apiOrgs, apiUsers, apiSubs] = await Promise.all([
+        apiFetchOrgs(),
+        apiFetchUsers(),
+        apiFetchSubs(),
+      ]);
 
-      // Fetch Live Data from player_service microservice API (with LocalStorage fallback)
-      apiFetchOrgs().then((apiOrgs) => {
-        if (apiOrgs && apiOrgs.length > 0) {
-          setOrganisations(apiOrgs);
-          localStorage.setItem('puzzlepro_admin_orgs', JSON.stringify(apiOrgs));
-        }
-      });
-
-      apiFetchUsers().then((apiUsers) => {
-        if (apiUsers && apiUsers.length > 0) {
-          setUsersList(apiUsers);
-          localStorage.setItem('puzzlepro_admin_users', JSON.stringify(apiUsers));
-        }
-      });
-
-      apiFetchSubs().then((apiSubs) => {
-        if (apiSubs && apiSubs.length > 0) {
-          setSubscriptionsList(apiSubs);
-          localStorage.setItem('puzzlepro_admin_subs', JSON.stringify(apiSubs));
-        }
-      });
-
-      // Seed Schools & Families with Tied Groups
-      const savedOrgs = localStorage.getItem('puzzlepro_admin_orgs');
-      if (savedOrgs) {
-        setOrganisations(JSON.parse(savedOrgs));
-      } else {
-        const initialOrgs: Organisation[] = [
-          {
-            id: 'org_001',
-            name: 'STEM Explorers Academy',
-            domain: 'stemexplorers.edu',
-            contactEmail: 'admin@stemexplorers.edu',
-            contactPhone: '+1 (555) 234-5678',
-            token: 'TOKEN_STEM_9932A',
-            googleAdsEnabled: false,
-            activeStudents: 140,
-            groups: ['Grade 5 Coding Class', 'Senior Coders Club', 'STEM Lab 1'],
-            createdAt: '2026-01-15',
-          },
-          {
-            id: 'org_002',
-            name: 'Metro City Unified Schools',
-            domain: 'metrocityschools.org',
-            contactEmail: 'tech@metrocityschools.org',
-            contactPhone: '+1 (555) 876-5432',
-            token: 'TOKEN_METRO_8821B',
-            googleAdsEnabled: true,
-            activeStudents: 480,
-            groups: ['Robotics Group A', 'Class 4B', 'Middle School Tech'],
-            createdAt: '2026-02-01',
-          },
-          {
-            id: 'org_003',
-            name: 'Jungle Coders Kids Club',
-            domain: 'junglecoders.com',
-            contactEmail: 'hello@junglecoders.com',
-            contactPhone: '+234 803 123 4567',
-            token: 'TOKEN_JUNGLE_7714C',
-            googleAdsEnabled: true,
-            activeStudents: 65,
-            groups: ['Junior Explorers', 'Jungle Adventurers'],
-            createdAt: '2026-03-10',
-          },
-        ];
-        setOrganisations(initialOrgs);
-        localStorage.setItem('puzzlepro_admin_orgs', JSON.stringify(initialOrgs));
-      }
-
-      // Seed Users with character avatars and 8-digit codes
-      const savedUsers = localStorage.getItem('puzzlepro_admin_users');
-      if (savedUsers) {
-        setUsersList(JSON.parse(savedUsers));
-      } else {
-        const initialUsers: PlatformUser[] = [
-          {
-            id: 'usr_101',
-            name: 'Alex Johnson',
-            avatar: '/images/character1.jpg',
-            studentCode: '83920193',
-            role: 'student',
-            organisationId: 'org_001',
-            organisationName: 'STEM Explorers Academy',
-            groupName: 'Grade 5 Coding Class',
-            assignedWorldId: 1,
-            totalXP: 450,
-            status: 'active',
-          },
-          {
-            id: 'usr_102',
-            name: 'Sarah Williams',
-            avatar: '/images/character2.jpg',
-            studentCode: '47201948',
-            role: 'student',
-            organisationId: 'org_002',
-            organisationName: 'Metro City Unified Schools',
-            groupName: 'Robotics Group A',
-            assignedWorldId: 2,
-            totalXP: 820,
-            status: 'active',
-          },
-          {
-            id: 'usr_103',
-            name: 'David Chen',
-            avatar: '/images/character3.jpg',
-            studentCode: '91823746',
-            role: 'student',
-            organisationId: 'org_003',
-            organisationName: 'Jungle Coders Kids Club',
-            groupName: 'Junior Explorers',
-            assignedWorldId: 3,
-            totalXP: 1200,
-            status: 'active',
-          },
-          {
-            id: 'usr_104',
-            name: 'Emily Davis',
-            avatar: '/images/character4.jpg',
-            studentCode: '58392014',
-            role: 'teacher',
-            organisationId: 'org_001',
-            organisationName: 'STEM Explorers Academy',
-            groupName: 'Grade 5 Coding Class',
-            assignedWorldId: 1,
-            totalXP: 2500,
-            status: 'active',
-          },
-          {
-            id: 'usr_105',
-            name: 'Lucas Martinez',
-            avatar: '/images/character5.jpg',
-            studentCode: '62918304',
-            role: 'student',
-            organisationId: 'org_002',
-            organisationName: 'Metro City Unified Schools',
-            groupName: 'Robotics Group A',
-            assignedWorldId: 4,
-            totalXP: 910,
-            status: 'active',
-          },
-          {
-            id: 'usr_106',
-            name: 'Maya Patel',
-            avatar: '/images/character6.jpg',
-            studentCode: '74019283',
-            role: 'student',
-            organisationId: 'org_001',
-            organisationName: 'STEM Explorers Academy',
-            groupName: 'Senior Coders Club',
-            assignedWorldId: 5,
-            totalXP: 1350,
-            status: 'active',
-          },
-          {
-            id: 'usr_107',
-            name: 'Ethan Brown',
-            avatar: '/images/character7.jpg',
-            studentCode: '31092847',
-            role: 'student',
-            organisationId: 'org_003',
-            organisationName: 'Jungle Coders Kids Club',
-            groupName: 'Jungle Adventurers',
-            assignedWorldId: 2,
-            totalXP: 670,
-            status: 'active',
-          },
-          {
-            id: 'usr_108',
-            name: 'Sophia Taylor',
-            avatar: '/images/character8.jpg',
-            studentCode: '59201938',
-            role: 'student',
-            organisationId: 'org_002',
-            organisationName: 'Metro City Unified Schools',
-            groupName: 'Class 4B',
-            assignedWorldId: 3,
-            totalXP: 1100,
-            status: 'active',
-          },
-          {
-            id: 'usr_109',
-            name: 'Liam Wilson (Cowboy)',
-            avatar: '/images/cowboy_avatar.jpg',
-            studentCode: '82019374',
-            role: 'student',
-            organisationId: 'org_001',
-            organisationName: 'STEM Explorers Academy',
-            groupName: 'STEM Lab 1',
-            assignedWorldId: 1,
-            totalXP: 880,
-            status: 'active',
-          },
-          {
-            id: 'usr_110',
-            name: 'Olivia Thomas (Pirate)',
-            avatar: '/images/pirate_avatar.jpg',
-            studentCode: '19384729',
-            role: 'student',
-            organisationId: 'org_003',
-            organisationName: 'Jungle Coders Kids Club',
-            groupName: 'Junior Explorers',
-            assignedWorldId: 4,
-            totalXP: 1450,
-            status: 'active',
-          },
-        ];
-        setUsersList(initialUsers);
-        localStorage.setItem('puzzlepro_admin_users', JSON.stringify(initialUsers));
-      }
-
-      // Seed Subscriptions
-      const savedSubs = localStorage.getItem('puzzlepro_admin_subs');
-      if (savedSubs) {
-        setSubscriptionsList(JSON.parse(savedSubs));
-      } else {
-        const initialSubs: Subscription[] = [
-          {
-            id: 'sub_301',
-            organisationId: 'org_001',
-            organisationName: 'STEM Explorers Academy',
-            userEmail: 'admin@stemexplorers.edu',
-            planName: 'School Enterprise',
-            status: 'active',
-            seats: 150,
-            price: '$299/mo',
-            renewalDate: '2027-01-15',
-          },
-          {
-            id: 'sub_302',
-            organisationId: 'org_002',
-            organisationName: 'Metro City Unified Schools',
-            userEmail: 'tech@metrocityschools.org',
-            planName: 'School Enterprise',
-            status: 'active',
-            seats: 500,
-            price: '$799/mo',
-            renewalDate: '2027-02-01',
-          },
-          {
-            id: 'sub_303',
-            organisationId: 'org_003',
-            organisationName: 'Jungle Coders Kids Club',
-            userEmail: 'hello@junglecoders.com',
-            planName: 'Pro Explorer',
-            status: 'active',
-            seats: 75,
-            price: '$149/mo',
-            renewalDate: '2026-09-10',
-          },
-        ];
-        setSubscriptionsList(initialSubs);
-        localStorage.setItem('puzzlepro_admin_subs', JSON.stringify(initialSubs));
-      }
+      setOrganisations(apiOrgs || []);
+      setUsersList(apiUsers || []);
+      setSubscriptionsList(apiSubs || []);
     } catch (e) {}
+  };
+
+  useEffect(() => {
+    const savedAuth = localStorage.getItem('puzzlepro_admin_session');
+    if (savedAuth === 'authenticated') {
+      setIsAuthenticated(true);
+    }
+    loadControlsDBData();
   }, []);
 
   const saveOrgs = (newOrgs: Organisation[]) => {
@@ -518,22 +275,16 @@ export default function AdminControlsPage() {
   };
 
   // Toggle Google Ads per Org
-  const toggleGoogleAds = (orgId: string) => {
+  const toggleGoogleAds = async (orgId: string) => {
     const org = organisations.find((o) => o.id === orgId);
     if (org) {
-      apiToggleAds(orgId, !org.googleAdsEnabled);
+      await apiToggleAds(orgId, !org.googleAdsEnabled);
+      await loadControlsDBData();
     }
-    const updated = organisations.map((org) => {
-      if (org.id === orgId) {
-        return { ...org, googleAdsEnabled: !org.googleAdsEnabled };
-      }
-      return org;
-    });
-    saveOrgs(updated);
   };
 
   // Create/Update Org with Tied Groups
-  const handleSaveOrg = (e: React.FormEvent) => {
+  const handleSaveOrg = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!orgForm.name) return;
 
@@ -542,61 +293,35 @@ export default function AdminControlsPage() {
       .map((g) => g.trim())
       .filter((g) => g.length > 0);
 
-    let targetOrg: Organisation;
-    if (editingOrg) {
-      targetOrg = {
-        ...editingOrg,
-        name: orgForm.name,
-        domain: orgForm.domain,
-        contactEmail: orgForm.contactEmail,
-        contactPhone: orgForm.contactPhone,
-        googleAdsEnabled: orgForm.googleAdsEnabled,
-        groups: parsedGroups.length > 0 ? parsedGroups : editingOrg.groups,
-      };
-      const updated = organisations.map((org) => (org.id === editingOrg.id ? targetOrg : org));
-      saveOrgs(updated);
-    } else {
-      const tokenRandom = Math.random().toString(36).substring(2, 8).toUpperCase();
-      targetOrg = {
-        id: `org_${Date.now().toString().slice(-4)}`,
-        name: orgForm.name,
-        domain: orgForm.domain || `${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
-        contactEmail: orgForm.contactEmail || `admin@${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
-        contactPhone: orgForm.contactPhone || '+1 (555) 000-0000',
-        token: `TOKEN_${orgForm.name.substring(0, 4).toUpperCase()}_${tokenRandom}`,
-        googleAdsEnabled: orgForm.googleAdsEnabled,
-        activeStudents: 0,
-        groups: parsedGroups.length > 0 ? parsedGroups : ['Default Group A'],
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      saveOrgs([...organisations, targetOrg]);
-    }
+    const tokenRandom = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const orgId = editingOrg ? editingOrg.id : `org_${Date.now().toString().slice(-4)}`;
 
-    apiSaveOrg({
-      id: targetOrg.id,
-      name: targetOrg.name,
-      domain: targetOrg.domain,
-      contactEmail: targetOrg.contactEmail,
-      contactPhone: targetOrg.contactPhone,
-      token: targetOrg.token,
-      googleAdsEnabled: targetOrg.googleAdsEnabled,
-      groups: targetOrg.groups,
+    await apiSaveOrg({
+      id: orgId,
+      name: orgForm.name,
+      domain: orgForm.domain || `${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
+      contactEmail: orgForm.contactEmail || `admin@${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
+      contactPhone: orgForm.contactPhone || '+1 (555) 000-0000',
+      token: editingOrg ? editingOrg.token : `TOKEN_${orgForm.name.substring(0, 4).toUpperCase()}_${tokenRandom}`,
+      googleAdsEnabled: orgForm.googleAdsEnabled,
+      groups: parsedGroups,
     });
 
     setIsOrgModalOpen(false);
     setEditingOrg(null);
     setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true, groupsText: '' });
+    await loadControlsDBData();
   };
 
-  const handleDeleteOrg = (id: string) => {
+  const handleDeleteOrg = async (id: string) => {
     if (confirm('Are you sure you want to delete this school / family?')) {
-      apiDeleteOrg(id);
-      saveOrgs(organisations.filter((o) => o.id !== id));
+      await apiDeleteOrg(id);
+      await loadControlsDBData();
     }
   };
 
   // Create/Update User with School/Family-Tied Group
-  const handleSaveUser = (e: React.FormEvent) => {
+  const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userForm.name) return;
 
@@ -604,63 +329,35 @@ export default function AdminControlsPage() {
     const finalGroup = userForm.groupName === '__NEW_CUSTOM_GROUP__' ? userForm.customGroupName : userForm.groupName;
     const finalStudentCode = userForm.studentCode || generate8DigitCode();
 
-    // Ensure the new group is attached to the School/Family's groups array
-    if (targetOrg && finalGroup && !targetOrg.groups.includes(finalGroup)) {
-      const updatedOrgs = organisations.map((o) => (o.id === targetOrg.id ? { ...o, groups: [...o.groups, finalGroup] } : o));
-      saveOrgs(updatedOrgs);
-    }
-
-    let targetUser: PlatformUser;
-    if (editingUser) {
-      targetUser = {
-        ...editingUser,
-        name: userForm.name,
-        avatar: userForm.avatar,
-        studentCode: finalStudentCode,
-        role: userForm.role,
-        organisationId: targetOrg.id,
-        organisationName: targetOrg.name,
-        groupName: finalGroup || 'Default Group A',
-        assignedWorldId: userForm.assignedWorldId,
-      };
-      const updated = usersList.map((u) => (u.id === editingUser.id ? targetUser : u));
-      saveUsers(updated);
-    } else {
-      targetUser = {
-        id: `usr_${Date.now().toString().slice(-4)}`,
-        name: userForm.name,
-        avatar: userForm.avatar || AVATAR_OPTIONS[0],
-        studentCode: finalStudentCode,
-        role: userForm.role,
-        organisationId: targetOrg.id,
-        organisationName: targetOrg.name,
-        groupName: finalGroup || 'Default Group A',
-        assignedWorldId: userForm.assignedWorldId || 1,
-        totalXP: 100,
-        status: 'active',
-      };
-      saveUsers([...usersList, targetUser]);
-    }
-
-    apiSaveUser(targetUser);
+    await apiSaveUser({
+      id: editingUser ? editingUser.id : undefined,
+      name: userForm.name,
+      avatar: userForm.avatar || AVATAR_OPTIONS[0],
+      studentCode: finalStudentCode,
+      role: userForm.role,
+      organisationId: targetOrg ? targetOrg.id : '',
+      organisationName: targetOrg ? targetOrg.name : '',
+      groupName: finalGroup || 'Default Group A',
+      assignedWorldId: userForm.assignedWorldId || 1,
+    });
 
     setIsUserModalOpen(false);
     setEditingUser(null);
     setUserForm({ name: '', avatar: AVATAR_OPTIONS[0], studentCode: '', role: 'student', organisationId: '', groupName: '', customGroupName: '', assignedWorldId: 1 });
+    await loadControlsDBData();
   };
 
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = async (id: string) => {
     if (confirm('Delete this student account?')) {
-      apiDeleteUser(id);
-      saveUsers(usersList.filter((u) => u.id !== id));
+      await apiDeleteUser(id);
+      await loadControlsDBData();
     }
   };
 
   // Change Assigned World
-  const handleAssignWorld = (userId: string, newWorldId: number) => {
-    apiAssignWorld(userId, newWorldId);
-    const updated = usersList.map((u) => (u.id === userId ? { ...u, assignedWorldId: newWorldId } : u));
-    saveUsers(updated);
+  const handleAssignWorld = async (userId: string, newWorldId: number) => {
+    await apiAssignWorld(userId, newWorldId);
+    await loadControlsDBData();
   };
 
   // Create Subscription
@@ -675,11 +372,11 @@ export default function AdminControlsPage() {
 
   const [isSubModalOpen, setIsSubModalOpen] = useState(false);
 
-  const handleSaveSubscription = (e: React.FormEvent) => {
+  const handleSaveSubscription = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!subForm.organisationName || !subForm.userEmail) return;
 
-    const newSub: Subscription = {
+    await apiSaveSub({
       id: `sub_${Date.now().toString().slice(-4)}`,
       organisationName: subForm.organisationName,
       userEmail: subForm.userEmail,
@@ -688,9 +385,9 @@ export default function AdminControlsPage() {
       seats: subForm.seats,
       price: subForm.price,
       renewalDate: subForm.renewalDate,
-    };
-    saveSubs([...subscriptionsList, newSub]);
+    });
     setIsSubModalOpen(false);
+    await loadControlsDBData();
   };
 
   // Dynamically calculate groups tied to selected School/Family for filtering

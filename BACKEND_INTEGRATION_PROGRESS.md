@@ -26,22 +26,25 @@
 ### Phase 2: Go Microservice REST API Handlers (`player_service`)
 - [x] Implement `OrganisationsHandler` (GET, POST, PUT, DELETE, Google Ads toggle) in `player_service/internal/handlers/handlers.go`
 - [x] Implement `UsersAdminHandler` (GET, POST, PUT, DELETE, World assignment, code regeneration) in `handlers.go`
+- [x] Implement `BatchSaveUsersHandler` (POST `/api/v1/users/batch`) for bulk user/child onboarding in `handlers.go`
 - [x] Implement `SubscriptionsHandler` (GET, POST) in `handlers.go`
 - [x] Register routes in `player_service/main.go` / `handlers.go` with CORS enabled for `http://localhost:3000`
 
 ### Phase 3: Frontend API Client Layer
 - [x] Create `frontend/src/services/api.ts` with typed fetch wrappers:
   - `fetchOrganisations()`, `saveOrganisation()`, `deleteOrganisation()`, `toggleGoogleAds()`
-  - `fetchUsers()`, `saveUser()`, `deleteUser()`, `assignWorld()`, `regenerateStudentCode()`
+  - `fetchUsers()`, `saveUser()`, `saveBatchUsers()`, `deleteUser()`, `assignWorld()`, `regenerateStudentCode()`
   - `fetchSubscriptions()`, `saveSubscription()`
 
 ### Phase 4: Dashboard & Portal Wiring
 - [x] Wire `/controls/page.tsx` state and modals to live REST API
-- [x] Wire `/schools/page.tsx` student roster and class management to REST API
-- [x] Wire `/families/page.tsx` child accounts and access codes to REST API
-- [x] Wire `/onboarding/page.tsx` wizard submission to REST API
+- [x] Wire `/schools/page.tsx` student roster, class management, and active school name to live REST API & onboarding session
+- [x] Wire `/families/page.tsx` child accounts, access codes, and family profile name to live REST API & onboarding session
+- [x] Wire `/onboarding/page.tsx` wizard submission (multi-child onboarding) to `saveBatchUsers` REST API and persist session state
+- [x] Clean up avatar options across controls, schools, families, and onboarding (removed 4 obsolete avatars: cowboy, pirate, viking, indie character)
 
 ### Phase 5: Verification & Production Build
+- [x] Run `go build ./...` and `go test ./...` on `player_service` to verify Go backend compilation and handlers
 - [x] Run `npx tsc --noEmit` to verify TypeScript type safety
 - [x] Run `npm run build` to validate Next.js static export
 - [x] Commit and push changes to GitHub `main` branch

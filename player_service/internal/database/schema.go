@@ -12,6 +12,7 @@ type Organisation struct {
 	Domain           string    `json:"domain"`
 	ContactEmail     string    `json:"contact_email"`
 	ContactPhone     string    `json:"contact_phone"`
+	Password         string    `json:"password,omitempty"`
 	Token            string    `json:"token"`
 	GoogleAdsEnabled bool      `json:"google_ads_enabled"`
 	Type             string    `json:"type"` // "school" | "family" | "enterprise"
@@ -81,6 +82,7 @@ func (db *DB) InitPlayerServiceSchema() error {
 		domain VARCHAR(255) DEFAULT '',
 		contact_email VARCHAR(255) DEFAULT '',
 		contact_phone VARCHAR(100) DEFAULT '',
+		password VARCHAR(255) DEFAULT 'school123',
 		token VARCHAR(255) UNIQUE NOT NULL,
 		google_ads_enabled BOOLEAN DEFAULT TRUE,
 		type VARCHAR(50) DEFAULT 'school',

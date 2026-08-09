@@ -488,11 +488,20 @@ func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r 
 
 	ctx := r.Context()
 	orgType := r.URL.Query().Get("type")
-	query := "SELECT id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type, created_at FROM organisations"
+	orgID := r.URL.Query().Get("id")
+	query := "SELECT id, name, domain, contact_email, contact_phone, password, token, google_ads_enabled, type, created_at FROM organisations"
 	var args []interface{}
+	var conds []string
 	if orgType != "" {
-		query += " WHERE type = ?"
+		conds = append(conds, "type = ?")
 		args = append(args, orgType)
+	}
+	if orgID != "" {
+		conds = append(conds, "id = ?")
+		args = append(args, orgID)
+	}
+	if len(conds) > 0 {
+		query += " WHERE " + strings.Join(conds, " AND ")
 	}
 	query += " ORDER BY created_at DESC"
 
@@ -508,7 +517,7 @@ func (p *PlayerServiceHandler) GetOrganisationsHandler(w http.ResponseWriter, r 
 	for rows.Next() {
 		var o database.Organisation
 		var createdAt string
-		if err := rows.Scan(&o.ID, &o.Name, &o.Domain, &o.ContactEmail, &o.ContactPhone, &o.Token, &o.GoogleAdsEnabled, &o.Type, &createdAt); err == nil {
+		if err := rows.Scan(&o.ID, &o.Name, &o.Domain, &o.ContactEmail, &o.ContactPhone, &o.Password, &o.Token, &o.GoogleAdsEnabled, &o.Type, &createdAt); err == nil {
 			_ = p.DB.QueryRowContext(ctx, "SELECT COUNT(*) FROM users WHERE organisation_id = ?", o.ID).Scan(&o.ActiveStudents)
 
 			grpRows, err := p.DB.QueryContext(ctx, "SELECT name FROM groups WHERE organisation_id = ?", o.ID)
@@ -559,18 +568,22 @@ func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r 
 	if req.Type == "" {
 		req.Type = "school"
 	}
+	if req.Password == "" {
+		req.Password = "school123"
+	}
 
 	_, err := p.DB.ExecContext(ctx, `
-		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, token, google_ads_enabled, type)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO organisations (id, name, domain, contact_email, contact_phone, password, token, google_ads_enabled, type)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 			name = VALUES(name),
 			domain = VALUES(domain),
 			contact_email = VALUES(contact_email),
 			contact_phone = VALUES(contact_phone),
+			password = VALUES(password),
 			google_ads_enabled = VALUES(google_ads_enabled),
 			type = VALUES(type)
-	`, req.ID, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.Token, req.GoogleAdsEnabled, req.Type)
+	`, req.ID, req.Name, req.Domain, req.ContactEmail, req.ContactPhone, req.Password, req.Token, req.GoogleAdsEnabled, req.Type)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -878,6 +891,95 @@ func (p *PlayerServiceHandler) SaveSubscriptionHandler(w http.ResponseWriter, r 
 
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "subscription": req})
+}
+
+type BatchUsersRequest struct {
+	OrganisationID string          `json:"organisation_id"`
+	Users          []database.User `json:"users"`
+}
+
+// BatchSaveUsersHandler handles bulk creation of multiple children/students
+func (p *PlayerServiceHandler) BatchSaveUsersHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Database unavailable"})
+		return
+	}
+
+	var req BatchUsersRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid request body"})
+		return
+	}
+
+	ctx := r.Context()
+	createdUsers := make([]database.User, 0)
+
+	for _, u := range req.Users {
+		if u.Username == "" {
+			continue
+		}
+		if u.AccessCode == "" {
+			u.AccessCode = fmt.Sprintf("%d", 10000000+time.Now().UnixNano()%90000000)
+		}
+		if u.Role == "" {
+			u.Role = "student"
+		}
+		if u.AssignedWorldID == 0 {
+			u.AssignedWorldID = 1
+		}
+		if u.Avatar == "" {
+			u.Avatar = "/images/character1.jpg"
+		}
+		orgID := u.OrganisationID
+		if orgID == "" {
+			orgID = req.OrganisationID
+		}
+
+		res, err := p.DB.ExecContext(ctx, `
+			INSERT INTO users (username, access_code, role, organisation_id, group_id, avatar, assigned_world_id, total_xp, total_stars)
+			VALUES (?, ?, ?, ?, 1, ?, ?, 100, 0)
+			ON DUPLICATE KEY UPDATE
+				access_code = VALUES(access_code),
+				role = VALUES(role),
+				organisation_id = VALUES(organisation_id),
+				avatar = VALUES(avatar),
+				assigned_world_id = VALUES(assigned_world_id)
+		`, u.Username, u.AccessCode, u.Role, orgID, u.Avatar, u.AssignedWorldID)
+
+		if err != nil {
+			// Fallback with unique username suffix if username collision occurred
+			uniqueUsername := fmt.Sprintf("%s (%s)", u.Username, u.AccessCode[:min(4, len(u.AccessCode))])
+			res, err = p.DB.ExecContext(ctx, `
+				INSERT INTO users (username, access_code, role, organisation_id, group_id, avatar, assigned_world_id, total_xp, total_stars)
+				VALUES (?, ?, ?, ?, 1, ?, ?, 100, 0)
+				ON DUPLICATE KEY UPDATE
+					access_code = VALUES(access_code),
+					role = VALUES(role),
+					organisation_id = VALUES(organisation_id),
+					avatar = VALUES(avatar),
+					assigned_world_id = VALUES(assigned_world_id)
+			`, uniqueUsername, u.AccessCode, u.Role, orgID, u.Avatar, u.AssignedWorldID)
+			if err == nil {
+				u.Username = uniqueUsername
+			}
+		}
+
+		if err == nil {
+			id, _ := res.LastInsertId()
+			u.ID = int(id)
+			u.OrganisationID = orgID
+			createdUsers = append(createdUsers, u)
+		}
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"users":   createdUsers,
+	})
 }
 
 func min(a, b int) int {
