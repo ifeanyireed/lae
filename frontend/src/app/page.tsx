@@ -178,7 +178,9 @@ export default function Home() {
   React.useEffect(() => {
     const handleHostMessage = (event: MessageEvent) => {
       if (event.data && event.data.type === 'HOST_AUTH_HANDSHAKE') {
-        const { username, role, groupName, groupId, xp } = event.data;
+        const { username, role, groupName, groupId, xp, worldId, world_id } = event.data;
+        const assignedWorld = worldId || world_id || 1;
+        setSelectedWorldId(assignedWorld);
         setUserContext((prev) => ({
           ...prev,
           username: username || prev.username,
@@ -205,6 +207,8 @@ export default function Home() {
       .then((data) => {
         if (data && data.success && data.user) {
           const userXp = data.user.total_xp ?? 0;
+          const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+          setSelectedWorldId(assignedWorld);
           setTotalXP(userXp);
           setUserContext((prev) => ({
             ...prev,
@@ -340,12 +344,7 @@ export default function Home() {
             }
             try {
               if (typeof window !== 'undefined') {
-                const savedAdv = localStorage.getItem('puzzlepro_active_adv');
                 const savedLvl = localStorage.getItem('puzzlepro_active_level');
-                if (savedAdv !== null) {
-                  const advId = parseInt(savedAdv, 10);
-                  if (!isNaN(advId) && advId > 0) setSelectedAdventureId(advId);
-                }
                 if (savedLvl !== null) {
                   const lvlIdx = parseInt(savedLvl, 10);
                   if (!isNaN(lvlIdx) && lvlIdx >= 0) setCurrentLevelIndex(lvlIdx);
@@ -354,6 +353,8 @@ export default function Home() {
             } catch (e) {}
 
             const userXp = data.user.total_xp ?? 0;
+            const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+            setSelectedWorldId(assignedWorld);
             setTotalXP(userXp);
             setUserContext({
               id: data.user.id || 1,
@@ -1156,6 +1157,8 @@ export default function Home() {
           } catch (e) {}
         }
         const userXp = data.user.total_xp ?? 0;
+        const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+        setSelectedWorldId(assignedWorld);
         const loggedUser = {
           id: data.user.id || 1,
           username: data.user.username || 'Explorer',
@@ -1967,6 +1970,7 @@ export default function Home() {
             onStartGame={() => {
               setShowSplash(false);
               setShowWelcomeModal(false);
+              setSelectedAdventureId(null);
               setActiveTab('map');
             }}
             onCodeSubmit={async (code) => {
@@ -1974,6 +1978,7 @@ export default function Home() {
               if (ok) {
                 setShowSplash(false);
                 setShowWelcomeModal(false);
+                setSelectedAdventureId(null);
                 setActiveTab('map');
               }
               return ok;
