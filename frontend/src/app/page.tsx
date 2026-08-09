@@ -1257,133 +1257,135 @@ export default function Home() {
         <div className="absolute inset-0 bg-slate-950/20 backdrop-blur-sm" />
       </div>
 
-      {/* Top Application Header Bar - Always Fixed & Sticky on Top */}
-      <header className="fixed top-0 left-0 right-0 z-[100] w-full px-4 sm:px-8 py-3 flex items-center justify-end min-h-[72px] pointer-events-none">
+      {/* Top Application Header Bar - Only Visible After Logging In / Starting Game */}
+      {!showSplash && (
+        <header className="fixed top-0 left-0 right-0 z-[100] w-full px-4 sm:px-8 py-3 flex items-center justify-end min-h-[72px] pointer-events-none">
 
-        {/* Center Top Header Switcher: ABSOLUTELY DEAD CENTERED HORIZONTALLY */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-center -space-x-1.5 sm:-space-x-2.5 md:-space-x-3 pointer-events-auto z-30">
-          {/* 1. Quest / Studio Button: Resumes Last Uncompleted Level Automatically */}
-          <ActionTooltip label="Quest / Tabletop Studio (Resume Adventure)" position="bottom">
-            <button
-              onClick={() => {
-                soundManager.playClick();
-                const uncompletedIdx = levelsProgress.findIndex((l) => !l.completed);
-                const targetIdx = uncompletedIdx !== -1 ? uncompletedIdx : 0;
-                handleSelectLevel(targetIdx);
-                setActiveTab('studio');
-              }}
-              className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30 p-0 ${
-                activeTab === 'studio' 
-                  ? 'opacity-100' 
-                  : 'filter grayscale opacity-100 hover:grayscale-0'
-              }`}
-            >
-              <Image src="/Quest.svg" alt="Quest Studio" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+          {/* Center Top Header Switcher: ABSOLUTELY DEAD CENTERED HORIZONTALLY */}
+          <div className="absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 flex items-center justify-center -space-x-1.5 sm:-space-x-2.5 md:-space-x-3 pointer-events-auto z-30">
+            {/* 1. Quest / Studio Button: Resumes Last Uncompleted Level Automatically */}
+            <ActionTooltip label="Quest / Tabletop Studio (Resume Adventure)" position="bottom">
+              <button
+                onClick={() => {
+                  soundManager.playClick();
+                  const uncompletedIdx = levelsProgress.findIndex((l) => !l.completed);
+                  const targetIdx = uncompletedIdx !== -1 ? uncompletedIdx : 0;
+                  handleSelectLevel(targetIdx);
+                  setActiveTab('studio');
+                }}
+                className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30 p-0 ${
+                  activeTab === 'studio' 
+                    ? 'opacity-100' 
+                    : 'filter grayscale opacity-100 hover:grayscale-0'
+                }`}
+              >
+                <Image src="/Quest.svg" alt="Quest Studio" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 2. Leaderboard & Customize Button */}
-          <ActionTooltip label="Leaderboard & Customizer" position="bottom">
-            <button
-              onClick={() => { soundManager.playClick(); setActiveTab('customizer'); }}
-              className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20 p-0 ${
-                activeTab === 'customizer' 
-                  ? 'opacity-100' 
-                  : 'filter grayscale opacity-100 hover:grayscale-0'
-              }`}
-            >
-              <Image src="/Leaderboard.svg" alt="Leaderboard" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+            {/* 2. Leaderboard & Customize Button */}
+            <ActionTooltip label="Leaderboard & Customizer" position="bottom">
+              <button
+                onClick={() => { soundManager.playClick(); setActiveTab('customizer'); }}
+                className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20 p-0 ${
+                  activeTab === 'customizer' 
+                    ? 'opacity-100' 
+                    : 'filter grayscale opacity-100 hover:grayscale-0'
+                }`}
+              >
+                <Image src="/Leaderboard.svg" alt="Leaderboard" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 3. Map Button: Strategic Point 4 - Fetch Latest Progress from DB on Opening Map */}
-          <ActionTooltip label="Maze Treasure Map" position="bottom">
-            <button
-              onClick={() => {
-                soundManager.playClick();
-                fetchUserProgressFromDB(userContext.id);
-                setActiveTab('map');
-              }}
-              className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10 p-0 ${
-                activeTab === 'map' 
-                  ? 'opacity-100' 
-                  : 'filter grayscale opacity-100 hover:grayscale-0'
-              }`}
-            >
-              <Image src="/Map.svg" alt="Maze Map" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
-        </div>
+            {/* 3. Map Button: Strategic Point 4 - Fetch Latest Progress from DB on Opening Map */}
+            <ActionTooltip label="Maze Treasure Map" position="bottom">
+              <button
+                onClick={() => {
+                  soundManager.playClick();
+                  fetchUserProgressFromDB(userContext.id);
+                  setActiveTab('map');
+                }}
+                className={`relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10 p-0 ${
+                  activeTab === 'map' 
+                    ? 'opacity-100' 
+                    : 'filter grayscale opacity-100 hover:grayscale-0'
+                }`}
+              >
+                <Image src="/Map.svg" alt="Maze Map" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
+          </div>
 
-        {/* Right Corner Controls */}
-        <div className="flex items-center justify-center -space-x-2 sm:-space-x-3 md:-space-x-4 pointer-events-auto z-30">
-          {/* 1. Mute / Unmute SFX Button */}
-          <ActionTooltip label={isMuted ? 'Unmute SFX' : 'Mute SFX'} position="bottom">
-            <button
-              onClick={handleToggleMute}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-50"
-            >
-              <Image 
-                src={isMuted ? '/Mute SFX.svg' : '/Unmute SFX.svg'} 
-                alt={isMuted ? 'Mute SFX' : 'Unmute SFX'} 
-                fill 
-                className="object-contain" 
-              />
-            </button>
-          </ActionTooltip>
+          {/* Right Corner Controls */}
+          <div className="flex items-center justify-center -space-x-2 sm:-space-x-3 md:-space-x-4 pointer-events-auto z-30">
+            {/* 1. Mute / Unmute SFX Button */}
+            <ActionTooltip label={isMuted ? 'Unmute SFX' : 'Mute SFX'} position="bottom">
+              <button
+                onClick={handleToggleMute}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-50"
+              >
+                <Image 
+                  src={isMuted ? '/Mute SFX.svg' : '/Unmute SFX.svg'} 
+                  alt={isMuted ? 'Mute SFX' : 'Unmute SFX'} 
+                  fill 
+                  className="object-contain" 
+                />
+              </button>
+            </ActionTooltip>
 
-          {/* 2. Mission Objectives Button */}
-          <ActionTooltip label="Level Objectives & Story" position="bottom">
-            <button
-              onClick={() => { soundManager.playClick(); setShowWelcomeModal(true); }}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-45"
-            >
-              <Image src="/Quest.svg" alt="Objectives" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+            {/* 2. Mission Objectives Button */}
+            <ActionTooltip label="Level Objectives & Story" position="bottom">
+              <button
+                onClick={() => { soundManager.playClick(); setShowWelcomeModal(true); }}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-45"
+              >
+                <Image src="/Quest.svg" alt="Objectives" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 3. Notification Button */}
-          <ActionTooltip label="Notifications" position="bottom">
-            <button
-              onClick={() => { soundManager.playClick(); }}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-40"
-            >
-              <Image src="/Notification.svg" alt="Notification" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+            {/* 3. Notification Button */}
+            <ActionTooltip label="Notifications" position="bottom">
+              <button
+                onClick={() => { soundManager.playClick(); }}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-40"
+              >
+                <Image src="/Notification.svg" alt="Notification" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 3. Settings Button */}
-          <ActionTooltip label="Settings" position="bottom">
-            <button
-              onClick={() => { soundManager.playClick(); }}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30"
-            >
-              <Image src="/Settings.svg" alt="Settings" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+            {/* 3. Settings Button */}
+            <ActionTooltip label="Settings" position="bottom">
+              <button
+                onClick={() => { soundManager.playClick(); }}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30"
+              >
+                <Image src="/Settings.svg" alt="Settings" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 4. Profile / Auth Session Button */}
-          <ActionTooltip label={`Explorer Profile (${userContext.role.toUpperCase()})`} position="bottom">
-            <button
-              onClick={() => { soundManager.playClick(); setShowSplash(true); }}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
-            >
-              <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
+            {/* 4. Profile / Auth Session Button */}
+            <ActionTooltip label={`Explorer Profile (${userContext.role.toUpperCase()})`} position="bottom">
+              <button
+                onClick={() => { soundManager.playClick(); setShowSplash(true); }}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
+              >
+                <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
 
-          {/* 5. Fullscreen Button */}
-          <ActionTooltip label="Fullscreen Mode" position="bottom">
-            <button
-              onClick={handleToggleFullscreen}
-              className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10"
-            >
-              <Image src="/Fullscreen.svg" alt="Fullscreen" fill className="object-contain" />
-            </button>
-          </ActionTooltip>
-        </div>
+            {/* 5. Fullscreen Button */}
+            <ActionTooltip label="Fullscreen Mode" position="bottom">
+              <button
+                onClick={handleToggleFullscreen}
+                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10"
+              >
+                <Image src="/Fullscreen.svg" alt="Fullscreen" fill className="object-contain" />
+              </button>
+            </ActionTooltip>
+          </div>
 
-      </header>
+        </header>
+      )}
 
       {/* Main View Area */}
       <div className="flex-1 w-full h-full p-0 flex flex-col items-center justify-center relative z-20 overflow-hidden pt-[72px]">
