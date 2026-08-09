@@ -7,12 +7,22 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'resultspro.ng',
+        hostname: 'learn2earnhq.com',
         pathname: '/**',
       },
       {
         protocol: 'https',
-        hostname: 'cdn.resultspro.ng',
+        hostname: 'puzzlepro.learn2earnhq.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'cdn.learn2earnhq.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'resultspro.ng',
         pathname: '/**',
       },
     ],

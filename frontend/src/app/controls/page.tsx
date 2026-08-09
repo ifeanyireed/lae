@@ -15,6 +15,8 @@ import {
   deleteUser as apiDeleteUser,
   fetchSubscriptions as apiFetchSubs,
   saveSubscription as apiSaveSub,
+  sendForgotPasswordCode,
+  resetPasswordWithCode,
 } from '@/services/api';
 import { authenticateUser } from '@/services/rbac';
 import {
@@ -251,6 +253,64 @@ export default function AdminControlsPage() {
 
   const router = useRouter();
 
+  // Forgot Password modal state
+  const [showForgotModal, setShowForgotModal] = useState<boolean>(false);
+  const [resetStep, setResetStep] = useState<1 | 2>(1);
+  const [resetEmail, setResetEmail] = useState<string>('');
+  const [resetCode, setResetCode] = useState<string>('');
+  const [newResetPassword, setNewResetPassword] = useState<string>('');
+  const [resetMsg, setResetMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [resetLoading, setResetLoading] = useState<boolean>(false);
+  const [demoResetCode, setDemoResetCode] = useState<string | null>(null);
+
+  const handleSendResetCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      setResetMsg({ type: 'error', text: 'Please enter your account email address.' });
+      return;
+    }
+    setResetLoading(true);
+    setResetMsg(null);
+    const res = await sendForgotPasswordCode(resetEmail);
+    setResetLoading(false);
+
+    if (res.success) {
+      setResetStep(2);
+      if (res.code) {
+        setDemoResetCode(res.code);
+        setResetCode(res.code);
+      }
+      setResetMsg({ type: 'success', text: `6-digit reset code sent to ${resetEmail}` });
+    } else {
+      setResetMsg({ type: 'error', text: res.error || 'Failed to send reset code.' });
+    }
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetCode || !newResetPassword) {
+      setResetMsg({ type: 'error', text: 'Please enter both the reset code and a new password.' });
+      return;
+    }
+    setResetLoading(true);
+    setResetMsg(null);
+    const res = await resetPasswordWithCode(resetEmail, resetCode, newResetPassword);
+    setResetLoading(false);
+
+    if (res.success) {
+      setResetMsg({ type: 'success', text: 'Password successfully reset! You can now sign in.' });
+      setTimeout(() => {
+        setShowForgotModal(false);
+        setResetStep(1);
+        setResetMsg(null);
+        setLoginEmail(resetEmail);
+        setLoginPassword(newResetPassword);
+      }, 1500);
+    } else {
+      setResetMsg({ type: 'error', text: res.error || 'Invalid or expired reset code.' });
+    }
+  };
+
   // Animated Login handler
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -281,7 +341,7 @@ export default function AdminControlsPage() {
 
   // Copy iFrame Embed Code
   const copyEmbedCode = (org: Organisation) => {
-    const embedCode = `<iframe src="https://puzzlepro.ng/embed?org_token=${org.token}" width="100%" height="750px" frameborder="0" allowfullscreen></iframe>`;
+    const embedCode = `<iframe src="https://learn2earnhq.com/embed?org_token=${org.token}" width="100%" height="750px" frameborder="0" allowfullscreen></iframe>`;
     navigator.clipboard.writeText(embedCode);
     setCopiedTokenId(org.id);
     setTimeout(() => setCopiedTokenId(null), 2500);
@@ -525,9 +585,23 @@ export default function AdminControlsPage() {
             </div>
 
             <div>
-              <label className="block text-[9px] font-normal text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-[9px] font-normal text-slate-300 md:text-slate-600 uppercase tracking-wider">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setResetEmail(loginEmail);
+                    setResetStep(1);
+                    setResetMsg(null);
+                    setShowForgotModal(true);
+                  }}
+                  className="text-[10px] text-amber-400 md:text-amber-600 hover:underline"
+                >
+                  Forgot Password?
+                </button>
+              </div>
               <input
                 type="password"
                 placeholder="••••••••"
@@ -556,6 +630,122 @@ export default function AdminControlsPage() {
             </button>
           </form>
         </div>
+
+        {/* FORGOT PASSWORD MODAL */}
+        {showForgotModal && (
+          <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 relative animate-scale-in text-slate-900">
+              <button
+                type="button"
+                onClick={() => setShowForgotModal(false)}
+                className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+              >
+                ✕
+              </button>
+
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="p-3 bg-amber-100 text-amber-700 rounded-xl">
+                  <IconShieldCheck className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-slate-900">Reset Account Password</h3>
+                  <p className="text-xs text-slate-500">Receive a 6-digit OTP code to verify and reset password</p>
+                </div>
+              </div>
+
+              {resetMsg && (
+                <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 mb-4 ${
+                  resetMsg.type === 'success'
+                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    : 'bg-red-50 text-red-700 border border-red-200'
+                }`}>
+                  {resetMsg.type === 'success' ? <IconCheck className="w-4 h-4 shrink-0" /> : <IconAlertCircle className="w-4 h-4 shrink-0" />}
+                  <span>{resetMsg.text}</span>
+                </div>
+              )}
+
+              {resetStep === 1 ? (
+                <form onSubmit={handleSendResetCode} className="space-y-4">
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">Account Contact Email</label>
+                    <input
+                      type="email"
+                      placeholder="admin@stemexplorers.edu"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div className="flex space-x-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowForgotModal(false)}
+                      className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 transition"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={resetLoading}
+                      className="flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold rounded-xl text-xs border border-amber-500 shadow-sm transition flex items-center justify-center space-x-1.5"
+                    >
+                      {resetLoading ? <span>Sending...</span> : <span>Send Reset Code</span>}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleConfirmResetPassword} className="space-y-4">
+                  {demoResetCode && (
+                    <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-[11px] text-sky-800 flex items-center justify-between">
+                      <span>Password Reset Code:</span>
+                      <span className="font-mono font-bold text-sky-900 tracking-wider text-xs">{demoResetCode}</span>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">6-Digit Reset Code</label>
+                    <input
+                      type="text"
+                      maxLength={6}
+                      placeholder="e.g. 928173"
+                      value={resetCode}
+                      onChange={(e) => setResetCode(e.target.value)}
+                      required
+                      className="w-full px-4 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-center text-base font-mono tracking-widest text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-medium text-slate-700 mb-1">New Account Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newResetPassword}
+                      onChange={(e) => setNewResetPassword(e.target.value)}
+                      required
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-900 outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+                  <div className="flex space-x-3 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setResetStep(1)}
+                      className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 transition"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={resetLoading}
+                      className="flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold rounded-xl text-xs border border-amber-500 shadow-sm transition flex items-center justify-center space-x-1.5"
+                    >
+                      {resetLoading ? <span>Resetting...</span> : <span>Update Password</span>}
+                    </button>
+                  </div>
+                </form>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     );
   }
@@ -649,7 +839,7 @@ export default function AdminControlsPage() {
                 {organisations.filter((o) => o.googleAdsEnabled).length} Monetized via Ads
               </p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 transition-transform duration-200 hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 transition-transform duration-200 hover:scale-110">
               <IconBuildingSkyscraper className="w-6 h-6" />
             </div>
           </div>
@@ -660,7 +850,7 @@ export default function AdminControlsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{usersList.length} Students</h3>
               <p className="text-[11px] font-normal text-blue-600 mt-0.5">8-Digit Access Codes Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 transition-transform duration-200 hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600 transition-transform duration-200 hover:scale-110">
               <IconUsers className="w-6 h-6" />
             </div>
           </div>
@@ -671,7 +861,7 @@ export default function AdminControlsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{subscriptionsList.length} Accounts</h3>
               <p className="text-[11px] font-normal text-amber-600 mt-0.5">Active Enterprise Plans</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 transition-transform duration-200 hover:scale-110">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 transition-transform duration-200 hover:scale-110">
               <IconCreditCard className="w-6 h-6" />
             </div>
           </div>
@@ -1314,7 +1504,7 @@ export default function AdminControlsPage() {
                 Embed PuzzlePro into <span className="font-normal text-slate-900">{embedModalOrg.name}</span>'s portal using their unique token:
               </p>
               <div className="bg-slate-900 text-slate-100 p-4 rounded-2xl font-mono text-xs overflow-x-auto relative border border-slate-800">
-                <code>{`<iframe src="https://puzzlepro.ng/embed?org_token=${embedModalOrg.token}" width="100%" height="750px" frameborder="0" allowfullscreen></iframe>`}</code>
+                <code>{`<iframe src="https://learn2earnhq.com/embed?org_token=${embedModalOrg.token}" width="100%" height="750px" frameborder="0" allowfullscreen></iframe>`}</code>
               </div>
             </div>
 

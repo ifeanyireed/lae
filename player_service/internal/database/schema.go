@@ -172,10 +172,23 @@ func (db *DB) InitPlayerServiceSchema() error {
 		FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
+	createVerificationCodesTable := `
+	CREATE TABLE IF NOT EXISTS verification_codes (
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		email VARCHAR(255) NOT NULL,
+		code VARCHAR(10) NOT NULL,
+		type VARCHAR(50) NOT NULL DEFAULT 'email_verification',
+		expires_at TIMESTAMP NOT NULL,
+		used BOOLEAN DEFAULT FALSE,
+		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+		INDEX idx_email_code (email, code, type)
+	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
+
 	if _, err := db.ExecContext(ctx, createOrganisationsTable); err != nil {
 		log.Printf("Warning: Organisations table creation error: %v", err)
 	}
 	_, _ = db.ExecContext(ctx, "ALTER TABLE organisations ADD COLUMN logo_url VARCHAR(500) DEFAULT '/monkey1.svg';")
+	_, _ = db.ExecContext(ctx, "ALTER TABLE organisations ADD COLUMN email_verified BOOLEAN DEFAULT FALSE;")
 	if _, err := db.ExecContext(ctx, createCentresTable); err != nil {
 		log.Printf("Warning: Centres table creation error: %v", err)
 	}
@@ -201,6 +214,10 @@ func (db *DB) InitPlayerServiceSchema() error {
 	}
 	_, _ = db.ExecContext(ctx, "ALTER TABLE user_progress ADD COLUMN world_id INT DEFAULT 1;")
 	_, _ = db.ExecContext(ctx, "ALTER TABLE user_progress ADD COLUMN adventure_id INT DEFAULT 1;")
+
+	if _, err := db.ExecContext(ctx, createVerificationCodesTable); err != nil {
+		log.Printf("Warning: Verification codes table creation error: %v", err)
+	}
 
 	db.seedAccessCodeUsers(ctx)
 

@@ -490,7 +490,7 @@ export default function FamiliesPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{children.length} Enrolled</h3>
               <p className="text-[11px] font-normal text-emerald-600 mt-0.5">8-Digit Student Codes Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+            <div className="w-12 h-12 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
               <IconHeartHandshake className="w-6 h-6" />
             </div>
           </div>
@@ -501,7 +501,7 @@ export default function FamiliesPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">Worlds 1 – 5</h3>
               <p className="text-[11px] font-normal text-amber-600 mt-0.5">Custom World Assignments</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
               <IconWorld className="w-6 h-6" />
             </div>
           </div>
@@ -514,7 +514,7 @@ export default function FamiliesPage() {
               </h3>
               <p className="text-[11px] font-normal text-blue-600 mt-0.5">Combined Coding Progress</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <IconCrown className="w-6 h-6" />
             </div>
           </div>
@@ -682,7 +682,7 @@ export default function FamiliesPage() {
             {/* Header banner */}
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shadow-xs">
+                <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shadow-xs overflow-hidden">
                   <Image src={profileForm.logoUrl || '/monkey1.svg'} alt="Family Avatar" width={56} height={56} className="object-contain" />
                 </div>
                 <div>
@@ -708,7 +708,7 @@ export default function FamiliesPage() {
               {/* Family Profile & Details Form */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
                     <IconSettings className="w-5 h-5" />
                   </div>
                   <div>
@@ -734,7 +734,7 @@ export default function FamiliesPage() {
                           key={img}
                           type="button"
                           onClick={() => setProfileForm({ ...profileForm, logoUrl: img })}
-                          className={`w-11 h-11 rounded-2xl p-1 border transition-all cursor-pointer ${profileForm.logoUrl === img ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                          className={`w-11 h-11 rounded-full p-1 border transition-all cursor-pointer ${profileForm.logoUrl === img ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
                         >
                           <Image src={img} alt="Avatar option" width={36} height={36} className="object-contain w-full h-full" />
                         </button>
@@ -755,12 +755,14 @@ export default function FamiliesPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Parent Contact Email</label>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        Parent Contact Email <span className="text-[10px] font-normal text-slate-400 ml-1">(Read-Only)</span>
+                      </label>
                       <input
                         type="email"
+                        readOnly
                         value={profileForm.contactEmail}
-                        onChange={(e) => setProfileForm({ ...profileForm, contactEmail: e.target.value })}
-                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500 cursor-not-allowed outline-none select-none"
                       />
                     </div>
                     <div>

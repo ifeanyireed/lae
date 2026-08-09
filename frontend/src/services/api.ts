@@ -455,3 +455,56 @@ export async function saveGroup(group: Partial<GroupApiItem>): Promise<GroupApiI
   return null;
 }
 
+// EMAIL VERIFICATION & PASSWORD RESET API HELPERS
+export async function sendVerificationCode(email: string): Promise<{ success: boolean; message?: string; error?: string; code?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/auth/send-verification`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network request failed' };
+  }
+}
+
+export async function verifyEmailCode(email: string, code: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code }),
+    });
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network request failed' };
+  }
+}
+
+export async function sendForgotPasswordCode(email: string): Promise<{ success: boolean; message?: string; error?: string; code?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network request failed' };
+  }
+}
+
+export async function resetPasswordWithCode(email: string, code: string, newPassword: string): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/auth/reset-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, code, new_password: newPassword }),
+    });
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Network request failed' };
+  }
+}
+

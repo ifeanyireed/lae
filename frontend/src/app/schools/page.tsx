@@ -571,7 +571,7 @@ export default function SchoolsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 flex flex-col overflow-y-auto">
       {/* Top Header */}
       <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-xs sticky top-0 z-40">
         <div className="flex items-center space-x-3">
@@ -593,7 +593,7 @@ export default function SchoolsPage() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 animate-fade-in-up">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 flex flex-col gap-6 pb-24 animate-fade-in-up">
         {/* Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
@@ -602,7 +602,7 @@ export default function SchoolsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{centresList.length} Locations</h3>
               <p className="text-[11px] font-normal text-emerald-600 mt-0.5">School Campuses Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600">
               <IconBuildingSkyscraper className="w-6 h-6" />
             </div>
           </div>
@@ -613,7 +613,7 @@ export default function SchoolsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{groupsDetailList.length} Active Groups</h3>
               <p className="text-[11px] font-normal text-purple-600 mt-0.5">Tied to Campus Centres</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
+            <div className="w-12 h-12 rounded-full bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
               <IconSchool className="w-6 h-6" />
             </div>
           </div>
@@ -624,7 +624,7 @@ export default function SchoolsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">{students.length} Students</h3>
               <p className="text-[11px] font-normal text-blue-600 mt-0.5">8-Digit Access Codes Active</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
+            <div className="w-12 h-12 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600">
               <IconUsers className="w-6 h-6" />
             </div>
           </div>
@@ -635,7 +635,7 @@ export default function SchoolsPage() {
               <h3 className="text-2xl font-medium text-slate-900 mt-1">5 Gamified Worlds</h3>
               <p className="text-[11px] font-normal text-amber-600 mt-0.5">Assigned per Class</p>
             </div>
-            <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+            <div className="w-12 h-12 rounded-full bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
               <IconWorld className="w-6 h-6" />
             </div>
           </div>
@@ -1055,7 +1055,7 @@ export default function SchoolsPage() {
             {/* Header banner */}
             <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-2xl bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shadow-xs">
+                <div className="w-16 h-16 rounded-full bg-amber-50 border border-amber-200 p-2 flex items-center justify-center shadow-xs overflow-hidden">
                   <Image src={profileForm.logoUrl || '/monkey1.svg'} alt="School Logo" width={56} height={56} className="object-contain" />
                 </div>
                 <div>
@@ -1081,7 +1081,7 @@ export default function SchoolsPage() {
               {/* Profile & Branding Details Form */}
               <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
                 <div className="flex items-center space-x-3 pb-3 border-b border-slate-100">
-                  <div className="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-full bg-amber-50 text-amber-600 flex items-center justify-center">
                     <IconSettings className="w-5 h-5" />
                   </div>
                   <div>
@@ -1107,7 +1107,7 @@ export default function SchoolsPage() {
                           key={img}
                           type="button"
                           onClick={() => setProfileForm({ ...profileForm, logoUrl: img })}
-                          className={`w-11 h-11 rounded-2xl p-1 border transition-all cursor-pointer ${profileForm.logoUrl === img ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
+                          className={`w-11 h-11 rounded-full p-1 border transition-all cursor-pointer ${profileForm.logoUrl === img ? 'bg-amber-100 border-amber-500 ring-2 ring-amber-400' : 'bg-slate-50 border-slate-200 hover:bg-slate-100'}`}
                         >
                           <Image src={img} alt="Logo option" width={36} height={36} className="object-contain w-full h-full" />
                         </button>
@@ -1146,12 +1146,14 @@ export default function SchoolsPage() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                      <label className="block text-xs font-medium text-slate-700 mb-1">Contact Email</label>
+                      <label className="block text-xs font-medium text-slate-700 mb-1">
+                        School Account Email <span className="text-[10px] font-normal text-slate-400 ml-1">(Read-Only)</span>
+                      </label>
                       <input
                         type="email"
+                        readOnly
                         value={profileForm.contactEmail}
-                        onChange={(e) => setProfileForm({ ...profileForm, contactEmail: e.target.value })}
-                        className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500"
+                        className="w-full px-3.5 py-2 bg-slate-100 border border-slate-200 rounded-xl text-xs text-slate-500 cursor-not-allowed outline-none select-none"
                       />
                     </div>
                     <div>

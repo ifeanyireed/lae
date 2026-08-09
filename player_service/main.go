@@ -8,6 +8,7 @@ import (
 	"player_service/internal/config"
 	"player_service/internal/database"
 	"player_service/internal/handlers"
+	"player_service/internal/mailer"
 	"player_service/internal/middleware"
 )
 
@@ -24,7 +25,8 @@ func main() {
 		}
 	}
 
-	h := handlers.New(db)
+	m := mailer.New(cfg.EmailProxyURL, cfg.EmailAPIKey, cfg.EmailFrom, cfg.EmailFromName)
+	h := handlers.New(db, m)
 	mux := http.NewServeMux()
 
 	// Microservice 2: player_service API routes
@@ -36,6 +38,13 @@ func main() {
 	mux.HandleFunc("/api/v1/player/leaderboard", h.GetLeaderboardHandler)
 	mux.HandleFunc("/api/v1/player/groups", h.GetGroupsHandler)
 	mux.HandleFunc("/api/v1/player/centres", h.GetCentresHandler)
+	mux.HandleFunc("/api/v1/email/send", h.SendEmailHandler)
+
+	// Auth, Verification & Password Reset Endpoints
+	mux.HandleFunc("/api/v1/auth/send-verification", h.SendVerificationHandler)
+	mux.HandleFunc("/api/v1/auth/verify-email", h.VerifyEmailHandler)
+	mux.HandleFunc("/api/v1/auth/forgot-password", h.ForgotPasswordHandler)
+	mux.HandleFunc("/api/v1/auth/reset-password", h.ResetPasswordHandler)
 
 	// iFrame Embed Verification & Token Endpoints
 	mux.HandleFunc("/api/v1/embed/verify", h.VerifyEmbedTokenHandler)

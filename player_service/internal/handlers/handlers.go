@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -12,14 +14,16 @@ import (
 	"player_service/internal/auth"
 	"player_service/internal/database"
 	"player_service/internal/embed"
+	"player_service/internal/mailer"
 )
 
 type PlayerServiceHandler struct {
-	DB *database.DB
+	DB     *database.DB
+	Mailer *mailer.Mailer
 }
 
-func New(db *database.DB) *PlayerServiceHandler {
-	return &PlayerServiceHandler{DB: db}
+func New(db *database.DB, m *mailer.Mailer) *PlayerServiceHandler {
+	return &PlayerServiceHandler{DB: db, Mailer: m}
 }
 
 type HandshakeRequest struct {
@@ -650,6 +654,10 @@ func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r 
 		}
 	}
 
+	if p.Mailer != nil && req.ContactEmail != "" {
+		p.Mailer.SendWelcomeEmail(req.ContactEmail, req.Name, req.Type, req.Password, req.Token)
+	}
+
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "organisation": req})
 }
@@ -936,6 +944,10 @@ func (p *PlayerServiceHandler) SaveSubscriptionHandler(w http.ResponseWriter, r 
 		w.WriteHeader(http.StatusInternalServerError)
 		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 		return
+	}
+
+	if p.Mailer != nil && req.UserEmail != "" {
+		p.Mailer.SendSubscriptionEmail(req.UserEmail, req.OrganisationName, req.PlanName, fmt.Sprintf("%d", req.Seats), req.Price)
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -1486,8 +1498,245 @@ func (p *PlayerServiceHandler) UpdatePasswordHandler(w http.ResponseWriter, r *h
 		return
 	}
 
+	var orgName, contactEmail string
+	_ = p.DB.QueryRowContext(ctx, "SELECT name, contact_email FROM organisations WHERE id = ?", req.ID).Scan(&orgName, &contactEmail)
+	if p.Mailer != nil && contactEmail != "" {
+		p.Mailer.SendPasswordChangedEmail(contactEmail, orgName)
+	}
+
 	w.WriteHeader(http.StatusOK)
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true})
+}
+
+// SendEmailHandler executes direct email dispatch via Hostinger PHP Email Proxy
+func (p *PlayerServiceHandler) SendEmailHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.Mailer == nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Mailer service unavailable"})
+		return
+	}
+
+	var req struct {
+		To       string `json:"to"`
+		Subject  string `json:"subject"`
+		HTML     string `json:"html"`
+		Text     string `json:"text"`
+		From     string `json:"from"`
+		FromName string `json:"from_name"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.To == "" || req.Subject == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Missing required fields: to, subject, html"})
+		return
+	}
+
+	err := p.Mailer.SendEmail(req.To, req.Subject, req.HTML, req.Text)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Email sent successfully"})
+}
+
+func generate6DigitCode() string {
+	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return fmt.Sprintf("%06d", r.Intn(1000000))
+}
+
+// SendVerificationHandler dispatches an email verification OTP code
+func (p *PlayerServiceHandler) SendVerificationHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Email) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Email address is required"})
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+
+	code := generate6DigitCode()
+	expiresAt := time.Now().Add(15 * time.Minute)
+
+	if p.DB != nil {
+		ctx := r.Context()
+		_, err := p.DB.ExecContext(ctx, `
+			INSERT INTO verification_codes (email, code, type, expires_at)
+			VALUES (?, ?, 'email_verification', ?)
+		`, email, code, expiresAt)
+		if err != nil {
+			log.Printf("⚠️ Error saving verification code: %v", err)
+		}
+	}
+
+	if p.Mailer != nil {
+		p.Mailer.SendVerificationEmail(email, code)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Verification code dispatched to your email address",
+		"code":    code,
+	})
+}
+
+// VerifyEmailHandler checks the 6-digit OTP and verifies the email address
+func (p *PlayerServiceHandler) VerifyEmailHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		Email string `json:"email"`
+		Code  string `json:"code"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Code) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Both email and verification code are required"})
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	code := strings.TrimSpace(req.Code)
+
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Email verified successfully"})
+		return
+	}
+
+	ctx := r.Context()
+	var id int
+	err := p.DB.QueryRowContext(ctx, `
+		SELECT id FROM verification_codes 
+		WHERE email = ? AND code = ? AND type = 'email_verification' AND used = FALSE AND expires_at > NOW()
+		ORDER BY id DESC LIMIT 1
+	`, email, code).Scan(&id)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid or expired verification code"})
+		return
+	}
+
+	// Mark code as used
+	_, _ = p.DB.ExecContext(ctx, "UPDATE verification_codes SET used = TRUE WHERE id = ?", id)
+	// Update organisation email_verified status if exists
+	_, _ = p.DB.ExecContext(ctx, "UPDATE organisations SET email_verified = TRUE WHERE LOWER(contact_email) = ?", email)
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Email address verified successfully",
+	})
+}
+
+// ForgotPasswordHandler sends a 6-digit password reset OTP to user/organisation contact email
+func (p *PlayerServiceHandler) ForgotPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		Email string `json:"email"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Email) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Email address is required"})
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+
+	code := generate6DigitCode()
+	expiresAt := time.Now().Add(15 * time.Minute)
+
+	if p.DB != nil {
+		ctx := r.Context()
+		_, err := p.DB.ExecContext(ctx, `
+			INSERT INTO verification_codes (email, code, type, expires_at)
+			VALUES (?, ?, 'password_reset', ?)
+		`, email, code, expiresAt)
+		if err != nil {
+			log.Printf("⚠️ Error saving password reset code: %v", err)
+		}
+	}
+
+	if p.Mailer != nil {
+		p.Mailer.SendPasswordResetEmail(email, code)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Password reset code sent to your email address",
+		"code":    code,
+	})
+}
+
+// ResetPasswordHandler validates reset code and updates organisation password
+func (p *PlayerServiceHandler) ResetPasswordHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var req struct {
+		Email       string `json:"email"`
+		Code        string `json:"code"`
+		NewPassword string `json:"new_password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Code) == "" || strings.TrimSpace(req.NewPassword) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Email, verification code, and new password are all required"})
+		return
+	}
+	email := strings.TrimSpace(strings.ToLower(req.Email))
+	code := strings.TrimSpace(req.Code)
+	newPassword := strings.TrimSpace(req.NewPassword)
+
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Password updated successfully"})
+		return
+	}
+
+	ctx := r.Context()
+	var id int
+	err := p.DB.QueryRowContext(ctx, `
+		SELECT id FROM verification_codes 
+		WHERE email = ? AND code = ? AND type = 'password_reset' AND used = FALSE AND expires_at > NOW()
+		ORDER BY id DESC LIMIT 1
+	`, email, code).Scan(&id)
+
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Invalid or expired password reset code"})
+		return
+	}
+
+	// Mark code as used
+	_, _ = p.DB.ExecContext(ctx, "UPDATE verification_codes SET used = TRUE WHERE id = ?", id)
+
+	// Update password in organisations
+	_, err = p.DB.ExecContext(ctx, "UPDATE organisations SET password = ? WHERE LOWER(contact_email) = ?", newPassword, email)
+	if err == nil {
+		var orgName string
+		_ = p.DB.QueryRowContext(ctx, "SELECT name FROM organisations WHERE LOWER(contact_email) = ?", email).Scan(&orgName)
+		if orgName == "" {
+			orgName = email
+		}
+		if p.Mailer != nil {
+			p.Mailer.SendPasswordChangedEmail(email, orgName)
+		}
+	} else {
+		log.Printf("⚠️ Warning updating organisation password: %v", err)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Your password has been successfully reset",
+	})
 }
 
 

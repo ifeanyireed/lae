@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { saveOrganisation, saveUser, saveBatchUsers } from '@/services/api';
+import { saveOrganisation, saveUser, saveBatchUsers, sendVerificationCode, verifyEmailCode } from '@/services/api';
 import {
   IconSchool,
   IconHeartHandshake,
@@ -19,6 +19,9 @@ import {
   IconShieldCheck,
   IconPlus,
   IconTrash,
+  IconMailCheck,
+  IconAlertCircle,
+  IconX,
 } from '@tabler/icons-react';
 
 const AVATAR_OPTIONS = [
@@ -116,15 +119,43 @@ export default function OnboardingPage() {
     setTimeout(() => setCopiedCodeId(null), 2000);
   };
 
+  // Email verification state
+  const [showVerificationModal, setShowVerificationModal] = useState<boolean>(false);
+  const [verificationCode, setVerificationCode] = useState<string>('');
+  const [isSendingCode, setIsSendingCode] = useState<boolean>(false);
+  const [isVerifyingCode, setIsVerifyingCode] = useState<boolean>(false);
+  const [isEmailVerified, setIsEmailVerified] = useState<boolean>(false);
+  const [verificationMsg, setVerificationMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [demoCodeHint, setDemoCodeHint] = useState<string | null>(null);
+
   // Step Navigation
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step === 2) {
-      if (role === 'school' && (!schoolData.name || !schoolData.email || !schoolData.password)) {
-        alert('Please fill in school name, educator email, and create a password.');
+      const email = role === 'school' ? schoolData.email : familyData.email;
+      const pwd = role === 'school' ? schoolData.password : familyData.password;
+      const name = role === 'school' ? schoolData.name : familyData.parentName;
+
+      if (!name || !email || !pwd) {
+        alert(role === 'school' ? 'Please fill in school name, educator email, and create a password.' : 'Please fill in parent name, email, and create a password.');
         return;
       }
-      if (role === 'family' && (!familyData.parentName || !familyData.email || !familyData.password)) {
-        alert('Please fill in parent name, email, and create a password.');
+
+      if (!isEmailVerified) {
+        setIsSendingCode(true);
+        setVerificationMsg(null);
+        const res = await sendVerificationCode(email);
+        setIsSendingCode(false);
+
+        if (res.success) {
+          setShowVerificationModal(true);
+          if (res.code) {
+            setDemoCodeHint(res.code);
+            setVerificationCode(res.code);
+          }
+          setVerificationMsg({ type: 'success', text: `A 6-digit OTP code has been dispatched to ${email}` });
+        } else {
+          alert(`Failed to send verification code: ${res.error || 'Please try again'}`);
+        }
         return;
       }
     }
@@ -136,6 +167,26 @@ export default function OnboardingPage() {
       }
     }
     setStep((prev) => Math.min(prev + 1, 4));
+  };
+
+  const handleVerifyCodeSubmit = async () => {
+    const email = role === 'school' ? schoolData.email : familyData.email;
+    if (!verificationCode || verificationCode.length < 4) {
+      setVerificationMsg({ type: 'error', text: 'Please enter the 6-digit OTP code.' });
+      return;
+    }
+
+    setIsVerifyingCode(true);
+    const res = await verifyEmailCode(email, verificationCode);
+    setIsVerifyingCode(false);
+
+    if (res.success) {
+      setIsEmailVerified(true);
+      setShowVerificationModal(false);
+      setStep(3);
+    } else {
+      setVerificationMsg({ type: 'error', text: res.error || 'Invalid or expired verification code.' });
+    }
   };
 
   const handleBack = () => {
@@ -628,6 +679,82 @@ export default function OnboardingPage() {
       <footer className="text-center text-[10px] text-slate-400 font-normal uppercase tracking-wider py-2">
         © 2026 PuzzlePro Onboarding Wizard. All rights reserved.
       </footer>
+
+      {/* EMAIL VERIFICATION MODAL */}
+      {showVerificationModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 relative animate-scale-in">
+            <button
+              onClick={() => setShowVerificationModal(false)}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 p-1 rounded-lg transition"
+            >
+              <IconX className="w-5 h-5" />
+            </button>
+
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-3 bg-amber-100 text-amber-700 rounded-xl">
+                <IconMailCheck className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">Verify Email Address</h3>
+                <p className="text-xs text-slate-500">
+                  Code sent to <span className="font-medium text-slate-800">{role === 'school' ? schoolData.email : familyData.email}</span>
+                </p>
+              </div>
+            </div>
+
+            {verificationMsg && (
+              <div className={`p-3 rounded-xl text-xs flex items-center space-x-2 mb-4 ${
+                verificationMsg.type === 'success'
+                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                  : 'bg-red-50 text-red-700 border border-red-200'
+              }`}>
+                {verificationMsg.type === 'success' ? <IconCheck className="w-4 h-4 shrink-0" /> : <IconAlertCircle className="w-4 h-4 shrink-0" />}
+                <span>{verificationMsg.text}</span>
+              </div>
+            )}
+
+            {demoCodeHint && (
+              <div className="p-2.5 bg-sky-50 border border-sky-200 rounded-xl text-[11px] text-sky-800 mb-4 flex items-center justify-between">
+                <span>Verification OTP Code:</span>
+                <span className="font-mono font-bold text-sky-900 tracking-wider text-xs">{demoCodeHint}</span>
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-[11px] font-medium text-slate-700 mb-1">Enter 6-Digit Verification Code</label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  placeholder="e.g. 482910"
+                  value={verificationCode}
+                  onChange={(e) => setVerificationCode(e.target.value)}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-center text-lg font-mono tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowVerificationModal(false)}
+                  className="flex-1 py-2.5 border border-slate-200 text-slate-600 font-medium rounded-xl text-xs hover:bg-slate-50 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleVerifyCodeSubmit}
+                  disabled={isVerifyingCode}
+                  className="flex-1 py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-semibold rounded-xl text-xs border border-amber-500 shadow-sm transition flex items-center justify-center space-x-1.5"
+                >
+                  {isVerifyingCode ? <span>Verifying...</span> : <span>Verify & Continue</span>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
