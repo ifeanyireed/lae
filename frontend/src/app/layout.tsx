@@ -18,12 +18,18 @@ const inter = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "PuzzlePro - The Lost Monkey Explorer",
-  description: "Interactive Tabletop Scratch Block Maze Game",
+  title: "PuzzlePro - 636 Coding Exercises for Kids | Blocks, HTML, CSS, JavaScript, Python",
+  description: "Learn to code with 636 interactive coding exercises for kids. Master Scratch Blocks, HTML, CSS, JavaScript, and Python through fun gamified adventures!",
+  keywords: ["coding for kids", "Scratch blocks", "HTML for kids", "CSS", "JavaScript", "Python", "PuzzlePro", "gamified learning"],
   icons: {
     icon: "/monkey1.svg",
     shortcut: "/monkey1.svg",
     apple: "/monkey1.svg",
+  },
+  openGraph: {
+    title: "PuzzlePro - 636 Coding Exercises for Kids | Blocks, HTML, CSS, JavaScript, Python",
+    description: "Learn to code with 636 interactive coding exercises for kids. Master Scratch Blocks, HTML, CSS, JavaScript, and Python through fun gamified adventures!",
+    type: "website",
   },
 };
 
