@@ -476,11 +476,21 @@ export default function AdminControlsPage() {
   // ==========================================
   if (!isAuthenticated) {
     return (
-      <div
-        className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative bg-cover bg-center overflow-x-hidden"
-        style={{ backgroundImage: "url('/full_maze.jpeg')" }}
-      >
-        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/60 z-0" />
+      <div className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative overflow-hidden">
+        {/* Background Video */}
+        <video
+          autoPlay
+          loop
+          muted
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover filter brightness-85 contrast-105 z-0"
+        >
+          <source src="/login_bg.mov" type="video/quicktime" />
+          <source src="/login_bg.mov" type="video/mp4" />
+        </video>
+
+        {/* Rich dark gradient overlay matching NETS ERP */}
+        <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
 
         <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white">
           <div className="flex items-center gap-3">
