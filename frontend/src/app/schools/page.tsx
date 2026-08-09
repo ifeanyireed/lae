@@ -22,7 +22,9 @@ import {
   IconLoader2,
 } from '@tabler/icons-react';
 
+import { useRouter } from 'next/navigation';
 import { fetchOrganisations, fetchUsers, saveUser, deleteUser, assignWorld as assignWorldApi } from '@/services/api';
+import { authenticateUser } from '@/services/rbac';
 
 const AVATAR_OPTIONS = [
   '/images/character1.jpg',
@@ -141,37 +143,27 @@ export default function SchoolsPage() {
     loadDataFromDB();
   }, []);
 
+  const router = useRouter();
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) {
-      setAuthError('Please enter both educator email and password.');
-      return;
-    }
     setIsLoggingIn(true);
     setAuthError('');
 
-    try {
-      const orgs = await fetchOrganisations('school');
-      const match = orgs.find(
-        (o) =>
-          o.contactEmail.toLowerCase() === loginEmail.toLowerCase() &&
-          (o.password === loginPassword || loginPassword === 'school123')
-      );
+    const res = await authenticateUser(loginEmail, loginPassword);
+    if ('error' in res) {
+      setAuthError(res.error);
+      setIsLoggingIn(false);
+      return;
+    }
 
-      if (match) {
-        const targetOrgId = match.id;
-        sessionStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-        localStorage.setItem('puzzlepro_active_org_id', targetOrgId);
-        setActiveOrgId(targetOrgId);
-        setIsAuthenticated(true);
-        localStorage.setItem('puzzlepro_school_session', 'authenticated');
-        await loadDataFromDB(targetOrgId);
-      } else {
-        setAuthError('Invalid credentials. Check your email and password created during onboarding.');
-      }
-    } catch (err) {
+    if (res.redirectUrl && !res.redirectUrl.startsWith('/schools')) {
+      router.push(res.redirectUrl);
+    } else {
+      const targetOrgId = res.orgId || activeOrgId;
       setIsAuthenticated(true);
       localStorage.setItem('puzzlepro_school_session', 'authenticated');
+      await loadDataFromDB(targetOrgId);
     }
     setIsLoggingIn(false);
   };

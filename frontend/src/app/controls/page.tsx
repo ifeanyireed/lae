@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   fetchOrganisations as apiFetchOrgs,
   saveOrganisation as apiSaveOrg,
@@ -15,6 +16,7 @@ import {
   fetchSubscriptions as apiFetchSubs,
   saveSubscription as apiSaveSub,
 } from '@/services/api';
+import { authenticateUser } from '@/services/rbac';
 import {
   IconBuildingSkyscraper,
   IconUsers,
@@ -234,24 +236,29 @@ export default function AdminControlsPage() {
     } catch (e) {}
   };
 
+  const router = useRouter();
+
   // Animated Login handler
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!loginEmail || !loginPassword) {
-      setAuthError('Please enter both admin email and password.');
-      return;
-    }
     setIsLoggingIn(true);
     setAuthError('');
-    setTimeout(() => {
-      if (loginEmail === 'admin@puzzlepro.com' || loginEmail === 'admin' || loginPassword === 'admin123') {
-        setIsAuthenticated(true);
-        localStorage.setItem('puzzlepro_admin_session', 'authenticated');
-      } else {
-        setAuthError('Invalid Admin email or password.');
-      }
+
+    const res = await authenticateUser(loginEmail, loginPassword);
+    if ('error' in res) {
+      setAuthError(res.error);
       setIsLoggingIn(false);
-    }, 450);
+      return;
+    }
+
+    if (res.redirectUrl && res.redirectUrl !== '/controls') {
+      router.push(res.redirectUrl);
+    } else {
+      setIsAuthenticated(true);
+      localStorage.setItem('puzzlepro_admin_session', 'authenticated');
+      await loadControlsDBData();
+    }
+    setIsLoggingIn(false);
   };
 
   const handleLogout = () => {
