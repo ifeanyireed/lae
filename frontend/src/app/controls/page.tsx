@@ -23,7 +23,9 @@ import {
   IconAlertCircle,
   IconX,
   IconCrown,
-  IconChartBar,
+  IconRefresh,
+  IconPhone,
+  IconMail,
 } from '@tabler/icons-react';
 
 // Types for Admin Platform Modules
@@ -32,6 +34,7 @@ export interface Organisation {
   name: string;
   domain: string;
   contactEmail: string;
+  contactPhone: string;
   token: string;
   googleAdsEnabled: boolean;
   activeStudents: number;
@@ -41,7 +44,7 @@ export interface Organisation {
 export interface PlatformUser {
   id: string;
   name: string;
-  email: string;
+  studentCode: string; // 8-digit access code (e.g. 84920193)
   role: 'student' | 'teacher' | 'org_admin';
   organisationId: string;
   organisationName: string;
@@ -76,6 +79,7 @@ export default function AdminControlsPage() {
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedTokenId, setCopiedTokenId] = useState<string | null>(null);
+  const [copiedStudentCodeId, setCopiedStudentCodeId] = useState<string | null>(null);
 
   // Initial Seed Data / LocalStorage State
   const [organisations, setOrganisations] = useState<Organisation[]>([]);
@@ -86,13 +90,19 @@ export default function AdminControlsPage() {
   const [embedModalOrg, setEmbedModalOrg] = useState<Organisation | null>(null);
   const [isOrgModalOpen, setIsOrgModalOpen] = useState(false);
   const [editingOrg, setEditingOrg] = useState<Organisation | null>(null);
-  const [orgForm, setOrgForm] = useState({ name: '', domain: '', contactEmail: '', googleAdsEnabled: true });
+  const [orgForm, setOrgForm] = useState({
+    name: '',
+    domain: '',
+    contactEmail: '',
+    contactPhone: '',
+    googleAdsEnabled: true,
+  });
 
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<PlatformUser | null>(null);
   const [userForm, setUserForm] = useState({
     name: '',
-    email: '',
+    studentCode: '',
     role: 'student' as 'student' | 'teacher' | 'org_admin',
     organisationId: '',
     groupName: '',
@@ -108,6 +118,11 @@ export default function AdminControlsPage() {
     price: '$99/mo',
     renewalDate: '2026-12-31',
   });
+
+  // Helper to generate a unique 8-digit access code for students
+  const generate8DigitCode = () => {
+    return Math.floor(10000000 + Math.random() * 90000000).toString();
+  };
 
   // Check auth session on load & seed defaults
   useEffect(() => {
@@ -128,6 +143,7 @@ export default function AdminControlsPage() {
             name: 'STEM Explorers Academy',
             domain: 'stemexplorers.edu',
             contactEmail: 'admin@stemexplorers.edu',
+            contactPhone: '+1 (555) 234-5678',
             token: 'TOKEN_STEM_9932A',
             googleAdsEnabled: false,
             activeStudents: 140,
@@ -138,6 +154,7 @@ export default function AdminControlsPage() {
             name: 'Metro City Unified Schools',
             domain: 'metrocityschools.org',
             contactEmail: 'tech@metrocityschools.org',
+            contactPhone: '+1 (555) 876-5432',
             token: 'TOKEN_METRO_8821B',
             googleAdsEnabled: true,
             activeStudents: 480,
@@ -148,6 +165,7 @@ export default function AdminControlsPage() {
             name: 'Jungle Coders Kids Club',
             domain: 'junglecoders.com',
             contactEmail: 'hello@junglecoders.com',
+            contactPhone: '+234 803 123 4567',
             token: 'TOKEN_JUNGLE_7714C',
             googleAdsEnabled: true,
             activeStudents: 65,
@@ -158,7 +176,7 @@ export default function AdminControlsPage() {
         localStorage.setItem('puzzlepro_admin_orgs', JSON.stringify(initialOrgs));
       }
 
-      // Seed Users
+      // Seed Users with 8-digit codes
       const savedUsers = localStorage.getItem('puzzlepro_admin_users');
       if (savedUsers) {
         setUsersList(JSON.parse(savedUsers));
@@ -167,7 +185,7 @@ export default function AdminControlsPage() {
           {
             id: 'usr_101',
             name: 'Alex Johnson',
-            email: 'alex.j@stemexplorers.edu',
+            studentCode: '83920193',
             role: 'student',
             organisationId: 'org_001',
             organisationName: 'STEM Explorers Academy',
@@ -179,7 +197,7 @@ export default function AdminControlsPage() {
           {
             id: 'usr_102',
             name: 'Sarah Williams',
-            email: 'sarah.w@metrocityschools.org',
+            studentCode: '47201948',
             role: 'student',
             organisationId: 'org_002',
             organisationName: 'Metro City Unified Schools',
@@ -191,7 +209,7 @@ export default function AdminControlsPage() {
           {
             id: 'usr_103',
             name: 'David Chen',
-            email: 'david.c@junglecoders.com',
+            studentCode: '91823746',
             role: 'student',
             organisationId: 'org_003',
             organisationName: 'Jungle Coders Kids Club',
@@ -203,7 +221,7 @@ export default function AdminControlsPage() {
           {
             id: 'usr_104',
             name: 'Emily Davis (Instructor)',
-            email: 'emily.teacher@stemexplorers.edu',
+            studentCode: '58392014',
             role: 'teacher',
             organisationId: 'org_001',
             organisationName: 'STEM Explorers Academy',
@@ -291,7 +309,6 @@ export default function AdminControlsPage() {
       setAuthError('Please enter both admin email and password.');
       return;
     }
-    // Simple admin login credential check
     if (loginEmail === 'admin@puzzlepro.com' || loginEmail === 'admin' || loginPassword === 'admin123') {
       setIsAuthenticated(true);
       setAuthError('');
@@ -312,6 +329,13 @@ export default function AdminControlsPage() {
     navigator.clipboard.writeText(embedCode);
     setCopiedTokenId(org.id);
     setTimeout(() => setCopiedTokenId(null), 2500);
+  };
+
+  // Copy Student 8-Digit Access Code
+  const copyStudentCode = (userId: string, code: string) => {
+    navigator.clipboard.writeText(code);
+    setCopiedStudentCodeId(userId);
+    setTimeout(() => setCopiedStudentCodeId(null), 2000);
   };
 
   // Toggle Google Ads per Org
@@ -338,6 +362,7 @@ export default function AdminControlsPage() {
               name: orgForm.name,
               domain: orgForm.domain,
               contactEmail: orgForm.contactEmail,
+              contactPhone: orgForm.contactPhone,
               googleAdsEnabled: orgForm.googleAdsEnabled,
             }
           : org
@@ -350,6 +375,7 @@ export default function AdminControlsPage() {
         name: orgForm.name,
         domain: orgForm.domain || `${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
         contactEmail: orgForm.contactEmail || `admin@${orgForm.name.toLowerCase().replace(/\s+/g, '')}.com`,
+        contactPhone: orgForm.contactPhone || '+1 (555) 000-0000',
         token: `TOKEN_${orgForm.name.substring(0, 4).toUpperCase()}_${tokenRandom}`,
         googleAdsEnabled: orgForm.googleAdsEnabled,
         activeStudents: 0,
@@ -360,7 +386,7 @@ export default function AdminControlsPage() {
 
     setIsOrgModalOpen(false);
     setEditingOrg(null);
-    setOrgForm({ name: '', domain: '', contactEmail: '', googleAdsEnabled: true });
+    setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true });
   };
 
   const handleDeleteOrg = (id: string) => {
@@ -372,9 +398,10 @@ export default function AdminControlsPage() {
   // Create/Update User
   const handleSaveUser = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userForm.name || !userForm.email) return;
+    if (!userForm.name) return;
 
     const orgObj = organisations.find((o) => o.id === userForm.organisationId) || organisations[0];
+    const finalStudentCode = userForm.studentCode || generate8DigitCode();
 
     if (editingUser) {
       const updated = usersList.map((u) =>
@@ -382,7 +409,7 @@ export default function AdminControlsPage() {
           ? {
               ...u,
               name: userForm.name,
-              email: userForm.email,
+              studentCode: finalStudentCode,
               role: userForm.role,
               organisationId: orgObj.id,
               organisationName: orgObj.name,
@@ -396,7 +423,7 @@ export default function AdminControlsPage() {
       const newUser: PlatformUser = {
         id: `usr_${Date.now().toString().slice(-4)}`,
         name: userForm.name,
-        email: userForm.email,
+        studentCode: finalStudentCode,
         role: userForm.role,
         organisationId: orgObj.id,
         organisationName: orgObj.name,
@@ -410,11 +437,11 @@ export default function AdminControlsPage() {
 
     setIsUserModalOpen(false);
     setEditingUser(null);
-    setUserForm({ name: '', email: '', role: 'student', organisationId: '', groupName: '', assignedWorldId: 1 });
+    setUserForm({ name: '', studentCode: '', role: 'student', organisationId: '', groupName: '', assignedWorldId: 1 });
   };
 
   const handleDeleteUser = (id: string) => {
-    if (confirm('Delete this user account?')) {
+    if (confirm('Delete this student account?')) {
       saveUsers(usersList.filter((u) => u.id !== id));
     }
   };
@@ -453,55 +480,52 @@ export default function AdminControlsPage() {
         className="min-h-screen font-sans flex items-center justify-end p-6 sm:p-12 md:p-20 relative bg-cover bg-center overflow-x-hidden"
         style={{ backgroundImage: "url('/full_maze.jpeg')" }}
       >
-        {/* Rich blue/indigo full-screen gradient overlay matching NETS ERP */}
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/60 z-0" />
 
-        {/* Floating Hero Info on Left (Medium + Large screens) */}
         <div className="hidden md:flex absolute left-12 lg:left-20 top-1/2 -translate-y-1/2 z-10 max-w-md flex-col gap-6 text-white">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/20 shadow-xl">
               <Image src="/monkey1.svg" alt="PuzzlePro Logo" width={28} height={28} className="object-contain" />
             </div>
-            <span className="font-extrabold text-xs tracking-widest uppercase text-amber-300">
+            <span className="font-semibold text-xs tracking-widest uppercase text-amber-300">
               PuzzlePro Admin Controls
             </span>
           </div>
           <div>
-            <h1 className="text-4xl lg:text-5xl font-black text-white leading-tight tracking-tight">
+            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tight">
               Empowering Talent, <br />
               <span className="text-amber-400">Driving Platform Growth.</span>
             </h1>
-            <p className="text-xs text-slate-200/80 mt-4 leading-relaxed font-semibold">
-              Welcome to the PuzzlePro Admin Worksuite. Manage organisation iFrame embeds, turn Google Ads monetization on/off, assign STEM learning worlds to students, and manage paid subscriptions in one unified dashboard.
+            <p className="text-xs text-slate-200/80 mt-4 leading-relaxed font-medium">
+              Welcome to the PuzzlePro Admin Worksuite. Manage organisation iFrame embeds, turn Google Ads monetization on/off, assign 8-digit student access codes, and manage paid subscriptions in one unified dashboard.
             </p>
           </div>
-          <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mt-4">
+          <div className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider mt-4">
             © 2026 PuzzlePro Platform Controls. All rights reserved.
           </div>
         </div>
 
-        {/* Floating Login Card on the Right */}
         <div className="relative z-10 w-full max-w-[380px] bg-slate-900/80 md:bg-white/90 p-7 rounded-[28px] border border-white/20 md:border-white/60 shadow-2xl backdrop-blur-xl flex flex-col gap-4">
           <div className="text-center md:text-left">
             <div className="w-12 h-12 bg-amber-400 rounded-2xl flex items-center justify-center border border-amber-600 shadow-md mb-2 mx-auto md:mx-0">
               <IconShieldCheck className="w-7 h-7 text-slate-950" />
             </div>
-            <h2 className="text-xl font-black text-white md:text-slate-900 tracking-tight">Admin Controls</h2>
-            <p className="text-[10px] text-slate-400 md:text-slate-500 font-bold uppercase tracking-wide mt-0.5">
+            <h2 className="text-xl font-bold text-white md:text-slate-900 tracking-tight">Admin Controls</h2>
+            <p className="text-[10px] text-slate-400 md:text-slate-500 font-semibold uppercase tracking-wide mt-0.5">
               Sign in to platform dashboard
             </p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-3.5">
             {authError && (
-              <div className="bg-red-500/10 md:bg-red-50 text-red-400 md:text-red-700 text-[11px] font-bold p-3 rounded-xl border border-red-500/20 md:border-red-200 flex items-center gap-2">
+              <div className="bg-red-500/10 md:bg-red-50 text-red-400 md:text-red-700 text-[11px] font-medium p-3 rounded-xl border border-red-500/20 md:border-red-200 flex items-center gap-2">
                 <IconAlertCircle className="w-4 h-4 shrink-0" />
                 <span>{authError}</span>
               </div>
             )}
 
             <div>
-              <label className="block text-[9px] font-extrabold text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
+              <label className="block text-[9px] font-semibold text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
                 Admin Email / Username
               </label>
               <input
@@ -512,12 +536,12 @@ export default function AdminControlsPage() {
                   setLoginEmail(e.target.value);
                   setAuthError('');
                 }}
-                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-semibold text-white md:text-slate-900"
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900"
               />
             </div>
 
             <div>
-              <label className="block text-[9px] font-extrabold text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
+              <label className="block text-[9px] font-semibold text-slate-300 md:text-slate-600 uppercase mb-1 tracking-wider">
                 Password
               </label>
               <input
@@ -528,20 +552,20 @@ export default function AdminControlsPage() {
                   setLoginPassword(e.target.value);
                   setAuthError('');
                 }}
-                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-semibold text-white md:text-slate-900"
+                className="w-full px-3.5 py-2.5 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-normal text-white md:text-slate-900"
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500"
+              className="w-full py-2.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl shadow-md transition-all duration-200 hover:scale-[1.01] active:scale-98 text-xs cursor-pointer border border-amber-500"
             >
               Sign In to Admin Portal
             </button>
           </form>
 
-          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-semibold mt-1">
-            Default credentials: <span className="font-bold text-amber-500 md:text-slate-900">admin@puzzlepro.com / admin123</span>
+          <p className="text-[10px] text-center md:text-left text-slate-400 md:text-slate-500 font-medium mt-1">
+            Default credentials: <span className="font-semibold text-amber-500 md:text-slate-900">admin@puzzlepro.com / admin123</span>
           </p>
         </div>
       </div>
@@ -555,13 +579,14 @@ export default function AdminControlsPage() {
     (o) =>
       o.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       o.domain.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.contactEmail.toLowerCase().includes(searchQuery.toLowerCase())
+      o.contactEmail.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      o.contactPhone.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const filteredUsers = usersList.filter(
     (u) =>
       u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      u.studentCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.groupName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       u.organisationName.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -582,9 +607,9 @@ export default function AdminControlsPage() {
             <Image src="/monkey1.svg" alt="PuzzlePro" width={24} height={24} className="object-contain" />
           </div>
           <div>
-            <h1 className="text-base font-black text-white tracking-tight flex items-center gap-2">
+            <h1 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
               <span>PuzzlePro Admin Controls</span>
-              <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30 uppercase font-extrabold tracking-wider">
+              <span className="text-[10px] bg-amber-400/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-400/30 uppercase font-semibold tracking-wider">
                 v2.1.1 Enterprise
               </span>
             </h1>
@@ -593,10 +618,10 @@ export default function AdminControlsPage() {
         </div>
 
         <div className="flex items-center space-x-3">
-          <span className="text-xs font-bold text-slate-300 hidden sm:inline">Admin User</span>
+          <span className="text-xs font-semibold text-slate-300 hidden sm:inline">Admin User</span>
           <button
             onClick={handleLogout}
-            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold flex items-center space-x-1.5 transition cursor-pointer border border-slate-700 shadow-sm"
+            className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition cursor-pointer border border-slate-700 shadow-sm"
           >
             <IconLogout className="w-3.5 h-3.5" />
             <span>Sign Out</span>
@@ -610,9 +635,9 @@ export default function AdminControlsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Organisations</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{organisations.length} Active</h3>
-              <p className="text-[11px] font-semibold text-emerald-600 mt-0.5">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Organisations</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">{organisations.length} Active</h3>
+              <p className="text-[11px] font-medium text-emerald-600 mt-0.5">
                 {organisations.filter((o) => o.googleAdsEnabled).length} Monetized via Ads
               </p>
             </div>
@@ -623,9 +648,9 @@ export default function AdminControlsPage() {
 
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Total Enrolled Students</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{usersList.length} Students</h3>
-              <p className="text-[11px] font-semibold text-blue-600 mt-0.5">Across 5 Learning Worlds</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Enrolled Students</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">{usersList.length} Students</h3>
+              <p className="text-[11px] font-medium text-blue-600 mt-0.5">8-Digit Access Codes Active</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-purple-50 border border-purple-100 flex items-center justify-center text-purple-600">
               <IconUsers className="w-6 h-6" />
@@ -634,9 +659,9 @@ export default function AdminControlsPage() {
 
           <div className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm flex items-center justify-between">
             <div>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Paid Subscriptions</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{subscriptionsList.length} Accounts</h3>
-              <p className="text-[11px] font-semibold text-amber-600 mt-0.5">Active Enterprise Plans</p>
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Paid Subscriptions</p>
+              <h3 className="text-2xl font-bold text-slate-900 mt-1">{subscriptionsList.length} Accounts</h3>
+              <p className="text-[11px] font-medium text-amber-600 mt-0.5">Active Enterprise Plans</p>
             </div>
             <div className="w-12 h-12 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
               <IconCreditCard className="w-6 h-6" />
@@ -652,10 +677,10 @@ export default function AdminControlsPage() {
                 setActiveTab('organisations');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center space-x-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'organisations'
                   ? 'bg-slate-900 text-amber-400 shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 font-semibold'
               }`}
             >
               <IconBuildingSkyscraper className="w-4 h-4" />
@@ -667,8 +692,8 @@ export default function AdminControlsPage() {
                 setActiveTab('users');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center space-x-2 cursor-pointer ${
-                activeTab === 'users' ? 'bg-slate-900 text-amber-400 shadow-sm' : 'text-slate-600 hover:bg-slate-100'
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
+                activeTab === 'users' ? 'bg-slate-900 text-amber-400 shadow-sm' : 'text-slate-600 hover:bg-slate-100 font-semibold'
               }`}
             >
               <IconUsers className="w-4 h-4" />
@@ -680,10 +705,10 @@ export default function AdminControlsPage() {
                 setActiveTab('subscriptions');
                 setSearchQuery('');
               }}
-              className={`px-4 py-2 rounded-xl text-xs font-black transition flex items-center space-x-2 cursor-pointer ${
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center space-x-2 cursor-pointer ${
                 activeTab === 'subscriptions'
                   ? 'bg-slate-900 text-amber-400 shadow-sm'
-                  : 'text-slate-600 hover:bg-slate-100'
+                  : 'text-slate-600 hover:bg-slate-100 font-semibold'
               }`}
             >
               <IconCreditCard className="w-4 h-4" />
@@ -699,7 +724,7 @@ export default function AdminControlsPage() {
               placeholder="Search module..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:ring-2 focus:ring-amber-500"
+              className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-800 outline-none focus:ring-2 focus:ring-amber-500"
             />
           </div>
         </div>
@@ -709,19 +734,19 @@ export default function AdminControlsPage() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Organisation Management</h2>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                  Create organisations, generate unique iFrame embed tokens, and toggle Google Ads monetization.
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">Organisation Management</h2>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  Create organisations, manage contact emails & phone numbers, generate iFrame embed tokens, and toggle Google Ads.
                 </p>
               </div>
 
               <button
                 onClick={() => {
                   setEditingOrg(null);
-                  setOrgForm({ name: '', domain: '', contactEmail: '', googleAdsEnabled: true });
+                  setOrgForm({ name: '', domain: '', contactEmail: '', contactPhone: '', googleAdsEnabled: true });
                   setIsOrgModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Organisation</span>
@@ -732,23 +757,36 @@ export default function AdminControlsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
+                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                     <th className="py-3 px-3">Organisation Name</th>
                     <th className="py-3 px-3">Domain</th>
+                    <th className="py-3 px-3">Contact Details</th>
                     <th className="py-3 px-3">Unique Embed Token</th>
                     <th className="py-3 px-3">Google Ads</th>
                     <th className="py-3 px-3">Students</th>
                     <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
                   {filteredOrgs.map((org) => (
                     <tr key={org.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 px-3 font-bold text-slate-900">{org.name}</td>
+                      <td className="py-3.5 px-3 font-semibold text-slate-900">{org.name}</td>
                       <td className="py-3.5 px-3 text-slate-500 font-mono text-[11px]">{org.domain}</td>
                       <td className="py-3.5 px-3">
+                        <div className="flex flex-col space-y-0.5 text-[11px]">
+                          <span className="flex items-center space-x-1 text-slate-700 font-medium">
+                            <IconMail className="w-3 h-3 text-slate-400" />
+                            <span>{org.contactEmail}</span>
+                          </span>
+                          <span className="flex items-center space-x-1 text-slate-500 font-mono">
+                            <IconPhone className="w-3 h-3 text-slate-400" />
+                            <span>{org.contactPhone}</span>
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-3.5 px-3">
                         <div className="flex items-center space-x-2">
-                          <span className="bg-slate-100 border border-slate-200 text-slate-800 font-mono text-[11px] px-2 py-0.5 rounded-lg font-bold">
+                          <span className="bg-slate-100 border border-slate-200 text-slate-800 font-mono text-[11px] px-2 py-0.5 rounded-lg font-semibold">
                             {org.token}
                           </span>
                           <button
@@ -767,7 +805,7 @@ export default function AdminControlsPage() {
                       <td className="py-3.5 px-3">
                         <button
                           onClick={() => toggleGoogleAds(org.id)}
-                          className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-black cursor-pointer border transition ${
+                          className={`flex items-center space-x-1 px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer border transition ${
                             org.googleAdsEnabled
                               ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
                               : 'bg-slate-100 text-slate-600 border-slate-300 hover:bg-slate-200'
@@ -786,12 +824,12 @@ export default function AdminControlsPage() {
                           )}
                         </button>
                       </td>
-                      <td className="py-3.5 px-3 font-bold text-slate-800">{org.activeStudents}</td>
+                      <td className="py-3.5 px-3 font-semibold text-slate-800">{org.activeStudents}</td>
                       <td className="py-3.5 px-3 text-right">
                         <div className="flex items-center justify-end space-x-2">
                           <button
                             onClick={() => setEmbedModalOrg(org)}
-                            className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-black flex items-center space-x-1 cursor-pointer"
+                            className="px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-[10px] font-bold flex items-center space-x-1 cursor-pointer"
                           >
                             <IconCode className="w-3.5 h-3.5" />
                             <span>iFrame Snippet</span>
@@ -803,6 +841,7 @@ export default function AdminControlsPage() {
                                 name: org.name,
                                 domain: org.domain,
                                 contactEmail: org.contactEmail,
+                                contactPhone: org.contactPhone,
                                 googleAdsEnabled: org.googleAdsEnabled,
                               });
                               setIsOrgModalOpen(true);
@@ -825,7 +864,7 @@ export default function AdminControlsPage() {
                   ))}
                   {filteredOrgs.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 text-xs font-medium">
+                      <td colSpan={7} className="py-8 text-center text-slate-400 text-xs font-medium">
                         No organisations found.
                       </td>
                     </tr>
@@ -841,9 +880,9 @@ export default function AdminControlsPage() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
-                <h2 className="text-base font-black text-slate-900 tracking-tight">User & World Assignment</h2>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">
-                  View student details in assigned groups/classes across organisations and assign Learning Worlds.
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">User & World Assignment</h2>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
+                  Manage student 8-digit access codes, view groups/classes across organisations, and assign Learning Worlds.
                 </p>
               </div>
 
@@ -852,7 +891,7 @@ export default function AdminControlsPage() {
                   setEditingUser(null);
                   setUserForm({
                     name: '',
-                    email: '',
+                    studentCode: generate8DigitCode(),
                     role: 'student',
                     organisationId: organisations[0]?.id || '',
                     groupName: '',
@@ -860,7 +899,7 @@ export default function AdminControlsPage() {
                   });
                   setIsUserModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Student / User</span>
@@ -871,9 +910,9 @@ export default function AdminControlsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
+                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                     <th className="py-3 px-3">Student Name</th>
-                    <th className="py-3 px-3">Email</th>
+                    <th className="py-3 px-3">8-Digit Access Code</th>
                     <th className="py-3 px-3">Organisation</th>
                     <th className="py-3 px-3">Group / Class</th>
                     <th className="py-3 px-3">Assigned World</th>
@@ -881,14 +920,31 @@ export default function AdminControlsPage() {
                     <th className="py-3 px-3 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
                   {filteredUsers.map((usr) => (
                     <tr key={usr.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 px-3 font-bold text-slate-900">{usr.name}</td>
-                      <td className="py-3.5 px-3 text-slate-500">{usr.email}</td>
+                      <td className="py-3.5 px-3 font-semibold text-slate-900">{usr.name}</td>
+                      <td className="py-3.5 px-3">
+                        <div className="flex items-center space-x-2">
+                          <span className="bg-amber-100/80 border border-amber-300 text-amber-950 font-mono text-xs px-2.5 py-1 rounded-xl font-bold tracking-widest shadow-xs">
+                            {usr.studentCode}
+                          </span>
+                          <button
+                            onClick={() => copyStudentCode(usr.id, usr.studentCode)}
+                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition cursor-pointer"
+                            title="Copy 8-Digit Access Code"
+                          >
+                            {copiedStudentCodeId === usr.id ? (
+                              <IconCheck className="w-3.5 h-3.5 text-emerald-600" />
+                            ) : (
+                              <IconCopy className="w-3.5 h-3.5" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
                       <td className="py-3.5 px-3 text-slate-700">{usr.organisationName}</td>
                       <td className="py-3.5 px-3">
-                        <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px] font-bold">
+                        <span className="bg-purple-50 text-purple-700 border border-purple-200 px-2 py-0.5 rounded-lg text-[11px] font-medium">
                           {usr.groupName}
                         </span>
                       </td>
@@ -897,7 +953,7 @@ export default function AdminControlsPage() {
                         <select
                           value={usr.assignedWorldId}
                           onChange={(e) => handleAssignWorld(usr.id, parseInt(e.target.value))}
-                          className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-950 font-black rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
+                          className="px-2.5 py-1 bg-amber-50 border border-amber-300 text-amber-950 font-bold rounded-xl text-xs outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer shadow-xs"
                         >
                           <option value={1}>World 1 (Monkey Explorers)</option>
                           <option value={2}>World 2 (HTML Architects)</option>
@@ -907,7 +963,7 @@ export default function AdminControlsPage() {
                         </select>
                       </td>
                       <td className="py-3.5 px-3">
-                        <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                        <span className="uppercase text-[10px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
                           {usr.role}
                         </span>
                       </td>
@@ -918,7 +974,7 @@ export default function AdminControlsPage() {
                               setEditingUser(usr);
                               setUserForm({
                                 name: usr.name,
-                                email: usr.email,
+                                studentCode: usr.studentCode,
                                 role: usr.role,
                                 organisationId: usr.organisationId,
                                 groupName: usr.groupName,
@@ -927,14 +983,14 @@ export default function AdminControlsPage() {
                               setIsUserModalOpen(true);
                             }}
                             className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer"
-                            title="Edit User"
+                            title="Edit Student"
                           >
                             <IconEdit className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteUser(usr.id)}
                             className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
-                            title="Delete User"
+                            title="Delete Student"
                           >
                             <IconTrash className="w-3.5 h-3.5" />
                           </button>
@@ -960,8 +1016,8 @@ export default function AdminControlsPage() {
           <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col gap-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-150">
               <div>
-                <h2 className="text-base font-black text-slate-900 tracking-tight">Subscription Management</h2>
-                <p className="text-xs text-slate-500 font-semibold mt-0.5">
+                <h2 className="text-base font-bold text-slate-900 tracking-tight">Subscription Management</h2>
+                <p className="text-xs text-slate-500 font-normal mt-0.5">
                   Manage paid users, seat licenses, renewal cycles, and enterprise accounts.
                 </p>
               </div>
@@ -978,7 +1034,7 @@ export default function AdminControlsPage() {
                   });
                   setIsSubModalOpen(true);
                 }}
-                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
+                className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center space-x-1.5 shadow-sm border border-amber-500 transition cursor-pointer self-start sm:self-auto"
               >
                 <IconPlus className="w-4 h-4" />
                 <span>Add Paid Subscription</span>
@@ -989,7 +1045,7 @@ export default function AdminControlsPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-extrabold">
+                  <tr className="border-b border-slate-200 text-[10px] uppercase tracking-wider text-slate-400 font-semibold">
                     <th className="py-3 px-3">Organisation / Account</th>
                     <th className="py-3 px-3">User Email</th>
                     <th className="py-3 px-3">Plan Type</th>
@@ -999,21 +1055,21 @@ export default function AdminControlsPage() {
                     <th className="py-3 px-3">Renewal Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
+                <tbody className="divide-y divide-slate-100 text-xs font-normal text-slate-700">
                   {filteredSubs.map((sub) => (
                     <tr key={sub.id} className="hover:bg-slate-50 transition-colors">
-                      <td className="py-3.5 px-3 font-bold text-slate-900">{sub.organisationName}</td>
+                      <td className="py-3.5 px-3 font-semibold text-slate-900">{sub.organisationName}</td>
                       <td className="py-3.5 px-3 text-slate-500">{sub.userEmail}</td>
                       <td className="py-3.5 px-3">
-                        <span className="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-lg text-[11px] font-black flex items-center space-x-1 w-fit">
+                        <span className="bg-amber-50 text-amber-900 border border-amber-200 px-2 py-0.5 rounded-lg text-[11px] font-bold flex items-center space-x-1 w-fit">
                           <IconCrown className="w-3 h-3 text-amber-600" />
                           <span>{sub.planName}</span>
                         </span>
                       </td>
-                      <td className="py-3.5 px-3 font-bold text-slate-800">{sub.seats} Seats</td>
-                      <td className="py-3.5 px-3 font-bold text-emerald-700">{sub.price}</td>
+                      <td className="py-3.5 px-3 font-semibold text-slate-800">{sub.seats} Seats</td>
+                      <td className="py-3.5 px-3 font-semibold text-emerald-700">{sub.price}</td>
                       <td className="py-3.5 px-3">
-                        <span className="uppercase text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="uppercase text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200">
                           {sub.status}
                         </span>
                       </td>
@@ -1041,7 +1097,7 @@ export default function AdminControlsPage() {
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
               <div className="flex items-center space-x-2">
                 <IconCode className="w-5 h-5 text-amber-500" />
-                <h3 className="font-black text-slate-900 text-base">iFrame Embed Code</h3>
+                <h3 className="font-bold text-slate-900 text-base">iFrame Embed Code</h3>
               </div>
               <button
                 onClick={() => setEmbedModalOrg(null)}
@@ -1052,7 +1108,7 @@ export default function AdminControlsPage() {
             </div>
 
             <div>
-              <p className="text-xs text-slate-600 font-semibold mb-2">
+              <p className="text-xs text-slate-600 font-medium mb-2">
                 Embed PuzzlePro into <span className="font-bold text-slate-900">{embedModalOrg.name}</span>'s portal using their unique token:
               </p>
               <div className="bg-slate-900 text-slate-100 p-4 rounded-2xl font-mono text-xs overflow-x-auto relative border border-slate-800">
@@ -1063,7 +1119,7 @@ export default function AdminControlsPage() {
             <div className="flex items-center justify-end space-x-3 pt-2">
               <button
                 onClick={() => copyEmbedCode(embedModalOrg)}
-                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
+                className="px-5 py-2.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold text-xs flex items-center space-x-1.5 border border-amber-500 shadow-sm transition cursor-pointer"
               >
                 {copiedTokenId === embedModalOrg.id ? (
                   <>
@@ -1087,7 +1143,7 @@ export default function AdminControlsPage() {
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
-              <h3 className="font-black text-slate-900 text-base">
+              <h3 className="font-bold text-slate-900 text-base">
                 {editingOrg ? 'Edit Organisation' : 'Add New Organisation'}
               </h3>
               <button
@@ -1100,7 +1156,7 @@ export default function AdminControlsPage() {
 
             <form onSubmit={handleSaveOrg} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
                   Organisation Name
                 </label>
                 <input
@@ -1109,30 +1165,47 @@ export default function AdminControlsPage() {
                   value={orgForm.name}
                   onChange={(e) => setOrgForm({ ...orgForm, name: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Domain</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Domain</label>
                 <input
                   type="text"
                   placeholder="stemexplorers.edu"
                   value={orgForm.domain}
                   onChange={(e) => setOrgForm({ ...orgForm, domain: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Contact Email</label>
-                <input
-                  type="email"
-                  placeholder="admin@stemexplorers.edu"
-                  value={orgForm.contactEmail}
-                  onChange={(e) => setOrgForm({ ...orgForm, contactEmail: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
+                    Contact Email
+                  </label>
+                  <input
+                    type="email"
+                    placeholder="admin@stemexplorers.edu"
+                    value={orgForm.contactEmail}
+                    onChange={(e) => setOrgForm({ ...orgForm, contactEmail: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
+                    Phone Number
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="+1 (555) 234-5678"
+                    value={orgForm.contactPhone}
+                    onChange={(e) => setOrgForm({ ...orgForm, contactPhone: e.target.value })}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center space-x-3 bg-slate-50 p-3 rounded-2xl border border-slate-200">
@@ -1143,7 +1216,7 @@ export default function AdminControlsPage() {
                   onChange={(e) => setOrgForm({ ...orgForm, googleAdsEnabled: e.target.checked })}
                   className="w-4 h-4 accent-amber-500 cursor-pointer"
                 />
-                <label htmlFor="googleAdsToggle" className="text-xs font-bold text-slate-800 cursor-pointer">
+                <label htmlFor="googleAdsToggle" className="text-xs font-semibold text-slate-800 cursor-pointer">
                   Enable Google Ads Monetization for this Organisation
                 </label>
               </div>
@@ -1152,13 +1225,13 @@ export default function AdminControlsPage() {
                 <button
                   type="button"
                   onClick={() => setIsOrgModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold rounded-xl text-xs cursor-pointer"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold rounded-xl text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
                 >
                   {editingOrg ? 'Save Changes' : 'Create Organisation'}
                 </button>
@@ -1173,8 +1246,8 @@ export default function AdminControlsPage() {
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
-              <h3 className="font-black text-slate-900 text-base">
-                {editingUser ? 'Edit User & World Assignment' : 'Add New Student / User'}
+              <h3 className="font-bold text-slate-900 text-base">
+                {editingUser ? 'Edit Student & World Assignment' : 'Add New Student / User'}
               </h3>
               <button
                 onClick={() => setIsUserModalOpen(false)}
@@ -1186,38 +1259,51 @@ export default function AdminControlsPage() {
 
             <form onSubmit={handleSaveUser} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Student Name</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Student Name</label>
                 <input
                   type="text"
                   placeholder="Alex Johnson"
                   value={userForm.name}
                   onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Email</label>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase">
+                    8-Digit Access Code
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setUserForm({ ...userForm, studentCode: generate8DigitCode() })}
+                    className="text-[10px] font-bold text-amber-700 hover:text-amber-800 flex items-center space-x-1 cursor-pointer"
+                  >
+                    <IconRefresh className="w-3 h-3" />
+                    <span>Auto Generate Code</span>
+                  </button>
+                </div>
                 <input
-                  type="email"
-                  placeholder="alex.j@stemexplorers.edu"
-                  value={userForm.email}
-                  onChange={(e) => setUserForm({ ...userForm, email: e.target.value })}
+                  type="text"
+                  maxLength={8}
+                  placeholder="83920193"
+                  value={userForm.studentCode}
+                  onChange={(e) => setUserForm({ ...userForm, studentCode: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-amber-50 border border-amber-300 rounded-xl text-xs font-mono font-bold text-amber-950 tracking-widest focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
                     Organisation
                   </label>
                   <select
                     value={userForm.organisationId}
                     onChange={(e) => setUserForm({ ...userForm, organisationId: e.target.value })}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none"
                   >
                     {organisations.map((o) => (
                       <option key={o.id} value={o.id}>
@@ -1228,7 +1314,7 @@ export default function AdminControlsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
                     Group / Class
                   </label>
                   <input
@@ -1236,19 +1322,19 @@ export default function AdminControlsPage() {
                     placeholder="Grade 5 Coding Class"
                     value={userForm.groupName}
                     onChange={(e) => setUserForm({ ...userForm, groupName: e.target.value })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
                   Assigned World
                 </label>
                 <select
                   value={userForm.assignedWorldId}
                   onChange={(e) => setUserForm({ ...userForm, assignedWorldId: parseInt(e.target.value) })}
-                  className="w-full px-3 py-2.5 bg-amber-50 border border-amber-300 font-black text-amber-950 rounded-xl text-xs outline-none"
+                  className="w-full px-3 py-2.5 bg-amber-50 border border-amber-300 font-bold text-amber-950 rounded-xl text-xs outline-none"
                 >
                   <option value={1}>World 1 (Monkey Explorers)</option>
                   <option value={2}>World 2 (HTML Architects)</option>
@@ -1262,15 +1348,15 @@ export default function AdminControlsPage() {
                 <button
                   type="button"
                   onClick={() => setIsUserModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold rounded-xl text-xs cursor-pointer"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold rounded-xl text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
                 >
-                  {editingUser ? 'Save Changes' : 'Create User'}
+                  {editingUser ? 'Save Changes' : 'Create Student'}
                 </button>
               </div>
             </form>
@@ -1283,7 +1369,7 @@ export default function AdminControlsPage() {
         <div className="fixed inset-0 bg-slate-950/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 flex flex-col gap-4 animate-in fade-in zoom-in duration-150">
             <div className="flex items-center justify-between pb-3 border-b border-slate-150">
-              <h3 className="font-black text-slate-900 text-base">Add Paid Subscription</h3>
+              <h3 className="font-bold text-slate-900 text-base">Add Paid Subscription</h3>
               <button
                 onClick={() => setIsSubModalOpen(false)}
                 className="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-600 transition cursor-pointer"
@@ -1294,7 +1380,7 @@ export default function AdminControlsPage() {
 
             <form onSubmit={handleSaveSubscription} className="flex flex-col gap-4">
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">
                   Organisation Name
                 </label>
                 <input
@@ -1303,29 +1389,29 @@ export default function AdminControlsPage() {
                   value={subForm.organisationName}
                   onChange={(e) => setSubForm({ ...subForm, organisationName: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">User Email</label>
+                <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">User Email</label>
                 <input
                   type="email"
                   placeholder="admin@stemexplorers.edu"
                   value={subForm.userEmail}
                   onChange={(e) => setSubForm({ ...subForm, userEmail: e.target.value })}
                   required
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 focus:ring-2 focus:ring-amber-500 outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Plan</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Plan</label>
                   <select
                     value={subForm.planName}
                     onChange={(e) => setSubForm({ ...subForm, planName: e.target.value as any })}
-                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none"
+                    className="w-full px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none"
                   >
                     <option value="Free Starter">Free Starter</option>
                     <option value="Pro Explorer">Pro Explorer</option>
@@ -1334,12 +1420,12 @@ export default function AdminControlsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-extrabold text-slate-500 uppercase mb-1">Seats</label>
+                  <label className="block text-[10px] font-semibold text-slate-500 uppercase mb-1">Seats</label>
                   <input
                     type="number"
                     value={subForm.seats}
                     onChange={(e) => setSubForm({ ...subForm, seats: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900 outline-none"
                   />
                 </div>
               </div>
@@ -1348,13 +1434,13 @@ export default function AdminControlsPage() {
                 <button
                   type="button"
                   onClick={() => setIsSubModalOpen(false)}
-                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-bold rounded-xl text-xs cursor-pointer"
+                  className="px-4 py-2 border border-slate-200 text-slate-600 hover:bg-slate-100 font-semibold rounded-xl text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
+                  className="px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold rounded-xl text-xs shadow-sm border border-amber-500 cursor-pointer"
                 >
                   Create Subscription
                 </button>
