@@ -1345,11 +1345,18 @@ func (p *PlayerServiceHandler) VerifyEmbedTokenHandler(w http.ResponseWriter, r 
 	if org.Domain != "" && org.Domain != "*" && requestOrigin != "" {
 		cleanDomain := strings.ToLower(org.Domain)
 		cleanOrigin := strings.ToLower(requestOrigin)
-		if !strings.Contains(cleanOrigin, cleanDomain) && !strings.Contains(cleanDomain, "localhost") {
+		// Allow origin if it contains organisation domain, platform host (learn2earnhq.com, resultspro.ng), or localhost
+		isAllowed := strings.Contains(cleanOrigin, cleanDomain) ||
+			strings.Contains(cleanOrigin, "learn2earnhq.com") ||
+			strings.Contains(cleanOrigin, "resultspro.ng") ||
+			strings.Contains(cleanOrigin, "localhost") ||
+			strings.Contains(cleanDomain, "localhost")
+
+		if !isAllowed {
 			w.WriteHeader(http.StatusForbidden)
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{
 				"valid": false,
-				"error": fmt.Sprintf("Domain authorization failed: Embed token for '%s' is not authorized on host origin '%s'", org.Domain, requestOrigin),
+				"error": "Domain authorization failed: Embed token is not authorized.",
 			})
 			return
 		}
