@@ -45,15 +45,32 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
         }
 
         if (Array.isArray(list) && list.length > 0) {
-          const formatted = list
+          const rawItems = list
             .filter((m: any) => m.username || m.name || m.full_name)
-            .map((m: any, idx: number) => ({
-              rank: idx + 1,
-              name: m.username || m.name || m.full_name || `Explorer_${idx + 1}`,
+            .map((m: any) => ({
+              name: m.username || m.name || m.full_name || 'Explorer',
               score: m.total_xp ?? m.totalXP ?? m.score ?? 0,
-              avatar: m.avatar || `/monkey${(idx % 12) + 1}.svg`,
-              badge: idx === 0 ? 'CHAMPION' : idx === 1 ? 'PRO' : idx === 2 ? 'STAR' : 'EXPLORER',
-            }));
+              avatar: m.avatar || '/monkey1.svg',
+            }))
+            .sort((a, b) => b.score - a.score);
+
+          const formatted = rawItems.map((m, idx) => {
+            let badge = 'EXPLORER';
+            if (m.score >= 2000) badge = 'CHAMPION';
+            else if (m.score >= 1000) badge = 'PRO';
+            else if (m.score >= 500) badge = 'STAR';
+            else if (m.score > 100 && idx === 0) badge = 'CHAMPION';
+            else if (m.score > 100 && idx === 1) badge = 'PRO';
+            else if (m.score > 100 && idx === 2) badge = 'STAR';
+
+            return {
+              rank: idx + 1,
+              name: m.name,
+              score: m.score,
+              avatar: m.avatar,
+              badge,
+            };
+          });
           setLeaderboards(formatted);
         }
       } catch (err) {
