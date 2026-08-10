@@ -47,10 +47,10 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
         if (Array.isArray(list) && list.length > 0) {
           const rawItems = list
             .filter((m: any) => m.username || m.name || m.full_name)
-            .map((m: any) => ({
+            .map((m: any, idx: number) => ({
               name: m.username || m.name || m.full_name || 'Explorer',
               score: m.total_xp ?? m.totalXP ?? m.score ?? 0,
-              avatar: m.avatar || '/monkey1.svg',
+              avatar: m.avatar || `/images/character${(idx % 20) + 1}.jpg`,
             }))
             .sort((a, b) => b.score - a.score);
 

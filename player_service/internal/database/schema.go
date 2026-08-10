@@ -250,7 +250,7 @@ func (db *DB) seedAccessCodeUsers(ctx context.Context) {
 		WorldID        int
 		XP             int
 	}{
-		{"Admin_Explorer", "ADMN-2026", "admin", "org_001", "/monkey1.svg", 1, 0},
+		{"Admin_Explorer", "ADMN-2026", "admin", "org_001", "/images/character1.jpg", 1, 0},
 		{"Alex Johnson", "83920193", "student", "org_001", "/images/character1.jpg", 1, 450},
 		{"Sarah Williams", "47201948", "student", "org_001", "/images/character2.jpg", 2, 820},
 		{"David Chen", "91823746", "student", "org_001", "/images/character3.jpg", 3, 1200},
