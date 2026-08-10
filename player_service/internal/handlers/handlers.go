@@ -439,7 +439,13 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 	}
 
 	orgID := r.URL.Query().Get("organisation_id")
+	if orgID == "" {
+		orgID = r.URL.Query().Get("orgId")
+	}
 	centreIDStr := r.URL.Query().Get("centre_id")
+	if centreIDStr == "" {
+		centreIDStr = r.URL.Query().Get("centreId")
+	}
 
 	query := `
 		SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, g.code, g.created_at
@@ -724,6 +730,9 @@ func (p *PlayerServiceHandler) GetUsersAdminHandler(w http.ResponseWriter, r *ht
 
 	ctx := r.Context()
 	orgID := r.URL.Query().Get("organisation_id")
+	if orgID == "" {
+		orgID = r.URL.Query().Get("orgId")
+	}
 
 	query := `
 		SELECT u.id, u.username, u.access_code, u.role, u.organisation_id, COALESCE(o.name, ''), u.group_id, COALESCE(g.name, ''), u.avatar, u.assigned_world_id, u.total_xp, u.total_stars
@@ -1061,6 +1070,9 @@ func (p *PlayerServiceHandler) GetCentresHandler(w http.ResponseWriter, r *http.
 
 	ctx := r.Context()
 	orgID := r.URL.Query().Get("organisation_id")
+	if orgID == "" {
+		orgID = r.URL.Query().Get("orgId")
+	}
 
 	query := "SELECT id, organisation_id, name, location, code, created_at FROM centres"
 	var args []interface{}
