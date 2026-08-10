@@ -8,7 +8,7 @@ const LOCAL_PUBLIC_ASSETS = ['/2_1_1.svg', '/scroll.svg', '/play.svg', '/reset.s
 
 export const CHARACTER_AVATARS_CDN = Array.from(
   { length: 20 },
-  (_, i) => `https://raw.githubusercontent.com/ifeanyireed/lae/main/frontend/public/images/character${i + 1}.jpg`
+  (_, i) => `${CDN_BASE_URL}/character${i + 1}.jpg`
 );
 
 export function getCharacterAvatarUrl(avatarPath?: string, index: number = 1): string {

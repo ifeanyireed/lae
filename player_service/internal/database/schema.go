@@ -133,7 +133,7 @@ func (db *DB) InitPlayerServiceSchema() error {
 		role VARCHAR(50) DEFAULT 'user',
 		organisation_id VARCHAR(100) DEFAULT NULL,
 		group_id INT DEFAULT 1,
-		avatar VARCHAR(255) DEFAULT '/images/character1.jpg',
+		avatar VARCHAR(255) DEFAULT 'https://cdn.resultspro.ng/assets/character1.jpg',
 		assigned_world_id INT DEFAULT 1,
 		total_xp INT DEFAULT 0,
 		total_stars INT DEFAULT 0,

@@ -52,7 +52,7 @@ import { authenticateUser } from '@/services/rbac';
 
 const AVATAR_OPTIONS = Array.from(
   { length: 20 },
-  (_, i) => `https://raw.githubusercontent.com/ifeanyireed/lae/main/frontend/public/images/character${i + 1}.jpg`
+  (_, i) => `https://cdn.resultspro.ng/assets/character${i + 1}.jpg`
 );
 
 export interface SchoolStudent {
