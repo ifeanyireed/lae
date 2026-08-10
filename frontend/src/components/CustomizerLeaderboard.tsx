@@ -9,6 +9,7 @@ import {
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
 import { PLAYER_SERVICE_API_URL } from '@/utils/api';
+import { getCdnUrl } from '@/utils/cdn';
 
 interface CustomizerLeaderboardProps {
   onClose: () => void;
@@ -161,7 +162,7 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
                   #{user.rank}
                 </span>
                 <div className="w-8.5 h-8.5 relative flex-shrink-0 rounded-full overflow-hidden border border-slate-400 shadow-sm">
-                  <Image src={user.avatar} alt={user.name} fill className="object-cover" />
+                  <Image src={getCdnUrl(user.avatar)} alt={user.name} fill className="object-cover" />
                 </div>
                 <div>
                   <h4 className={`text-base font-bold ${color.name}`}>{user.name}</h4>

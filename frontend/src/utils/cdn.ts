@@ -20,7 +20,13 @@ export function getCdnUrl(assetPath: string, cacheBust: boolean = true): string 
   const query = cacheBust ? `?v=${ASSET_VERSION_KEY}` : '';
 
   // If asset is present locally in /public directory, serve directly from local server
-  if (LOCAL_PUBLIC_ASSETS.includes(cleanPath)) {
+  if (
+    cleanPath.startsWith('/images/') ||
+    cleanPath.startsWith('/avatars/') ||
+    cleanPath.startsWith('/monkey') ||
+    cleanPath.startsWith('/beaver') ||
+    LOCAL_PUBLIC_ASSETS.includes(cleanPath)
+  ) {
     return `${cleanPath}${query}`;
   }
 
