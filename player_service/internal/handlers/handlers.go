@@ -170,9 +170,9 @@ func (p *PlayerServiceHandler) CodeLoginHandler(w http.ResponseWriter, r *http.R
 	rawCode := strings.ReplaceAll(strings.ToUpper(cleanCode), "-", "")
 	var user database.User
 	err := p.DB.QueryRowContext(ctx,
-		"SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?",
+		"SELECT id, username, access_code, role, group_id, avatar, assigned_world_id, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?",
 		rawCode,
-	).Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+	).Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.AssignedWorldID, &user.TotalXP, &user.TotalStars)
 
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
@@ -232,18 +232,18 @@ func (p *PlayerServiceHandler) VerifySessionHandler(w http.ResponseWriter, r *ht
 	var err error
 
 	if userID > 0 {
-		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE id = ?", userID).
-			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, assigned_world_id, total_xp, total_stars FROM users WHERE id = ?", userID).
+			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.AssignedWorldID, &user.TotalXP, &user.TotalStars)
 	} else if codeStr != "" {
 		rawCode := strings.ReplaceAll(strings.ToUpper(strings.TrimSpace(codeStr)), "-", "")
-		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?", rawCode).
-			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+		err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, assigned_world_id, total_xp, total_stars FROM users WHERE REPLACE(UPPER(access_code), '-', '') = ?", rawCode).
+			Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.AssignedWorldID, &user.TotalXP, &user.TotalStars)
 	} else {
 		userIDStr := r.URL.Query().Get("user_id")
 		uID, _ := strconv.Atoi(userIDStr)
 		if uID > 0 {
-			err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, total_xp, total_stars FROM users WHERE id = ?", uID).
-				Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.TotalXP, &user.TotalStars)
+			err = p.DB.QueryRowContext(ctx, "SELECT id, username, access_code, role, group_id, avatar, assigned_world_id, total_xp, total_stars FROM users WHERE id = ?", uID).
+				Scan(&user.ID, &user.Username, &user.AccessCode, &user.Role, &user.GroupID, &user.Avatar, &user.AssignedWorldID, &user.TotalXP, &user.TotalStars)
 		} else {
 			err = fmt.Errorf("no session identifier provided")
 		}

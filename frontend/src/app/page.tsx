@@ -211,7 +211,7 @@ export default function Home() {
       .then((data) => {
         if (data && data.success && data.user) {
           const userXp = data.user.total_xp ?? 0;
-          const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+          const assignedWorld = data.user.assigned_world_id || data.user.assignedWorldId || data.user.world_id || data.user.worldId || data.user.world || 1;
           setSelectedWorldId(assignedWorld);
           setTotalXP(userXp);
           setUserContext((prev) => ({
@@ -389,7 +389,7 @@ export default function Home() {
             } catch (e) {}
 
             const userXp = data.user.total_xp ?? 0;
-            const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+            const assignedWorld = data.user.assigned_world_id || data.user.assignedWorldId || data.user.world_id || data.user.worldId || data.user.world || 1;
             setSelectedWorldId(assignedWorld);
             setTotalXP(userXp);
             setUserContext({
@@ -1194,7 +1194,7 @@ export default function Home() {
           } catch (e) {}
         }
         const userXp = data.user.total_xp ?? 0;
-        const assignedWorld = data.user.world_id || data.user.worldId || data.user.assigned_world_id || data.user.world || 1;
+        const assignedWorld = data.user.assigned_world_id || data.user.assignedWorldId || data.user.world_id || data.user.worldId || data.user.world || 1;
         setSelectedWorldId(assignedWorld);
         const loggedUser = {
           id: data.user.id || 1,
