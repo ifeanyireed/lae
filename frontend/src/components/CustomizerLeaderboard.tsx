@@ -24,21 +24,44 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
   const [leaderboards, setLeaderboards] = React.useState<Array<{ rank: number; name: string; score: number; avatar: string; badge: string }>>([]);
 
   React.useEffect(() => {
-    fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/leaderboard?group_id=${groupId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data && data.success && Array.isArray(data.members) && data.members.length > 0) {
-          const formatted = data.members.map((m: any, idx: number) => ({
-            rank: idx + 1,
-            name: m.username || `Explorer_${idx + 1}`,
-            score: m.total_xp ?? 0,
-            avatar: m.avatar || `/monkey${(idx % 12) + 1}.svg`,
-            badge: idx === 0 ? 'CHAMPION' : idx === 1 ? 'PRO' : idx === 2 ? 'STAR' : 'EXPLORER',
-          }));
+    const fetchLeaderboardData = async () => {
+      try {
+        let res = await fetch(`${PLAYER_SERVICE_API_URL}/api/v1/leaderboard?group_id=${groupId}`);
+        let data = await res.json();
+
+        let list = data.leaderboard || data.members || data.users || [];
+        if ((!Array.isArray(list) || list.length === 0) && data.success === false) {
+          res = await fetch(`${PLAYER_SERVICE_API_URL}/api/v1/player/leaderboard?group_id=${groupId}`);
+          data = await res.json();
+          list = data.leaderboard || data.members || data.users || [];
+        }
+
+        if (!Array.isArray(list) || list.length === 0) {
+          const usersRes = await fetch(`${PLAYER_SERVICE_API_URL}/api/v1/users?group_id=${groupId}`);
+          const usersData = await usersRes.json();
+          if (usersData && usersData.success && Array.isArray(usersData.users)) {
+            list = usersData.users;
+          }
+        }
+
+        if (Array.isArray(list) && list.length > 0) {
+          const formatted = list
+            .filter((m: any) => m.username || m.name || m.full_name)
+            .map((m: any, idx: number) => ({
+              rank: idx + 1,
+              name: m.username || m.name || m.full_name || `Explorer_${idx + 1}`,
+              score: m.total_xp ?? m.totalXP ?? m.score ?? 0,
+              avatar: m.avatar || `/monkey${(idx % 12) + 1}.svg`,
+              badge: idx === 0 ? 'CHAMPION' : idx === 1 ? 'PRO' : idx === 2 ? 'STAR' : 'EXPLORER',
+            }));
           setLeaderboards(formatted);
         }
-      })
-      .catch(() => {});
+      } catch (err) {
+        console.error('Error fetching leaderboard data:', err);
+      }
+    };
+
+    fetchLeaderboardData();
   }, [groupId]);
 
   const textColors = [
