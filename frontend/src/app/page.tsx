@@ -1320,73 +1320,75 @@ export default function Home() {
             </ActionTooltip>
           </div>
 
-          {/* Right Corner Controls */}
-          <div className="flex items-center justify-center -space-x-2 sm:-space-x-3 md:-space-x-4 pointer-events-auto z-30">
-            {/* 1. Mute / Unmute SFX Button */}
-            <ActionTooltip label={isMuted ? 'Unmute SFX' : 'Mute SFX'} position="bottom">
-              <button
-                onClick={handleToggleMute}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-50"
-              >
-                <Image 
-                  src={isMuted ? '/Mute SFX.svg' : '/Unmute SFX.svg'} 
-                  alt={isMuted ? 'Mute SFX' : 'Unmute SFX'} 
-                  fill 
-                  className="object-contain" 
-                />
-              </button>
-            </ActionTooltip>
+          {/* Right Corner Controls (Admin Only) */}
+          {userContext.role === 'admin' && (
+            <div className="flex items-center justify-center -space-x-2 sm:-space-x-3 md:-space-x-4 pointer-events-auto z-30">
+              {/* 1. Mute / Unmute SFX Button */}
+              <ActionTooltip label={isMuted ? 'Unmute SFX' : 'Mute SFX'} position="bottom">
+                <button
+                  onClick={handleToggleMute}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-50"
+                >
+                  <Image 
+                    src={isMuted ? '/Mute SFX.svg' : '/Unmute SFX.svg'} 
+                    alt={isMuted ? 'Mute SFX' : 'Unmute SFX'} 
+                    fill 
+                    className="object-contain" 
+                  />
+                </button>
+              </ActionTooltip>
 
-            {/* 2. Mission Objectives Button */}
-            <ActionTooltip label="Level Objectives & Story" position="bottom">
-              <button
-                onClick={() => { soundManager.playClick(); setShowWelcomeModal(true); }}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-45"
-              >
-                <Image src="/Quest.svg" alt="Objectives" fill className="object-contain" />
-              </button>
-            </ActionTooltip>
+              {/* 2. Mission Objectives Button */}
+              <ActionTooltip label="Level Objectives & Story" position="bottom">
+                <button
+                  onClick={() => { soundManager.playClick(); setShowWelcomeModal(true); }}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-45"
+                >
+                  <Image src="/Quest.svg" alt="Objectives" fill className="object-contain" />
+                </button>
+              </ActionTooltip>
 
-            {/* 3. Notification Button */}
-            <ActionTooltip label="Notifications" position="bottom">
-              <button
-                onClick={() => { soundManager.playClick(); }}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-40"
-              >
-                <Image src="/Notification.svg" alt="Notification" fill className="object-contain" />
-              </button>
-            </ActionTooltip>
+              {/* 3. Notification Button */}
+              <ActionTooltip label="Notifications" position="bottom">
+                <button
+                  onClick={() => { soundManager.playClick(); }}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-40"
+                >
+                  <Image src="/Notification.svg" alt="Notification" fill className="object-contain" />
+                </button>
+              </ActionTooltip>
 
-            {/* 3. Settings Button */}
-            <ActionTooltip label="Settings" position="bottom">
-              <button
-                onClick={() => { soundManager.playClick(); }}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30"
-              >
-                <Image src="/Settings.svg" alt="Settings" fill className="object-contain" />
-              </button>
-            </ActionTooltip>
+              {/* 3. Settings Button */}
+              <ActionTooltip label="Settings" position="bottom">
+                <button
+                  onClick={() => { soundManager.playClick(); }}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-30"
+                >
+                  <Image src="/Settings.svg" alt="Settings" fill className="object-contain" />
+                </button>
+              </ActionTooltip>
 
-            {/* 4. Profile / Auth Session Button */}
-            <ActionTooltip label={`Explorer Profile (${userContext.role.toUpperCase()})`} position="bottom">
-              <button
-                onClick={() => { soundManager.playClick(); setShowSplash(true); }}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
-              >
-                <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
-              </button>
-            </ActionTooltip>
+              {/* 4. Profile / Auth Session Button */}
+              <ActionTooltip label={`Explorer Profile (${userContext.role.toUpperCase()})`} position="bottom">
+                <button
+                  onClick={() => { soundManager.playClick(); setShowSplash(true); }}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-20"
+                >
+                  <Image src="/Profile.svg" alt="Profile Auth" fill className="object-contain" />
+                </button>
+              </ActionTooltip>
 
-            {/* 5. Fullscreen Button */}
-            <ActionTooltip label="Fullscreen Mode" position="bottom">
-              <button
-                onClick={handleToggleFullscreen}
-                className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10"
-              >
-                <Image src="/Fullscreen.svg" alt="Fullscreen" fill className="object-contain" />
-              </button>
-            </ActionTooltip>
-          </div>
+              {/* 5. Fullscreen Button */}
+              <ActionTooltip label="Fullscreen Mode" position="bottom">
+                <button
+                  onClick={handleToggleFullscreen}
+                  className="relative w-10 h-10 xs:w-12 xs:h-12 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 rounded-full transition transform hover:scale-110 active:scale-95 cursor-pointer flex-shrink-0 z-10"
+                >
+                  <Image src="/Fullscreen.svg" alt="Fullscreen" fill className="object-contain" />
+                </button>
+              </ActionTooltip>
+            </div>
+          )}
 
         </header>
       )}
@@ -1924,18 +1926,18 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* RIGHT SIDE FLOATING VERTICAL SVG BUTTONS - STAGGERED ONE-BY-ONE FLOW ANIMATION */}
+      {/* RIGHT SIDE FLOATING VERTICAL SVG BUTTONS (Admin Only) */}
       <AnimatePresence>
-        {activeTab === 'studio' && (
+        {activeTab === 'studio' && userContext.role === 'admin' && (
           <motion.div
-            key="right-vertical-bar"
+            key="right-corner-toolbar"
             variants={{
               hidden: { opacity: 0 },
               visible: {
                 opacity: 1,
                 transition: {
-                  staggerChildren: 0.07,
-                  delayChildren: 0.04,
+                  staggerChildren: 0.05,
+                  delayChildren: 0.1,
                 },
               },
               exit: {
