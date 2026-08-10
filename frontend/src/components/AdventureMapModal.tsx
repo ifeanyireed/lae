@@ -26,6 +26,9 @@ interface AdventureMapModalProps {
   totalXP: number;
   groupName?: string;
   userRole?: string;
+  assignedWorldId?: number;
+  selectedWorldId?: number;
+  onSelectWorld?: (worldId: number) => void;
 }
 
 export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
@@ -37,14 +40,26 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
   totalXP,
   groupName = 'Jungle Explorers Group A',
   userRole = 'user',
+  assignedWorldId = 1,
+  selectedWorldId: externalSelectedWorldId,
+  onSelectWorld,
 }) => {
   const [lockedVibrateIdx, setLockedVibrateIdx] = useState<number | null>(null);
   const [selectedAdvId, setSelectedAdvId] = useState<number | null>(null);
-  const [selectedWorldId, setSelectedWorldId] = useState<number>(1);
+  const [internalWorldId, setInternalWorldId] = useState<number>(assignedWorldId || 1);
+
+  const selectedWorldId = externalSelectedWorldId || internalWorldId;
+  const setSelectedWorldId = (wId: number) => {
+    setInternalWorldId(wId);
+    if (onSelectWorld) onSelectWorld(wId);
+  };
 
   if (!isOpen) return null;
 
   const isAdmin = userRole === 'admin';
+  const maxUnlockedWorld = Math.max(1, assignedWorldId || 1);
+  const isWorldUnlocked = (wId: number) => isAdmin || wId <= maxUnlockedWorld;
+
   const currentWorld = ALL_WORLDS.find((w) => w.id === selectedWorldId) || ALL_WORLDS[0];
   const currentAdv = currentWorld.adventures.find((a) => a.id === selectedAdvId);
 
@@ -58,7 +73,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
           className="relative w-full max-w-5xl h-[85vh] bg-gradient-to-b from-amber-950 via-slate-900 to-slate-950 border-2 border-amber-500/40 rounded-3xl p-4 sm:p-6 flex flex-col shadow-2xl overflow-hidden"
         >
           {/* Top Header Bar */}
-          <div className="flex items-center justify-between border-b border-amber-600/40 pb-4 mb-4 z-10 shrink-0">
+          <div className="flex items-center justify-between border-b border-amber-600/40 pb-4 mb-3 z-10 shrink-0">
             <div className="flex items-center space-x-3 sm:space-x-4">
               {currentAdv ? (
                 <button
@@ -115,29 +130,40 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </button>
           </div>
 
-          {/* Admin Temporary World Selector Bar (Left Vertical Sidebar) */}
-          {isAdmin && !currentAdv && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 z-40 flex flex-col space-y-2 bg-white/90 backdrop-blur-md p-2 rounded-2xl border border-slate-300 shadow-2xl items-center">
-              <span className="text-[10px] font-black text-slate-950 px-1 font-mono uppercase tracking-wider text-center max-w-[70px] leading-tight">
-                Admin Worlds
+          {/* Interactive World Selector Tabs Bar for Learners & Admins */}
+          {!currentAdv && (
+            <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-600/40 mb-3 overflow-x-auto z-30 shrink-0">
+              <span className="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider px-2 shrink-0">
+                Learning Worlds
               </span>
-              <div className="w-full h-px bg-slate-300 my-1" />
-              {ALL_WORLDS.map((w) => (
-                <button
-                  key={`adv-modal-world-${w.id}`}
-                  onClick={() => {
-                    soundManager.playClick();
-                    setSelectedWorldId(w.id);
-                  }}
-                  className={`w-full px-2.5 py-1.5 rounded-xl text-xs font-black transition cursor-pointer shrink-0 shadow-sm text-center ${
-                    selectedWorldId === w.id
-                      ? 'bg-amber-400 text-slate-950 border border-amber-600 ring-2 ring-amber-500 scale-105'
-                      : 'bg-white/90 text-slate-950 border border-slate-300 hover:bg-amber-400'
-                  }`}
-                >
-                  World {w.id}
-                </button>
-              ))}
+              <div className="w-px h-5 bg-amber-600/40 shrink-0" />
+              {ALL_WORLDS.map((w) => {
+                const unlocked = isWorldUnlocked(w.id);
+                const isSelected = selectedWorldId === w.id;
+                return (
+                  <button
+                    key={`adv-modal-world-${w.id}`}
+                    onClick={() => {
+                      if (unlocked) {
+                        soundManager.playClick();
+                        setSelectedWorldId(w.id);
+                      } else {
+                        soundManager.playError();
+                      }
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center space-x-1.5 shrink-0 shadow-sm ${
+                      isSelected
+                        ? 'bg-amber-400 text-slate-950 border border-amber-500 scale-105 shadow-md'
+                        : unlocked
+                        ? 'bg-amber-900/60 text-amber-200 border border-amber-600/40 hover:bg-amber-800'
+                        : 'bg-slate-900/80 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                    }`}
+                  >
+                    <span>World {w.id}</span>
+                    {!unlocked && <Lock className="w-3 h-3 text-slate-500" />}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -147,7 +173,8 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
               {currentWorld.adventures.map((adv) => {
                 const monkeyNum = (((adv.id + 11) % 23) + 1);
                 const advMonkeyImg = `/monkey${monkeyNum}.svg`;
-                const isAdvUnlocked = adv.id === 1 || isAdmin;
+                const activeWorldUnlocked = isWorldUnlocked(selectedWorldId);
+                const isAdvUnlocked = activeWorldUnlocked || adv.id === 1 || isAdmin;
                 const isVibrating = lockedVibrateIdx === adv.id;
 
                 return (

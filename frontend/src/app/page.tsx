@@ -42,6 +42,7 @@ export default function Home() {
     totalXP: 0,
     totalScore: 0,
     totalStars: 0,
+    assignedWorldId: 1,
   });
 
   const [showMapModal, setShowMapModal] = useState(false);
@@ -223,6 +224,7 @@ export default function Home() {
             avatar: data.user.avatar || '/monkey1.svg',
             totalXP: userXp,
             totalStars: data.user.total_stars ?? 0,
+            assignedWorldId: assignedWorld,
           }));
           if (data.progress) {
             syncProgressFromDB(data.progress);
@@ -400,6 +402,7 @@ export default function Home() {
               totalXP: userXp,
               totalScore: 0,
               totalStars: data.user.total_stars ?? 0,
+              assignedWorldId: assignedWorld,
             });
             if (data.progress) {
               syncProgressFromDB(data.progress);
@@ -1203,6 +1206,7 @@ export default function Home() {
           totalXP: userXp,
           totalScore: 0,
           totalStars: data.user.total_stars ?? 0,
+          assignedWorldId: assignedWorld,
         };
         setUserContext(loggedUser);
         setTotalXP(userXp);
@@ -2034,6 +2038,9 @@ export default function Home() {
         totalXP={userContext.totalXP}
         groupName={userContext.groupName}
         userRole={userContext.role}
+        assignedWorldId={userContext.assignedWorldId || selectedWorldId || 1}
+        selectedWorldId={selectedWorldId}
+        onSelectWorld={(wId) => setSelectedWorldId(wId)}
       />
 
       {/* Game Application Launcher Splash Screen */}
