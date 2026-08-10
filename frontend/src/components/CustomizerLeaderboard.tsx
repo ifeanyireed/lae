@@ -110,7 +110,7 @@ export const CustomizerLeaderboard: React.FC<CustomizerLeaderboardProps> = ({
               Group Leaderboard
             </h2>
             <p className="text-xs sm:text-sm font-semibold text-amber-900 tracking-tight mt-0.5">
-              🏆 {groupName}
+              {groupName}
             </p>
           </div>
         </div>
