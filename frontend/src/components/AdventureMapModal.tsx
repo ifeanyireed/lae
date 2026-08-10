@@ -130,37 +130,29 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
             </button>
           </div>
 
-          {/* Interactive World Selector Tabs Bar for Learners & Admins */}
-          {!currentAdv && (
+          {/* Admin-Only World Navigator Bar */}
+          {isAdmin && !currentAdv && (
             <div className="flex items-center space-x-2 bg-amber-950/80 p-2 rounded-2xl border border-amber-600/40 mb-3 overflow-x-auto z-30 shrink-0">
               <span className="text-[10px] font-black text-amber-300 font-mono uppercase tracking-wider px-2 shrink-0">
-                Learning Worlds
+                Admin Worlds
               </span>
               <div className="w-px h-5 bg-amber-600/40 shrink-0" />
               {ALL_WORLDS.map((w) => {
-                const unlocked = isWorldUnlocked(w.id);
                 const isSelected = selectedWorldId === w.id;
                 return (
                   <button
                     key={`adv-modal-world-${w.id}`}
                     onClick={() => {
-                      if (unlocked) {
-                        soundManager.playClick();
-                        setSelectedWorldId(w.id);
-                      } else {
-                        soundManager.playError();
-                      }
+                      soundManager.playClick();
+                      setSelectedWorldId(w.id);
                     }}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition cursor-pointer flex items-center space-x-1.5 shrink-0 shadow-sm ${
                       isSelected
                         ? 'bg-amber-400 text-slate-950 border border-amber-500 scale-105 shadow-md'
-                        : unlocked
-                        ? 'bg-amber-900/60 text-amber-200 border border-amber-600/40 hover:bg-amber-800'
-                        : 'bg-slate-900/80 text-slate-500 border border-slate-800 cursor-not-allowed opacity-60'
+                        : 'bg-amber-900/60 text-amber-200 border border-amber-600/40 hover:bg-amber-800'
                     }`}
                   >
                     <span>World {w.id}</span>
-                    {!unlocked && <Lock className="w-3 h-3 text-slate-500" />}
                   </button>
                 );
               })}
@@ -173,8 +165,7 @@ export const AdventureMapModal: React.FC<AdventureMapModalProps> = ({
               {currentWorld.adventures.map((adv) => {
                 const monkeyNum = (((adv.id + 11) % 23) + 1);
                 const advMonkeyImg = `/monkey${monkeyNum}.svg`;
-                const activeWorldUnlocked = isWorldUnlocked(selectedWorldId);
-                const isAdvUnlocked = activeWorldUnlocked || adv.id === 1 || isAdmin;
+                const isAdvUnlocked = adv.id === 1 || isAdmin;
                 const isVibrating = lockedVibrateIdx === adv.id;
 
                 return (
