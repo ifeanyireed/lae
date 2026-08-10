@@ -13,7 +13,18 @@ export async function fetchOrganisations(type?: string, id?: string): Promise<Or
     const res = await fetch(url);
     const data = await res.json();
     if (data && data.success && Array.isArray(data.organisations)) {
-      return data.organisations;
+      return data.organisations.map((item: any) => ({
+        ...item,
+        contactEmail: item.contactEmail || item.contact_email || '',
+        contactPhone: item.contactPhone || item.contact_phone || '',
+        googleAdsEnabled:
+          item.googleAdsEnabled !== undefined
+            ? item.googleAdsEnabled
+            : item.google_ads_enabled !== undefined
+            ? item.google_ads_enabled
+            : true,
+        logoUrl: item.logoUrl || item.logo_url || '/monkey1.svg',
+      }));
     }
   } catch (e) {}
   return [];
@@ -21,14 +32,25 @@ export async function fetchOrganisations(type?: string, id?: string): Promise<Or
 
 export async function saveOrganisation(org: Partial<Organisation>): Promise<Organisation | null> {
   try {
+    const payload = {
+      ...org,
+      contact_email: org.contactEmail || org.contact_email || '',
+      contact_phone: org.contactPhone || org.contact_phone || '',
+      google_ads_enabled: org.googleAdsEnabled !== undefined ? org.googleAdsEnabled : true,
+    };
     const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/organisations`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(org),
+      body: JSON.stringify(payload),
     });
     const data = await res.json();
     if (data && data.success && data.organisation) {
-      return data.organisation;
+      const o = data.organisation;
+      return {
+        ...o,
+        contactEmail: o.contactEmail || o.contact_email || '',
+        contactPhone: o.contactPhone || o.contact_phone || '',
+      };
     }
   } catch (e) {}
   return null;

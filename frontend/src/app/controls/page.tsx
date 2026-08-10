@@ -90,6 +90,8 @@ export interface Organisation {
   domain: string;
   contactEmail: string;
   contactPhone: string;
+  contact_email?: string;
+  contact_phone?: string;
   password?: string;
   logoUrl?: string;
   type?: string;
@@ -974,12 +976,12 @@ export default function AdminControlsPage() {
                       <td className="py-3.5 px-3">
                         <div className="flex flex-col space-y-0.5 text-[11px]">
                           <span className="flex items-center space-x-1 text-slate-700 font-normal">
-                            <IconMail className="w-3 h-3 text-slate-400" />
-                            <span>{org.contactEmail}</span>
+                            <IconMail className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>{org.contactEmail || org.contact_email || '—'}</span>
                           </span>
                           <span className="flex items-center space-x-1 text-slate-500 font-mono">
-                            <IconPhone className="w-3 h-3 text-slate-400" />
-                            <span>{org.contactPhone}</span>
+                            <IconPhone className="w-3 h-3 text-slate-400 shrink-0" />
+                            <span>{org.contactPhone || org.contact_phone || '—'}</span>
                           </span>
                         </div>
                       </td>
