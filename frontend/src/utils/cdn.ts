@@ -6,6 +6,27 @@ const ASSET_VERSION_KEY = process.env.NEXT_PUBLIC_BUILD_VERSION || '2.1.1_v1';
 // Local assets stored directly in /public directory that should bypass external CDN URL
 const LOCAL_PUBLIC_ASSETS = ['/2_1_1.svg', '/scroll.svg', '/play.svg', '/reset.svg', '/start.svg', '/monkey1.svg'];
 
+export const CHARACTER_AVATARS_CDN = Array.from(
+  { length: 20 },
+  (_, i) => `https://raw.githubusercontent.com/ifeanyireed/lae/main/frontend/public/images/character${i + 1}.jpg`
+);
+
+export function getCharacterAvatarUrl(avatarPath?: string, index: number = 1): string {
+  if (!avatarPath) return CHARACTER_AVATARS_CDN[0];
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) return avatarPath;
+
+  const match = avatarPath.match(/character(\d+)/i);
+  if (match && match[1]) {
+    const num = parseInt(match[1], 10);
+    if (num >= 1 && num <= 20) {
+      return CHARACTER_AVATARS_CDN[num - 1];
+    }
+  }
+
+  const idx = (Math.max(1, index) - 1) % 20;
+  return CHARACTER_AVATARS_CDN[idx];
+}
+
 /**
  * Returns full URL for an asset, appending CDN_BASE_URL (or local public path for local files),
  * including a cache-busting query parameter to force browser & CDN cache refresh.
@@ -18,6 +39,10 @@ export function getCdnUrl(assetPath: string, cacheBust: boolean = true): string 
   }
   const cleanPath = assetPath.startsWith('/') ? assetPath : `/${assetPath}`;
   const query = cacheBust ? `?v=${ASSET_VERSION_KEY}` : '';
+
+  if (cleanPath.includes('character')) {
+    return getCharacterAvatarUrl(cleanPath);
+  }
 
   // If asset is present locally in /public directory, serve directly from local server
   if (

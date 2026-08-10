@@ -39,16 +39,10 @@ import {
 } from '@/services/api';
 import { authenticateUser } from '@/services/rbac';
 
-const AVATAR_OPTIONS = [
-  '/images/character1.jpg',
-  '/images/character2.jpg',
-  '/images/character3.jpg',
-  '/images/character4.jpg',
-  '/images/character5.jpg',
-  '/images/character6.jpg',
-  '/images/character7.jpg',
-  '/images/character8.jpg',
-];
+const AVATAR_OPTIONS = Array.from(
+  { length: 20 },
+  (_, i) => `https://raw.githubusercontent.com/ifeanyireed/lae/main/frontend/public/images/character${i + 1}.jpg`
+);
 
 export interface ChildAccount {
   id: string;

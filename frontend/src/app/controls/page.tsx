@@ -51,29 +51,10 @@ import {
   IconMapPin,
 } from '@tabler/icons-react';
 
-// Character avatar options from public/images
-const AVATAR_OPTIONS = [
-  '/images/character1.jpg',
-  '/images/character2.jpg',
-  '/images/character3.jpg',
-  '/images/character4.jpg',
-  '/images/character5.jpg',
-  '/images/character6.jpg',
-  '/images/character7.jpg',
-  '/images/character8.jpg',
-  '/images/character9.jpg',
-  '/images/character10.jpg',
-  '/images/character11.jpg',
-  '/images/character12.jpg',
-  '/images/character13.jpg',
-  '/images/character14.jpg',
-  '/images/character15.jpg',
-  '/images/character16.jpg',
-  '/images/character17.jpg',
-  '/images/character18.jpg',
-  '/images/character19.jpg',
-  '/images/character20.jpg',
-];
+const AVATAR_OPTIONS = Array.from(
+  { length: 20 },
+  (_, i) => `https://raw.githubusercontent.com/ifeanyireed/lae/main/frontend/public/images/character${i + 1}.jpg`
+);
 
 // Types for Admin Platform Modules
 export interface CentreItem {
