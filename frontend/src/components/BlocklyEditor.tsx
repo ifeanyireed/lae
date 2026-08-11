@@ -248,9 +248,9 @@ const renderBlocksToText = (blocksList: CodeBlock[], indentLevel: number, worldI
       const innerText = b.textValue || (b.children && b.children.length > 0 ? b.children.map(c => c.textValue || '').join('') : 'Build the world with HTML tags.');
       lines.push(`${indent}<p>${innerText}</p>`);
     }
-    // 8. TEXT TAG / SPAN / INPUT
+    // 8. TEXT TAG / SPAN / INPUT (Pure raw text inside tags or body)
     else if (b.type === 'text' || b.type === 'text_tag' || b.type === 'text_input') {
-      lines.push(`${indent}<text>${b.textValue || 'Sample Text'}</text>`);
+      lines.push(`${indent}${b.textValue || 'Sample Text'}`);
     }
     // 9. LIST TAG
     else if (b.type === 'list_tag' || b.type === 'list') {
@@ -459,21 +459,95 @@ const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
     let customStepValue: number | undefined = undefined;
 
     if (!lower.startsWith('</') && lower.includes('<title')) {
-      blockDef = { type: 'title_tag', label: '<title>', category: 'html', blockClass: 'bg-[#E91E63] text-white border-[#C2185B] font-bold' };
       const m = line.match(/<title>(.*?)<\/title>/i);
-      if (m && m[1]) customTextValue = m[1];
-    } else if (!lower.startsWith('</') && lower.includes('<h1')) {
-      blockDef = { type: 'h1_tag', label: '<h1>', category: 'html', blockClass: 'bg-[#B80751] text-white border-[#90053E] font-bold' };
+      const innerStr = (m && m[1]) ? m[1].trim() : '';
+      const titleBlock: CodeBlock = {
+        instanceId: `parsed-title-${idx}`,
+        type: 'title_tag',
+        label: '<title>',
+        category: 'html',
+        blockClass: 'bg-[#E91E63] text-white border-[#C2185B] font-bold',
+        children: innerStr ? [{
+          instanceId: `parsed-title-text-${idx}`,
+          type: 'text_input',
+          label: 'text',
+          category: 'html',
+          blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold',
+          textValue: innerStr,
+        }] : [],
+      };
+      addToActiveContainer(titleBlock);
+      return;
+    }
+
+    if (!lower.startsWith('</') && lower.includes('<h1')) {
       const m = line.match(/<h1>(.*?)<\/h1>/i);
-      if (m && m[1]) customTextValue = m[1];
-    } else if (!lower.startsWith('</') && lower.includes('<p')) {
-      blockDef = { type: 'p_tag', label: '<p>', category: 'html', blockClass: 'bg-[#EC4899] text-white border-[#DB2777] font-bold' };
+      const innerStr = (m && m[1]) ? m[1].trim() : '';
+      const h1Block: CodeBlock = {
+        instanceId: `parsed-h1-${idx}`,
+        type: 'h1_tag',
+        label: '<h1>',
+        category: 'html',
+        blockClass: 'bg-[#B80751] text-white border-[#90053E] font-bold',
+        children: innerStr ? [{
+          instanceId: `parsed-h1-text-${idx}`,
+          type: 'text_input',
+          label: 'text',
+          category: 'html',
+          blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold',
+          textValue: innerStr,
+        }] : [],
+      };
+      addToActiveContainer(h1Block);
+      return;
+    }
+
+    if (!lower.startsWith('</') && lower.includes('<p')) {
       const m = line.match(/<p>(.*?)<\/p>/i);
-      if (m && m[1]) customTextValue = m[1];
-    } else if (!lower.startsWith('</') && (lower.includes('<text') || lower.includes('<span>'))) {
-      blockDef = { type: 'text_input', label: 'text', category: 'html', blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold' };
+      const innerStr = (m && m[1]) ? m[1].trim() : '';
+      const pBlock: CodeBlock = {
+        instanceId: `parsed-p-${idx}`,
+        type: 'p_tag',
+        label: '<p>',
+        category: 'html',
+        blockClass: 'bg-[#EC4899] text-white border-[#DB2777] font-bold',
+        children: innerStr ? [{
+          instanceId: `parsed-p-text-${idx}`,
+          type: 'text_input',
+          label: 'text',
+          category: 'html',
+          blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold',
+          textValue: innerStr,
+        }] : [],
+      };
+      addToActiveContainer(pBlock);
+      return;
+    }
+
+    if (!lower.startsWith('</') && (lower.includes('<text') || lower.includes('<span>'))) {
       const m = line.match(/<text>(.*?)<\/text>/i) || line.match(/<span>(.*?)<\/span>/i);
-      if (m && m[1]) customTextValue = m[1];
+      const innerStr = (m && m[1]) ? m[1].trim() : '';
+      addToActiveContainer({
+        instanceId: `parsed-text-${idx}`,
+        type: 'text_input',
+        label: 'text',
+        category: 'html',
+        blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold',
+        textValue: innerStr || 'Sample Text',
+      });
+      return;
+    }
+
+    if (!lower.startsWith('<') && line.trim().length > 0) {
+      addToActiveContainer({
+        instanceId: `parsed-rawtext-${idx}`,
+        type: 'text_input',
+        label: 'text',
+        category: 'html',
+        blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold',
+        textValue: line.trim(),
+      });
+      return;
     } else if (lower.includes('moveforward') || lower.includes('move_forward')) {
       blockDef = { type: 'move_forward', label: 'move forward', category: 'motion', blockClass: 'block-motion', stepValue: 1 };
       const m = line.match(/\((\d+)\)/);
