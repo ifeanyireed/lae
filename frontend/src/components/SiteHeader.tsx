@@ -30,11 +30,14 @@ export const SiteHeader: React.FC = () => {
           
           {/* Brand Logo & Name */}
           <Link href="/" className="flex items-center space-x-3 group focus:outline-none">
-            <div className="relative w-9 h-9 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 p-0.5 shadow-md group-hover:scale-105 transition-transform duration-200">
-              <div className="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center overflow-hidden">
-                <Image src="/monkey1.svg" alt="PuzzlePro Monkey" width={32} height={32} className="object-contain" priority />
-              </div>
-            </div>
+            <Image 
+              src="/monkey1.svg" 
+              alt="PuzzlePro Monkey" 
+              width={42} 
+              height={42} 
+              className="object-contain shrink-0 group-hover:scale-105 transition-transform duration-200" 
+              priority 
+            />
             <div className="flex flex-col">
               <div className="flex items-center space-x-1.5">
                 <span className="text-xl sm:text-2xl font-black font-varela tracking-tight bg-gradient-to-r from-amber-500 via-amber-600 to-yellow-600 bg-clip-text text-transparent drop-shadow-xs">
