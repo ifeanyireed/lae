@@ -193,28 +193,21 @@ const getIdeFilename = (worldId: number): string => {
 };
 
 const getInitialIdeCode = (worldId: number): string => {
-  switch (worldId) {
-    case 2:
-      return `<!DOCTYPE html>\n<html>\n  <head>\n    <title>The Digital Kingdom</title>\n  </head>\n  <body>\n    <h1>Welcome Builder!</h1>\n    <p>HTML builds the kingdom structure.</p>\n  </body>\n</html>`;
-    case 3:
-      return `/* World 3: CSS Stylesheet */\nbody {\n  background-color: #0f172a;\n  color: #f8fafc;\n  font-family: 'Varela Round', sans-serif;\n}\n\nh1 {\n  color: #f59e0b;\n  font-size: 2.2rem;\n  text-align: center;\n}\n\np {\n  color: #94a3b8;\n  line-height: 1.6;\n}`;
-    case 4:
-      return `// World 4: JavaScript Logic\nfunction runQuest() {\n  moveForward(1);\n  turnRight();\n  say("Awaken the Kingdom!");\n}\n\nrunQuest();`;
-    case 5:
-      return `# World 5: Python Power Engine\ndef main():\n    for i in range(3):\n        move_forward()\n        collect_coin()\n    turn_left()\n    print("Python Master Active")\n\nif __name__ == "__main__":\n    main()`;
-    default:
-      return `// Code Editor\nmoveForward();`;
-  }
+  return '';
 };
 
 const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
+  if (!blocks || blocks.length === 0) {
+    return '';
+  }
+
   if (worldId === 2) {
-    // HTML5 World
+    // HTML5 World: Render ONLY stacked HTML blocks inside <body>
     let htmlLines: string[] = [
       '<!DOCTYPE html>',
       '<html>',
       '  <head>',
-      '    <title>The Digital Kingdom</title>',
+      '    <title>HTML Page</title>',
       '  </head>',
       '  <body>',
     ];
@@ -228,12 +221,9 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
       else if (b.type === 'img_tag') htmlLines.push('    <img src="/monkey1.svg" alt="Monkey" />');
       else if (b.type === 'say_hello') htmlLines.push(`    <!-- Monkey Says: "${b.textValue || 'Hello!'}" -->`);
       else if (b.type === 'move_forward') htmlLines.push(`    <!-- Action: Move Forward ${b.stepValue || 1} Step(s) -->`);
+      else if (b.type === 'turn_left') htmlLines.push('    <!-- Action: Turn Left -->');
+      else if (b.type === 'turn_right') htmlLines.push('    <!-- Action: Turn Right -->');
     });
-
-    if (blocks.length === 0 || !blocks.some(b => ['h1_tag', 'p_tag', 'text_input', 'list_tag', 'link_tag', 'img_tag'].includes(b.type))) {
-      htmlLines.push('    <h1>Welcome Builder</h1>');
-      htmlLines.push('    <p>Construct the digital kingdom using HTML code tags.</p>');
-    }
 
     htmlLines.push('  </body>');
     htmlLines.push('</html>');
@@ -241,70 +231,49 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
   }
 
   if (worldId === 3) {
-    // CSS3 World
-    let cssLines: string[] = ['/* World 3: CSS Stylesheet */', 'body {'];
-    let hasRules = false;
+    // CSS3 World: Render ONLY stacked CSS blocks
+    let cssLines: string[] = ['/* CSS Stylesheet */', 'body {'];
     blocks.forEach((b) => {
-      if (b.type === 'css_color') { cssLines.push(`  color: ${b.textValue || '#f59e0b'};`); hasRules = true; }
-      else if (b.type === 'css_font_size') { cssLines.push(`  font-size: ${b.textValue || '2rem'};`); hasRules = true; }
-      else if (b.type === 'css_background') { cssLines.push(`  background-color: ${b.textValue || '#0f172a'};`); hasRules = true; }
-      else if (b.type === 'css_margin') { cssLines.push(`  margin: ${b.textValue || '20px'};`); hasRules = true; }
+      if (b.type === 'css_color') cssLines.push(`  color: ${b.textValue || '#f59e0b'};`);
+      else if (b.type === 'css_font_size') cssLines.push(`  font-size: ${b.textValue || '2rem'};`);
+      else if (b.type === 'css_background') cssLines.push(`  background-color: ${b.textValue || '#0f172a'};`);
+      else if (b.type === 'css_margin') cssLines.push(`  margin: ${b.textValue || '20px'};`);
     });
-    if (!hasRules) {
-      cssLines.push('  background-color: #0f172a;');
-      cssLines.push('  color: #f8fafc;');
-      cssLines.push("  font-family: 'Varela Round', sans-serif;");
-    }
     cssLines.push('}');
     return cssLines.join('\n');
   }
 
   if (worldId === 4) {
-    // JavaScript ES6 World
-    let jsLines: string[] = ['// World 4: JavaScript Logic', 'function runQuest() {'];
+    // JavaScript ES6 World: Render ONLY stacked JS blocks
+    let jsLines: string[] = [];
     blocks.forEach((b) => {
-      if (b.type === 'move_forward') jsLines.push(`  moveForward(${b.stepValue || 1});`);
-      else if (b.type === 'turn_left') jsLines.push('  turnLeft();');
-      else if (b.type === 'turn_right') jsLines.push('  turnRight();');
-      else if (b.type === 'turn_around') jsLines.push('  turnAround();');
-      else if (b.type === 'say_hello') jsLines.push(`  say("${b.textValue || 'Hello!' }");`);
-      else if (b.type === 'collect_coin') jsLines.push('  collectCoin();');
-      else if (b.type === 'repeat') jsLines.push(`  for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n    moveForward(1);\n  }`);
+      if (b.type === 'move_forward') jsLines.push(`moveForward(${b.stepValue || 1});`);
+      else if (b.type === 'turn_left') jsLines.push('turnLeft();');
+      else if (b.type === 'turn_right') jsLines.push('turnRight();');
+      else if (b.type === 'turn_around') jsLines.push('turnAround();');
+      else if (b.type === 'say_hello') jsLines.push(`say("${b.textValue || 'Hello!' }");`);
+      else if (b.type === 'collect_coin') jsLines.push('collectCoin();');
+      else if (b.type === 'repeat') jsLines.push(`for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n  moveForward(1);\n}`);
     });
-    if (jsLines.length <= 2) {
-      jsLines.push('  moveForward(1);');
-      jsLines.push('  turnRight();');
-      jsLines.push('  say("Awaken the Kingdom!");');
-    }
-    jsLines.push('}');
-    jsLines.push('\nrunQuest();');
     return jsLines.join('\n');
   }
 
   if (worldId === 5) {
-    // Python 3 World
-    let pyLines: string[] = ['# World 5: Python Power Engine', 'def main():'];
+    // Python 3 World: Render ONLY stacked Python blocks
+    let pyLines: string[] = [];
     blocks.forEach((b) => {
-      if (b.type === 'move_forward') pyLines.push(`    move_forward(${b.stepValue || 1})`);
-      else if (b.type === 'turn_left') pyLines.push('    turn_left()');
-      else if (b.type === 'turn_right') pyLines.push('    turn_right()');
-      else if (b.type === 'turn_around') pyLines.push('    turn_around()');
-      else if (b.type === 'say_hello') pyLines.push(`    print("${b.textValue || 'Hello World!'}")`);
-      else if (b.type === 'collect_coin') pyLines.push('    collect_coin()');
-      else if (b.type === 'repeat') pyLines.push(`    for i in range(${b.repeatCount || 1}):\n        move_forward()`);
+      if (b.type === 'move_forward') pyLines.push(`move_forward(${b.stepValue || 1})`);
+      else if (b.type === 'turn_left') pyLines.push('turn_left()');
+      else if (b.type === 'turn_right') pyLines.push('turn_right()');
+      else if (b.type === 'turn_around') pyLines.push('turn_around()');
+      else if (b.type === 'say_hello') pyLines.push(`print("${b.textValue || 'Hello World!'}")`);
+      else if (b.type === 'collect_coin') pyLines.push('collect_coin()');
+      else if (b.type === 'repeat') pyLines.push(`for i in range(${b.repeatCount || 1}):\n    move_forward()`);
     });
-    if (pyLines.length <= 2) {
-      pyLines.push('    for i in range(3):');
-      pyLines.push('        move_forward()');
-      pyLines.push('    turn_left()');
-      pyLines.push('    print("Python Master Active")');
-    }
-    pyLines.push('\nif __name__ == "__main__":');
-    pyLines.push('    main()');
     return pyLines.join('\n');
   }
 
-  return getInitialIdeCode(worldId);
+  return '';
 };
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
