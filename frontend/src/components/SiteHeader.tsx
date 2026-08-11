@@ -4,22 +4,31 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Menu, X, Sparkles, Code2, School, Users, Mail, BookOpen } from 'lucide-react';
+import { 
+  IconMenu2, 
+  IconX, 
+  IconSparkles, 
+  IconCode, 
+  IconSchool, 
+  IconUsers, 
+  IconMail, 
+  IconBook 
+} from '@tabler/icons-react';
 
 export const SiteHeader: React.FC = () => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navItems = [
-    { label: 'Home', href: '/', icon: Code2 },
-    { label: 'About Us', href: '/about', icon: BookOpen },
-    { label: 'Schools', href: '/schools', icon: School },
-    { label: 'Families', href: '/families', icon: Users },
-    { label: 'Contact', href: '/contact', icon: Mail },
+    { label: 'Home', href: '/', icon: IconCode },
+    { label: 'About Us', href: '/about', icon: IconBook },
+    { label: 'Schools', href: '/schools', icon: IconSchool },
+    { label: 'Families', href: '/families', icon: IconUsers },
+    { label: 'Contact', href: '/contact', icon: IconMail },
   ];
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-sm">
+    <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-slate-200/80 shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           
@@ -73,7 +82,7 @@ export const SiteHeader: React.FC = () => {
               href="/"
               className="btn-glossy-3d btn-glossy-amber px-5 py-2.5 text-xs font-black uppercase tracking-wider shadow-md flex items-center space-x-2 border border-amber-300/50"
             >
-              <Sparkles className="w-4 h-4" />
+              <IconSparkles className="w-4 h-4" />
               <span>Start Coding</span>
             </Link>
           </div>
@@ -85,7 +94,7 @@ export const SiteHeader: React.FC = () => {
               className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 focus:outline-none"
               aria-label="Toggle Navigation Menu"
             >
-              {mobileMenuOpen ? <X className="w-6 h-6 text-amber-600" /> : <Menu className="w-6 h-6" />}
+              {mobileMenuOpen ? <IconX className="w-6 h-6 text-amber-600" /> : <IconMenu2 className="w-6 h-6" />}
             </button>
           </div>
 
@@ -120,7 +129,7 @@ export const SiteHeader: React.FC = () => {
               onClick={() => setMobileMenuOpen(false)}
               className="w-full btn-glossy-3d btn-glossy-amber py-3 text-sm font-black uppercase tracking-wider shadow-lg flex items-center justify-center space-x-2"
             >
-              <Sparkles className="w-5 h-5" />
+              <IconSparkles className="w-5 h-5" />
               <span>Start Coding Quests</span>
             </Link>
           </div>

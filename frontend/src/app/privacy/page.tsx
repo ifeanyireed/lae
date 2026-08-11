@@ -3,7 +3,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { ShieldCheck, Lock, Mail, Phone, MapPin } from 'lucide-react';
+import { 
+  IconShieldCheck, 
+  IconLock, 
+  IconMail, 
+  IconPhone, 
+  IconMapPin 
+} from '@tabler/icons-react';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy - PuzzlePro',
@@ -32,7 +38,7 @@ export default function PrivacyPage() {
         {/* HERO BANNER */}
         <section className="text-center space-y-4 pt-4">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs sm:text-sm font-bold uppercase tracking-wider">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <IconShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>COPPA Aligned & Kid-Safe Guaranteed</span>
           </div>
 
@@ -52,7 +58,7 @@ export default function PrivacyPage() {
           <div className="lg:col-span-4 hidden lg:block sticky top-24 space-y-4">
             <div className="bg-white border border-slate-200/80 p-6 rounded-3xl space-y-4 shadow-sm">
               <h3 className="text-xs font-black uppercase tracking-wider text-amber-600 font-varela flex items-center space-x-2">
-                <Lock className="w-4 h-4" />
+                <IconLock className="w-4 h-4" />
                 <span>Privacy Topics</span>
               </h3>
               <nav className="space-y-1 text-xs">
@@ -169,15 +175,15 @@ export default function PrivacyPage() {
               </p>
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2 text-xs">
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  <IconMapPin className="w-4 h-4 text-emerald-600" />
                   <span><strong>Address:</strong> House 5, B Close, 206 Road, Festac Lagos, Nigeria</span>
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <Phone className="w-4 h-4 text-emerald-600" />
+                  <IconPhone className="w-4 h-4 text-emerald-600" />
                   <span><strong>Phone:</strong> +234 803 542 8870</span>
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <Mail className="w-4 h-4 text-emerald-600" />
+                  <IconMail className="w-4 h-4 text-emerald-600" />
                   <span><strong>Email:</strong> hello@resultspro.ng</span>
                 </div>
               </div>

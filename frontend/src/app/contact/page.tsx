@@ -5,18 +5,18 @@ import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
 import { 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Clock, 
-  Send, 
-  CheckCircle2, 
-  MessageSquare, 
-  HelpCircle, 
-  ChevronDown,
-  School,
-  Users
-} from 'lucide-react';
+  IconMail, 
+  IconPhone, 
+  IconMapPin, 
+  IconClock, 
+  IconSend, 
+  IconCheck, 
+  IconMessage, 
+  IconHelp, 
+  IconChevronDown, 
+  IconSchool, 
+  IconUsers 
+} from '@tabler/icons-react';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -70,7 +70,7 @@ export default function ContactPage() {
         {/* HERO SECTION */}
         <section className="text-center space-y-4 pt-4 sm:pt-8">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs sm:text-sm font-bold uppercase tracking-wider shadow-xs">
-            <MessageSquare className="w-4 h-4 text-amber-600" />
+            <IconMessage className="w-4 h-4 text-amber-600" />
             <span>We Are Here to Help</span>
           </div>
 
@@ -92,7 +92,7 @@ export default function ContactPage() {
             <div className="bg-white border border-slate-200/80 p-6 sm:p-8 rounded-3xl space-y-6 shadow-md">
               <div className="space-y-2 border-b border-slate-200 pb-4">
                 <h2 className="text-xl font-bold font-varela text-slate-900 flex items-center space-x-2">
-                  <Mail className="w-5 h-5 text-amber-600" />
+                  <IconMail className="w-5 h-5 text-amber-600" />
                   <span>Contact Information</span>
                 </h2>
                 <p className="text-xs text-slate-500">
@@ -105,7 +105,7 @@ export default function ContactPage() {
                 {/* Address */}
                 <div className="flex items-start space-x-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-                    <MapPin className="w-5 h-5" />
+                    <IconMapPin className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Office Address</h3>
@@ -118,7 +118,7 @@ export default function ContactPage() {
                 {/* Phone */}
                 <div className="flex items-start space-x-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-                    <Phone className="w-5 h-5" />
+                    <IconPhone className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Phone / WhatsApp</h3>
@@ -131,7 +131,7 @@ export default function ContactPage() {
                 {/* Email */}
                 <div className="flex items-start space-x-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-                    <Mail className="w-5 h-5" />
+                    <IconMail className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Email Address</h3>
@@ -144,7 +144,7 @@ export default function ContactPage() {
                 {/* Hours */}
                 <div className="flex items-start space-x-4">
                   <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shrink-0">
-                    <Clock className="w-5 h-5" />
+                    <IconClock className="w-5 h-5" />
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Support Hours</h3>
@@ -167,14 +167,14 @@ export default function ContactPage() {
                   href="/schools"
                   className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 text-slate-700 hover:text-slate-900 flex items-center space-x-2 transition font-medium"
                 >
-                  <School className="w-4 h-4 text-amber-600 shrink-0" />
+                  <IconSchool className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>School Portal</span>
                 </Link>
                 <Link
                   href="/families"
                   className="p-3 rounded-2xl bg-slate-50 border border-slate-200 hover:border-amber-400 text-slate-700 hover:text-slate-900 flex items-center space-x-2 transition font-medium"
                 >
-                  <Users className="w-4 h-4 text-amber-600 shrink-0" />
+                  <IconUsers className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>Family Portal</span>
                 </Link>
               </div>
@@ -195,7 +195,7 @@ export default function ContactPage() {
             {submitted ? (
               <div className="py-12 text-center space-y-4 bg-emerald-50 border border-emerald-200 rounded-2xl p-8 animate-fade-in-up">
                 <div className="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10" />
+                  <IconCheck className="w-10 h-10" />
                 </div>
                 <h3 className="text-2xl font-bold font-varela text-slate-900">Message Sent Successfully!</h3>
                 <p className="text-slate-600 text-sm max-w-md mx-auto">
@@ -297,7 +297,7 @@ export default function ContactPage() {
                   disabled={loading}
                   className="w-full btn-glossy-3d btn-glossy-amber py-3.5 text-xs sm:text-sm font-black uppercase tracking-wider shadow-md flex items-center justify-center space-x-2 border border-amber-400"
                 >
-                  <Send className="w-4 h-4" />
+                  <IconSend className="w-4 h-4" />
                   <span>{loading ? 'Sending Message...' : 'Submit Message'}</span>
                 </button>
 
@@ -312,7 +312,7 @@ export default function ContactPage() {
         <section className="space-y-8 pt-6">
           <div className="text-center space-y-2">
             <div className="inline-flex items-center space-x-2 text-amber-600 text-xs font-bold uppercase tracking-wider">
-              <HelpCircle className="w-4 h-4" />
+              <IconHelp className="w-4 h-4" />
               <span>FAQ</span>
             </div>
             <h2 className="text-2xl sm:text-4xl font-black font-varela text-slate-900 tracking-tight">
@@ -331,7 +331,7 @@ export default function ContactPage() {
                   className="w-full p-5 text-left font-bold font-varela text-slate-900 text-base flex items-center justify-between gap-4 focus:outline-none"
                 >
                   <span>{faq.q}</span>
-                  <ChevronDown className={`w-5 h-5 text-amber-600 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
+                  <IconChevronDown className={`w-5 h-5 text-amber-600 transition-transform ${openFaq === i ? 'rotate-180' : ''}`} />
                 </button>
                 {openFaq === i && (
                   <div className="p-5 pt-0 text-slate-600 text-sm leading-relaxed border-t border-slate-100">

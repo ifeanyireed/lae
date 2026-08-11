@@ -3,7 +3,12 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { MapPin, Phone, Mail, ShieldCheck } from 'lucide-react';
+import { 
+  IconMapPin, 
+  IconPhone, 
+  IconMail, 
+  IconShieldCheck 
+} from '@tabler/icons-react';
 
 export const SiteFooter: React.FC = () => {
   return (
@@ -26,7 +31,7 @@ export const SiteFooter: React.FC = () => {
             ResultsPro's gamified coding platform for kids. Master 636 exercises across Scratch Blocks, HTML, CSS, JavaScript, and Python through interactive story adventures.
           </p>
           <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl w-fit">
-            <ShieldCheck className="w-4 h-4 text-emerald-600" />
+            <IconShieldCheck className="w-4 h-4 text-emerald-600" />
             <span>100% Kid-Safe & COPPA Aligned</span>
           </div>
         </div>
@@ -101,19 +106,19 @@ export const SiteFooter: React.FC = () => {
           </h3>
           <div className="space-y-2.5 text-xs">
             <div className="flex items-start space-x-2.5">
-              <MapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+              <IconMapPin className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
               <span className="text-slate-700 leading-snug">
                 House 5, B Close, 206 Road, Festac Lagos, Nigeria
               </span>
             </div>
             <div className="flex items-center space-x-2.5">
-              <Phone className="w-4 h-4 text-amber-600 shrink-0" />
+              <IconPhone className="w-4 h-4 text-amber-600 shrink-0" />
               <a href="tel:+2348035428870" className="text-slate-700 hover:text-amber-600 transition font-medium">
                 +234 803 542 8870
               </a>
             </div>
             <div className="flex items-center space-x-2.5">
-              <Mail className="w-4 h-4 text-amber-600 shrink-0" />
+              <IconMail className="w-4 h-4 text-amber-600 shrink-0" />
               <a href="mailto:hello@resultspro.ng" className="text-slate-700 hover:text-amber-600 transition font-medium">
                 hello@resultspro.ng
               </a>

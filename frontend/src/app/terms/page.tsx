@@ -3,7 +3,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
-import { FileText, Mail, Phone, MapPin, Scale } from 'lucide-react';
+import { 
+  IconFileText, 
+  IconMail, 
+  IconPhone, 
+  IconMapPin, 
+  IconScale 
+} from '@tabler/icons-react';
 
 export const metadata: Metadata = {
   title: 'Terms & Conditions - PuzzlePro',
@@ -33,7 +39,7 @@ export default function TermsPage() {
         {/* HERO BANNER */}
         <section className="text-center space-y-4 pt-4">
           <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-700 text-xs sm:text-sm font-bold uppercase tracking-wider">
-            <Scale className="w-4 h-4 text-amber-600" />
+            <IconScale className="w-4 h-4 text-amber-600" />
             <span>Legal Agreement</span>
           </div>
 
@@ -53,7 +59,7 @@ export default function TermsPage() {
           <div className="lg:col-span-4 hidden lg:block sticky top-24 space-y-4">
             <div className="bg-white border border-slate-200/80 p-6 rounded-3xl space-y-4 shadow-sm">
               <h3 className="text-xs font-black uppercase tracking-wider text-amber-600 font-varela flex items-center space-x-2">
-                <FileText className="w-4 h-4" />
+                <IconFileText className="w-4 h-4" />
                 <span>Table of Contents</span>
               </h3>
               <nav className="space-y-1 text-xs">
@@ -178,15 +184,15 @@ export default function TermsPage() {
               </p>
               <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 space-y-2 text-xs">
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <MapPin className="w-4 h-4 text-amber-600" />
+                  <IconMapPin className="w-4 h-4 text-amber-600" />
                   <span><strong>Address:</strong> House 5, B Close, 206 Road, Festac Lagos, Nigeria</span>
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <Phone className="w-4 h-4 text-amber-600" />
+                  <IconPhone className="w-4 h-4 text-amber-600" />
                   <span><strong>Phone:</strong> +234 803 542 8870</span>
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
-                  <Mail className="w-4 h-4 text-amber-600" />
+                  <IconMail className="w-4 h-4 text-amber-600" />
                   <span><strong>Email:</strong> hello@resultspro.ng</span>
                 </div>
               </div>
