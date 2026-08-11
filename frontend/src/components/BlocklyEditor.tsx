@@ -209,6 +209,7 @@ const getInitialIdeCode = (worldId: number): string => {
 
 const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
   if (worldId === 2) {
+    // HTML5 World
     let htmlLines: string[] = [
       '<!DOCTYPE html>',
       '<html>',
@@ -217,6 +218,7 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
       '  </head>',
       '  <body>',
     ];
+
     blocks.forEach((b) => {
       if (b.type === 'h1_tag') htmlLines.push(`    <h1>${b.textValue || 'Welcome Builder'}</h1>`);
       else if (b.type === 'p_tag') htmlLines.push(`    <p>${b.textValue || 'Build the world with HTML tags.'}</p>`);
@@ -224,21 +226,41 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
       else if (b.type === 'list_tag') htmlLines.push('    <ul>\n      <li>First Item</li>\n      <li>Second Item</li>\n    </ul>');
       else if (b.type === 'link_tag') htmlLines.push('    <a href="/schools">Kingdom Link</a>');
       else if (b.type === 'img_tag') htmlLines.push('    <img src="/monkey1.svg" alt="Monkey" />');
+      else if (b.type === 'say_hello') htmlLines.push(`    <!-- Monkey Says: "${b.textValue || 'Hello!'}" -->`);
+      else if (b.type === 'move_forward') htmlLines.push(`    <!-- Action: Move Forward ${b.stepValue || 1} Step(s) -->`);
     });
-    if (blocks.length === 0 || !blocks.some(b => ['h1_tag', 'p_tag', 'text_input'].includes(b.type))) {
+
+    if (blocks.length === 0 || !blocks.some(b => ['h1_tag', 'p_tag', 'text_input', 'list_tag', 'link_tag', 'img_tag'].includes(b.type))) {
       htmlLines.push('    <h1>Welcome Builder</h1>');
       htmlLines.push('    <p>Construct the digital kingdom using HTML code tags.</p>');
     }
+
     htmlLines.push('  </body>');
     htmlLines.push('</html>');
     return htmlLines.join('\n');
   }
 
   if (worldId === 3) {
-    return getInitialIdeCode(3);
+    // CSS3 World
+    let cssLines: string[] = ['/* World 3: CSS Stylesheet */', 'body {'];
+    let hasRules = false;
+    blocks.forEach((b) => {
+      if (b.type === 'css_color') { cssLines.push(`  color: ${b.textValue || '#f59e0b'};`); hasRules = true; }
+      else if (b.type === 'css_font_size') { cssLines.push(`  font-size: ${b.textValue || '2rem'};`); hasRules = true; }
+      else if (b.type === 'css_background') { cssLines.push(`  background-color: ${b.textValue || '#0f172a'};`); hasRules = true; }
+      else if (b.type === 'css_margin') { cssLines.push(`  margin: ${b.textValue || '20px'};`); hasRules = true; }
+    });
+    if (!hasRules) {
+      cssLines.push('  background-color: #0f172a;');
+      cssLines.push('  color: #f8fafc;');
+      cssLines.push("  font-family: 'Varela Round', sans-serif;");
+    }
+    cssLines.push('}');
+    return cssLines.join('\n');
   }
 
   if (worldId === 4) {
+    // JavaScript ES6 World
     let jsLines: string[] = ['// World 4: JavaScript Logic', 'function runQuest() {'];
     blocks.forEach((b) => {
       if (b.type === 'move_forward') jsLines.push(`  moveForward(${b.stepValue || 1});`);
@@ -247,6 +269,7 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
       else if (b.type === 'turn_around') jsLines.push('  turnAround();');
       else if (b.type === 'say_hello') jsLines.push(`  say("${b.textValue || 'Hello!' }");`);
       else if (b.type === 'collect_coin') jsLines.push('  collectCoin();');
+      else if (b.type === 'repeat') jsLines.push(`  for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n    moveForward(1);\n  }`);
     });
     if (jsLines.length <= 2) {
       jsLines.push('  moveForward(1);');
@@ -259,6 +282,7 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
   }
 
   if (worldId === 5) {
+    // Python 3 World
     let pyLines: string[] = ['# World 5: Python Power Engine', 'def main():'];
     blocks.forEach((b) => {
       if (b.type === 'move_forward') pyLines.push(`    move_forward(${b.stepValue || 1})`);
@@ -267,6 +291,7 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
       else if (b.type === 'turn_around') pyLines.push('    turn_around()');
       else if (b.type === 'say_hello') pyLines.push(`    print("${b.textValue || 'Hello World!'}")`);
       else if (b.type === 'collect_coin') pyLines.push('    collect_coin()');
+      else if (b.type === 'repeat') pyLines.push(`    for i in range(${b.repeatCount || 1}):\n        move_forward()`);
     });
     if (pyLines.length <= 2) {
       pyLines.push('    for i in range(3):');
@@ -329,6 +354,11 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
   const program = externalProgram || internalProgram;
   const setProgram = externalSetProgram || setInternalProgram;
+
+  // Live translation: compile stacked blocks into actual code whenever blocks change
+  useEffect(() => {
+    setIdeCodeText(convertProgramToText(program, activeWorldId));
+  }, [program, activeWorldId]);
 
   // Auto-scroll Scratch Blocks stack to active step or newly added block on activity
   useEffect(() => {
