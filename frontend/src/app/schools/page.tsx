@@ -561,6 +561,17 @@ export default function SchoolsPage() {
             </button>
           </form>
         </div>
+
+        {/* Public Footer Links */}
+        <div className="absolute bottom-4 left-0 right-0 z-20 flex items-center justify-center space-x-3 sm:space-x-5 text-[11px] text-slate-300 md:text-slate-500 font-medium">
+          <Link href="/about" className="hover:text-amber-500 transition">About Us</Link>
+          <span>•</span>
+          <Link href="/contact" className="hover:text-amber-500 transition">Contact</Link>
+          <span>•</span>
+          <Link href="/privacy" className="hover:text-amber-500 transition">Privacy Policy</Link>
+          <span>•</span>
+          <Link href="/terms" className="hover:text-amber-500 transition">Terms & Conditions</Link>
+        </div>
       </div>
     );
   }

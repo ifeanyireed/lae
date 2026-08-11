@@ -670,8 +670,14 @@ export default function OnboardingPage() {
         )}
       </main>
 
-      <footer className="text-center text-[10px] text-slate-400 font-normal uppercase tracking-wider py-2">
-        © 2026 PuzzlePro Onboarding Wizard. All rights reserved.
+      <footer className="text-center text-[11px] text-slate-400 font-medium py-3 space-x-4">
+        <Link href="/about" className="hover:text-amber-500 transition">About Us</Link>
+        <span>•</span>
+        <Link href="/contact" className="hover:text-amber-500 transition">Contact</Link>
+        <span>•</span>
+        <Link href="/privacy" className="hover:text-amber-500 transition">Privacy Policy</Link>
+        <span>•</span>
+        <Link href="/terms" className="hover:text-amber-500 transition">Terms & Conditions</Link>
       </footer>
 
       {/* EMAIL VERIFICATION MODAL */}
