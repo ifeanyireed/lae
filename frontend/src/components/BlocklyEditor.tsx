@@ -198,63 +198,134 @@ const getInitialIdeCode = (worldId: number): string => {
   return '';
 };
 
-const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
-  // Filter out hat blocks (when_flag_clicked and when_html_started)
-  const actionBlocks = (blocks || []).filter(b => b.type !== 'when_flag_clicked' && b.type !== 'when_html_started');
+const renderBlocksToText = (blocksList: CodeBlock[], indentLevel: number, worldId: number): string[] => {
+  const indent = '  '.repeat(indentLevel);
+  let lines: string[] = [];
 
-  if (actionBlocks.length === 0) {
-    return '';
-  }
+  (blocksList || []).forEach((b) => {
+    if (b.type === 'when_flag_clicked' || b.type === 'when_html_started') return;
 
-  let codeLines: string[] = [];
-
-  actionBlocks.forEach((b) => {
-    // HTML Tag Blocks
-    if (b.type === 'h1_tag') codeLines.push(`<h1>${b.textValue || 'Welcome Builder'}</h1>`);
-    else if (b.type === 'p_tag') codeLines.push(`<p>${b.textValue || 'Build the world with HTML tags.'}</p>`);
-    else if (b.type === 'text_input') codeLines.push(`<span>${b.textValue || 'Sample Text'}</span>`);
-    else if (b.type === 'list_tag') codeLines.push('<ul>\n  <li>First Item</li>\n  <li>Second Item</li>\n</ul>');
-    else if (b.type === 'link_tag') codeLines.push('<a href="/schools">Kingdom Link</a>');
-    else if (b.type === 'img_tag') codeLines.push('<img src="/monkey1.svg" alt="Monkey" />');
-    
+    // 1. DOCTYPE
+    if (b.type === 'doctype' || b.type === 'doctype_html') {
+      lines.push(`${indent}<!doctype html>`);
+    }
+    // 2. HTML TAG
+    else if (b.type === 'html' || b.type === 'html_tag') {
+      lines.push(`${indent}<html>`);
+      if (b.children && b.children.length > 0) {
+        lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+      }
+      lines.push(`${indent}</html>`);
+    }
+    // 3. HEAD TAG
+    else if (b.type === 'head' || b.type === 'head_tag') {
+      lines.push(`${indent}<head>`);
+      if (b.children && b.children.length > 0) {
+        lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+      }
+      lines.push(`${indent}</head>`);
+    }
+    // 4. TITLE TAG
+    else if (b.type === 'title' || b.type === 'title_tag') {
+      const innerText = b.textValue || (b.children && b.children.length > 0 ? b.children.map(c => c.textValue || '').join('') : 'My Webpage');
+      lines.push(`${indent}<title>${innerText}</title>`);
+    }
+    // 5. BODY TAG
+    else if (b.type === 'body' || b.type === 'body_tag') {
+      lines.push(`${indent}<body>`);
+      if (b.children && b.children.length > 0) {
+        lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+      }
+      lines.push(`${indent}</body>`);
+    }
+    // 6. HEADING (H1) TAG
+    else if (b.type === 'h1' || b.type === 'h1_tag' || b.type === 'heading' || b.type === 'heading_tag') {
+      const innerText = b.textValue || (b.children && b.children.length > 0 ? b.children.map(c => c.textValue || '').join('') : 'Welcome Builder');
+      lines.push(`${indent}<h1>${innerText}</h1>`);
+    }
+    // 7. PARAGRAPH (P) TAG
+    else if (b.type === 'p' || b.type === 'p_tag' || b.type === 'paragraph' || b.type === 'paragraph_tag') {
+      const innerText = b.textValue || (b.children && b.children.length > 0 ? b.children.map(c => c.textValue || '').join('') : 'Build the world with HTML tags.');
+      lines.push(`${indent}<p>${innerText}</p>`);
+    }
+    // 8. TEXT TAG / SPAN / INPUT
+    else if (b.type === 'text' || b.type === 'text_tag' || b.type === 'text_input') {
+      lines.push(`${indent}<span>${b.textValue || 'Sample Text'}</span>`);
+    }
+    // 9. LIST TAG
+    else if (b.type === 'list_tag' || b.type === 'list') {
+      lines.push(`${indent}<ul>`);
+      if (b.children && b.children.length > 0) {
+        lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+      } else {
+        lines.push(`${indent}  <li>First Item</li>`);
+        lines.push(`${indent}  <li>Second Item</li>`);
+      }
+      lines.push(`${indent}</ul>`);
+    }
+    // 10. LINK TAG
+    else if (b.type === 'link_tag' || b.type === 'link') {
+      lines.push(`${indent}<a href="/schools">${b.textValue || 'Kingdom Link'}</a>`);
+    }
+    // 11. IMG TAG
+    else if (b.type === 'img_tag' || b.type === 'img') {
+      lines.push(`${indent}<img src="/monkey1.svg" alt="Monkey" />`);
+    }
     // CSS Blocks
-    else if (b.type === 'css_color') codeLines.push(`color: ${b.textValue || '#f59e0b'};`);
-    else if (b.type === 'css_font_size') codeLines.push(`font-size: ${b.textValue || '2rem'};`);
-    else if (b.type === 'css_background') codeLines.push(`background-color: ${b.textValue || '#0f172a'};`);
-    else if (b.type === 'css_margin') codeLines.push(`margin: ${b.textValue || '20px'};`);
-    
-    // Motion & Logic Blocks (JS / Python format depending on world)
+    else if (b.type === 'css_color') lines.push(`${indent}color: ${b.textValue || '#f59e0b'};`);
+    else if (b.type === 'css_font_size') lines.push(`${indent}font-size: ${b.textValue || '2rem'};`);
+    else if (b.type === 'css_background') lines.push(`${indent}background-color: ${b.textValue || '#0f172a'};`);
+    else if (b.type === 'css_margin') lines.push(`${indent}margin: ${b.textValue || '20px'};`);
+    // Motion & Control blocks
     else if (b.type === 'move_forward') {
-      if (worldId === 5) codeLines.push(`move_forward(${b.stepValue || 1})`);
-      else codeLines.push(`moveForward(${b.stepValue || 1});`);
+      if (worldId === 5) lines.push(`${indent}move_forward(${b.stepValue || 1})`);
+      else lines.push(`${indent}moveForward(${b.stepValue || 1});`);
     }
     else if (b.type === 'turn_left') {
-      if (worldId === 5) codeLines.push('turn_left()');
-      else codeLines.push('turnLeft();');
+      if (worldId === 5) lines.push(`${indent}turn_left()`);
+      else lines.push(`${indent}turnLeft();`);
     }
     else if (b.type === 'turn_right') {
-      if (worldId === 5) codeLines.push('turn_right()');
-      else codeLines.push('turnRight();');
+      if (worldId === 5) lines.push(`${indent}turn_right()`);
+      else lines.push(`${indent}turnRight();`);
     }
     else if (b.type === 'turn_around') {
-      if (worldId === 5) codeLines.push('turn_around()');
-      else codeLines.push('turnAround();');
+      if (worldId === 5) lines.push(`${indent}turn_around()`);
+      else lines.push(`${indent}turnAround();`);
     }
     else if (b.type === 'say_hello') {
-      if (worldId === 5) codeLines.push(`print("${b.textValue || 'Hello World!'}")`);
-      else codeLines.push(`say("${b.textValue || 'Hello!' }");`);
+      if (worldId === 5) lines.push(`${indent}print("${b.textValue || 'Hello World!'}")`);
+      else lines.push(`${indent}say("${b.textValue || 'Hello!' }");`);
     }
     else if (b.type === 'collect_coin') {
-      if (worldId === 5) codeLines.push('collect_coin()');
-      else codeLines.push('collectCoin();');
+      if (worldId === 5) lines.push(`${indent}collect_coin()`);
+      else lines.push(`${indent}collectCoin();`);
     }
     else if (b.type === 'repeat') {
-      if (worldId === 5) codeLines.push(`for i in range(${b.repeatCount || 1}):\n    move_forward()`);
-      else codeLines.push(`for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n  moveForward(1);\n}`);
+      if (worldId === 5) {
+        lines.push(`${indent}for i in range(${b.repeatCount || 1}):`);
+        if (b.children && b.children.length > 0) {
+          lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+        } else {
+          lines.push(`${indent}    move_forward()`);
+        }
+      } else {
+        lines.push(`${indent}for (let i = 0; i < ${b.repeatCount || 1}; i++) {`);
+        if (b.children && b.children.length > 0) {
+          lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
+        } else {
+          lines.push(`${indent}  moveForward(1);`);
+        }
+        lines.push(`${indent}}`);
+      }
     }
   });
 
-  return codeLines.join('\n');
+  return lines;
+};
+
+const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
+  return renderBlocksToText(blocks, 0, worldId).join('\n');
 };
 
 const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
