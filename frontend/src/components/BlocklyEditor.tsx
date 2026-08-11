@@ -151,29 +151,29 @@ const renderLanguageLogo = (worldId: number) => {
   switch (worldId) {
     case 2: // HTML
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-600 text-[10px] font-black tracking-wider uppercase shadow-sm">
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-orange-500/20 backdrop-blur-md border border-orange-500/40 text-orange-600 text-[10px] font-black tracking-wider uppercase shadow-sm">
           <IconBrandHtml5 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
           <span>HTML5</span>
         </span>
       );
     case 3: // CSS
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-600 text-[10px] font-black tracking-wider uppercase shadow-sm">
-          <IconBrandCss3 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-blue-500/25 backdrop-blur-md border border-blue-400/50 text-blue-700 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandCss3 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <span>CSS3</span>
         </span>
       );
     case 4: // JavaScript
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-500/30 text-amber-800 text-[10px] font-black tracking-wider uppercase shadow-sm">
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-amber-400/25 backdrop-blur-md border border-amber-500/40 text-amber-900 text-[10px] font-black tracking-wider uppercase shadow-sm">
           <IconBrandJavascript className="w-3.5 h-3.5 text-amber-600 shrink-0" />
           <span>JavaScript</span>
         </span>
       );
     case 5: // Python
       return (
-        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-[10px] font-black tracking-wider uppercase shadow-sm">
-          <IconBrandPython className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+        <span className="inline-flex items-center space-x-1 px-2.5 py-0.5 rounded-full bg-blue-600/20 backdrop-blur-md border border-blue-500/40 text-blue-800 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandPython className="w-3.5 h-3.5 text-blue-600 shrink-0" />
           <span>Python</span>
         </span>
       );
