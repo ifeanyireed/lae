@@ -197,83 +197,62 @@ const getInitialIdeCode = (worldId: number): string => {
 };
 
 const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
-  if (!blocks || blocks.length === 0) {
+  // Filter out hat blocks (when_flag_clicked and when_html_started)
+  const actionBlocks = (blocks || []).filter(b => b.type !== 'when_flag_clicked' && b.type !== 'when_html_started');
+
+  if (actionBlocks.length === 0) {
     return '';
   }
 
-  if (worldId === 2) {
-    // HTML5 World: Render ONLY stacked HTML blocks inside <body>
-    let htmlLines: string[] = [
-      '<!DOCTYPE html>',
-      '<html>',
-      '  <head>',
-      '    <title>HTML Page</title>',
-      '  </head>',
-      '  <body>',
-    ];
+  let codeLines: string[] = [];
 
-    blocks.forEach((b) => {
-      if (b.type === 'h1_tag') htmlLines.push(`    <h1>${b.textValue || 'Welcome Builder'}</h1>`);
-      else if (b.type === 'p_tag') htmlLines.push(`    <p>${b.textValue || 'Build the world with HTML tags.'}</p>`);
-      else if (b.type === 'text_input') htmlLines.push(`    <span>${b.textValue || 'Sample Text'}</span>`);
-      else if (b.type === 'list_tag') htmlLines.push('    <ul>\n      <li>First Item</li>\n      <li>Second Item</li>\n    </ul>');
-      else if (b.type === 'link_tag') htmlLines.push('    <a href="/schools">Kingdom Link</a>');
-      else if (b.type === 'img_tag') htmlLines.push('    <img src="/monkey1.svg" alt="Monkey" />');
-      else if (b.type === 'say_hello') htmlLines.push(`    <!-- Monkey Says: "${b.textValue || 'Hello!'}" -->`);
-      else if (b.type === 'move_forward') htmlLines.push(`    <!-- Action: Move Forward ${b.stepValue || 1} Step(s) -->`);
-      else if (b.type === 'turn_left') htmlLines.push('    <!-- Action: Turn Left -->');
-      else if (b.type === 'turn_right') htmlLines.push('    <!-- Action: Turn Right -->');
-    });
+  actionBlocks.forEach((b) => {
+    // HTML Tag Blocks
+    if (b.type === 'h1_tag') codeLines.push(`<h1>${b.textValue || 'Welcome Builder'}</h1>`);
+    else if (b.type === 'p_tag') codeLines.push(`<p>${b.textValue || 'Build the world with HTML tags.'}</p>`);
+    else if (b.type === 'text_input') codeLines.push(`<span>${b.textValue || 'Sample Text'}</span>`);
+    else if (b.type === 'list_tag') codeLines.push('<ul>\n  <li>First Item</li>\n  <li>Second Item</li>\n</ul>');
+    else if (b.type === 'link_tag') codeLines.push('<a href="/schools">Kingdom Link</a>');
+    else if (b.type === 'img_tag') codeLines.push('<img src="/monkey1.svg" alt="Monkey" />');
+    
+    // CSS Blocks
+    else if (b.type === 'css_color') codeLines.push(`color: ${b.textValue || '#f59e0b'};`);
+    else if (b.type === 'css_font_size') codeLines.push(`font-size: ${b.textValue || '2rem'};`);
+    else if (b.type === 'css_background') codeLines.push(`background-color: ${b.textValue || '#0f172a'};`);
+    else if (b.type === 'css_margin') codeLines.push(`margin: ${b.textValue || '20px'};`);
+    
+    // Motion & Logic Blocks (JS / Python format depending on world)
+    else if (b.type === 'move_forward') {
+      if (worldId === 5) codeLines.push(`move_forward(${b.stepValue || 1})`);
+      else codeLines.push(`moveForward(${b.stepValue || 1});`);
+    }
+    else if (b.type === 'turn_left') {
+      if (worldId === 5) codeLines.push('turn_left()');
+      else codeLines.push('turnLeft();');
+    }
+    else if (b.type === 'turn_right') {
+      if (worldId === 5) codeLines.push('turn_right()');
+      else codeLines.push('turnRight();');
+    }
+    else if (b.type === 'turn_around') {
+      if (worldId === 5) codeLines.push('turn_around()');
+      else codeLines.push('turnAround();');
+    }
+    else if (b.type === 'say_hello') {
+      if (worldId === 5) codeLines.push(`print("${b.textValue || 'Hello World!'}")`);
+      else codeLines.push(`say("${b.textValue || 'Hello!' }");`);
+    }
+    else if (b.type === 'collect_coin') {
+      if (worldId === 5) codeLines.push('collect_coin()');
+      else codeLines.push('collectCoin();');
+    }
+    else if (b.type === 'repeat') {
+      if (worldId === 5) codeLines.push(`for i in range(${b.repeatCount || 1}):\n    move_forward()`);
+      else codeLines.push(`for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n  moveForward(1);\n}`);
+    }
+  });
 
-    htmlLines.push('  </body>');
-    htmlLines.push('</html>');
-    return htmlLines.join('\n');
-  }
-
-  if (worldId === 3) {
-    // CSS3 World: Render ONLY stacked CSS blocks
-    let cssLines: string[] = ['/* CSS Stylesheet */', 'body {'];
-    blocks.forEach((b) => {
-      if (b.type === 'css_color') cssLines.push(`  color: ${b.textValue || '#f59e0b'};`);
-      else if (b.type === 'css_font_size') cssLines.push(`  font-size: ${b.textValue || '2rem'};`);
-      else if (b.type === 'css_background') cssLines.push(`  background-color: ${b.textValue || '#0f172a'};`);
-      else if (b.type === 'css_margin') cssLines.push(`  margin: ${b.textValue || '20px'};`);
-    });
-    cssLines.push('}');
-    return cssLines.join('\n');
-  }
-
-  if (worldId === 4) {
-    // JavaScript ES6 World: Render ONLY stacked JS blocks
-    let jsLines: string[] = [];
-    blocks.forEach((b) => {
-      if (b.type === 'move_forward') jsLines.push(`moveForward(${b.stepValue || 1});`);
-      else if (b.type === 'turn_left') jsLines.push('turnLeft();');
-      else if (b.type === 'turn_right') jsLines.push('turnRight();');
-      else if (b.type === 'turn_around') jsLines.push('turnAround();');
-      else if (b.type === 'say_hello') jsLines.push(`say("${b.textValue || 'Hello!' }");`);
-      else if (b.type === 'collect_coin') jsLines.push('collectCoin();');
-      else if (b.type === 'repeat') jsLines.push(`for (let i = 0; i < ${b.repeatCount || 1}; i++) {\n  moveForward(1);\n}`);
-    });
-    return jsLines.join('\n');
-  }
-
-  if (worldId === 5) {
-    // Python 3 World: Render ONLY stacked Python blocks
-    let pyLines: string[] = [];
-    blocks.forEach((b) => {
-      if (b.type === 'move_forward') pyLines.push(`move_forward(${b.stepValue || 1})`);
-      else if (b.type === 'turn_left') pyLines.push('turn_left()');
-      else if (b.type === 'turn_right') pyLines.push('turn_right()');
-      else if (b.type === 'turn_around') pyLines.push('turn_around()');
-      else if (b.type === 'say_hello') pyLines.push(`print("${b.textValue || 'Hello World!'}")`);
-      else if (b.type === 'collect_coin') pyLines.push('collect_coin()');
-      else if (b.type === 'repeat') pyLines.push(`for i in range(${b.repeatCount || 1}):\n    move_forward()`);
-    });
-    return pyLines.join('\n');
-  }
-
-  return '';
+  return codeLines.join('\n');
 };
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
