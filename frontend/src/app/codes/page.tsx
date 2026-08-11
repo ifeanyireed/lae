@@ -118,31 +118,7 @@ export default function StudentCodesPage() {
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
       </div>
 
-      {/* Top Header Navbar */}
-      <header className="relative z-20 w-full px-6 lg:px-12 py-5 flex items-center justify-between border-b border-white/10 bg-slate-950/40 backdrop-blur-md">
-        <Link href="/" className="flex items-center space-x-3 group">
-          <Image
-            src="/monkey1.svg"
-            alt="PuzzlePro Logo"
-            width={40}
-            height={40}
-            className="object-contain drop-shadow-md transition-transform group-hover:scale-105"
-          />
-          <span className="text-white font-medium text-lg tracking-tight">
-            PuzzlePro <span className="text-amber-400 font-normal">Codes</span>
-          </span>
-        </Link>
 
-        <div className="flex items-center space-x-3">
-          <Link
-            href="/schools"
-            className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/15 backdrop-blur-md transition flex items-center space-x-1.5"
-          >
-            <IconSchool className="w-4 h-4 text-amber-400" />
-            <span>Educator Portal</span>
-          </Link>
-        </div>
-      </header>
 
       {/* Main Container Content */}
       <div className="relative z-10 flex-1 w-full max-w-7xl mx-auto px-6 lg:px-12 py-10 flex flex-col md:flex-row items-center justify-between gap-10">
