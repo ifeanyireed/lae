@@ -253,28 +253,6 @@ export default function StudentCodesPage() {
                   )}
                 </button>
               </form>
-
-              {/* Sample Quick Badges */}
-              <div className="pt-2 border-t border-slate-200/40">
-                <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-2 font-normal">
-                  Try Sample 6-Digit Group Codes:
-                </span>
-                <div className="flex flex-wrap gap-1.5">
-                  {['784912', '592810', '310492'].map((sample) => (
-                    <button
-                      key={sample}
-                      type="button"
-                      onClick={() => {
-                        setGroupCodeInput(sample);
-                        handleLookupGroup(sample);
-                      }}
-                      className="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 md:text-amber-700 text-[11px] font-mono rounded-lg border border-amber-500/20 transition cursor-pointer"
-                    >
-                      {sample}
-                    </button>
-                  ))}
-                </div>
-              </div>
             </div>
           ) : (
             /* STEP 2: GROUP FOUND & STUDENT DIRECTORY SEARCH */
