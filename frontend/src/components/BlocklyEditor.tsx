@@ -324,6 +324,35 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   const program = externalProgram || internalProgram;
   const setProgram = externalSetProgram || setInternalProgram;
 
+  // Helper to ensure when_flag_clicked and when_html_started hat blocks remain in the frame when empty
+  const ensureHatBlocks = React.useCallback((blocks: CodeBlock[]): CodeBlock[] => {
+    const hasFlag = blocks.some(b => b.type === 'when_flag_clicked');
+    const hasHtml = blocks.some(b => b.type === 'when_html_started');
+
+    let result = [...blocks];
+    if (!hasFlag) {
+      result.unshift({ instanceId: 'default-when-clicked', type: 'when_flag_clicked', label: 'when play clicked', category: 'events', blockClass: 'block-events' });
+    }
+    if ((activeWorldId === 2 || isWorld2) && !hasHtml) {
+      const flagIdx = result.findIndex(b => b.type === 'when_flag_clicked');
+      const htmlBlock: CodeBlock = { instanceId: 'default-html-hat', type: 'when_html_started', label: 'HTML', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold' };
+      if (flagIdx >= 0) {
+        result.splice(flagIdx + 1, 0, htmlBlock);
+      } else {
+        result.unshift(htmlBlock);
+      }
+    }
+    return result;
+  }, [activeWorldId, isWorld2]);
+
+  // Keep when_flag_clicked and when_html_started hat blocks in the frame if empty
+  useEffect(() => {
+    if (program.length === 0 || !program.some(b => b.type === 'when_flag_clicked')) {
+      const hatBlocks = ensureHatBlocks(program);
+      setProgram(hatBlocks);
+    }
+  }, [program.length, ensureHatBlocks, setProgram]);
+
   // Live translation: compile stacked blocks into actual code whenever blocks change
   useEffect(() => {
     setIdeCodeText(convertProgramToText(program, activeWorldId));
@@ -1324,7 +1353,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             </div>
 
             {/* Floating Code Stack Zoom Control Widget locked to bottom-right of stack dropzone */}
-            <div className="absolute bottom-3 right-3 z-50 pointer-events-auto shrink-0 shadow-lg">
+            <div className="sticky bottom-3 right-3 ml-auto z-50 pointer-events-auto shrink-0 shadow-lg">
               <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-slate-300 shadow-md">
                 <button
                   onClick={() => { soundManager.playClick(); setCodeStackZoomScale(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100)); }}
