@@ -266,6 +266,16 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   const [isIdeMode, setIsIdeMode] = useState<boolean>(false);
   const [ideCodeText, setIdeCodeText] = useState<string>('');
 
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const lineNumbersRef = React.useRef<HTMLDivElement>(null);
+  const codeStackContainerRef = React.useRef<HTMLDivElement>(null);
+
+  const handleTextareaScroll = () => {
+    if (textareaRef.current && lineNumbersRef.current) {
+      lineNumbersRef.current.scrollTop = textareaRef.current.scrollTop;
+    }
+  };
+
   const [internalCategory, setInternalCategory] = useState<string>('motion');
   const activeCategory = externalCategory || internalCategory;
   const setActiveCategory = onSelectCategory || setInternalCategory;
@@ -280,6 +290,40 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
 
   const program = externalProgram || internalProgram;
   const setProgram = externalSetProgram || setInternalProgram;
+
+  // Auto-scroll Scratch Blocks stack to active step or newly added block on activity
+  useEffect(() => {
+    if (!isIdeMode && codeStackContainerRef.current) {
+      codeStackContainerRef.current.scrollTo({
+        top: codeStackContainerRef.current.scrollHeight,
+        behavior: 'smooth',
+      });
+    }
+  }, [program.length, activeStepIndex, isIdeMode]);
+
+  // Auto-scroll IDE editor to active line or latest typed line on activity
+  useEffect(() => {
+    if (isIdeMode && textareaRef.current) {
+      const lines = ideCodeText.split('\n');
+      const targetLine = activeStepIndex !== null && activeStepIndex < lines.length
+        ? activeStepIndex
+        : lines.length - 1;
+      
+      const lineHeight = 24;
+      const scrollTop = Math.max(0, targetLine * lineHeight - 40);
+
+      textareaRef.current.scrollTo({
+        top: scrollTop,
+        behavior: 'smooth',
+      });
+      if (lineNumbersRef.current) {
+        lineNumbersRef.current.scrollTo({
+          top: scrollTop,
+          behavior: 'smooth',
+        });
+      }
+    }
+  }, [ideCodeText, activeStepIndex, isIdeMode]);
 
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -865,20 +909,28 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             <div className="pt-1 flex flex-col flex-1 min-h-0 space-y-2 w-full h-full relative text-slate-100 font-mono">
               {/* IDE Text Area Editor Container */}
               <div className="flex-1 w-full relative bg-slate-950/95 border border-slate-800 rounded-3xl overflow-hidden flex flex-col p-4 shadow-2xl min-h-0">
-                <div className="flex-1 flex space-x-3 overflow-y-auto min-h-0 pr-16 pb-16">
-                  {/* Line Numbers */}
-                  <div className="text-slate-600 text-xs text-right select-none font-mono py-0.5 pr-2.5 border-r border-slate-800/80 flex flex-col space-y-1 shrink-0">
-                    {ideCodeText.split('\n').map((_, idx) => (
-                      <div key={idx}>{idx + 1}</div>
+                <div className="flex-1 flex space-x-3 overflow-hidden min-h-0 relative pr-16 pb-12">
+                  {/* Line Numbers Column */}
+                  <div
+                    ref={lineNumbersRef}
+                    className="text-slate-600 text-xs sm:text-sm text-right select-none font-mono py-0.5 pr-2.5 border-r border-slate-800/80 flex flex-col shrink-0 overflow-y-auto scrollbar-none h-full"
+                  >
+                    {Array.from({ length: Math.max(ideCodeText.split('\n').length, 1) }).map((_, idx) => (
+                      <div key={idx} className="h-6 leading-6 font-mono shrink-0">
+                        {idx + 1}
+                      </div>
                     ))}
+                    <div className="h-16 shrink-0" />
                   </div>
 
                   {/* Code Input Area */}
                   <textarea
+                    ref={textareaRef}
                     value={ideCodeText}
                     onChange={(e) => setIdeCodeText(e.target.value)}
+                    onScroll={handleTextareaScroll}
                     spellCheck={false}
-                    className="flex-1 bg-transparent text-slate-100 text-xs sm:text-sm font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full"
+                    className="flex-1 bg-transparent text-slate-100 text-xs sm:text-sm font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full overflow-y-auto py-0.5"
                     placeholder="Write code here..."
                   />
                 </div>
@@ -1155,6 +1207,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 }
               } catch (err) {}
             }}
+            ref={codeStackContainerRef}
             className={`relative flex-1 min-h-[120px] overflow-y-auto flex flex-col space-y-2 p-3 rounded-2xl border transition-all w-full shadow-inner items-start ${
               isDraggingOver 
                 ? 'bg-amber-400/20 border-2 border-dashed border-amber-400 ring-4 ring-amber-400/30' 
