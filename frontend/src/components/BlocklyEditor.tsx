@@ -822,7 +822,13 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
         <div className={`flex items-center space-x-2.5 ${isCollapsed ? 'border-r border-slate-900/15 pr-2 mr-0.5' : ''}`}>
           <IconGripHorizontal className="w-3.5 h-3.5 text-slate-800 opacity-80" />
 
-          {/* TOGGLE SWITCH IN FRONT WITH NO TEXT INSIDE (WORLDS 2-5) */}
+          {/* Logo & Title Text (Block Editor when on blocks, Code Editor when on code) */}
+          <span className="text-[11px] font-black text-slate-950 font-mono tracking-wide flex items-center space-x-1 whitespace-nowrap">
+            <IconPuzzle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+            <span>{isIdeMode ? 'Code Editor' : 'Block Editor'}</span>
+          </span>
+
+          {/* TEXTLESS TOGGLE SWITCH AFTER TITLE AND LOGO (WORLDS 2-5) */}
           {(activeWorldId >= 2 || isWorld2) && !isCollapsed && (
             <button
               type="button"
@@ -847,11 +853,6 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               />
             </button>
           )}
-
-          <span className="text-[11px] font-black text-slate-950 font-mono tracking-wide flex items-center space-x-1 whitespace-nowrap">
-            <IconPuzzle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-            <span>Block Editor/Code Editor</span>
-          </span>
         </div>
 
         <div className="flex items-center space-x-1.5" onClick={(e) => isCollapsed && e.stopPropagation()}>
