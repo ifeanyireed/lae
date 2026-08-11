@@ -530,3 +530,23 @@ export async function resetPasswordWithCode(email: string, code: string, newPass
   }
 }
 
+export async function sendContactForm(data: {
+  name: string;
+  email: string;
+  phone?: string;
+  category?: string;
+  message: string;
+}): Promise<{ success: boolean; message?: string; error?: string }> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/contact/send`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: e?.message || 'Failed to dispatch contact message' };
+  }
+}
+
+

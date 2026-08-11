@@ -314,3 +314,46 @@ func (m *Mailer) SendPasswordResetEmail(toEmail, code string) {
 		}
 	}()
 }
+
+// SendContactMessageEmail dispatches user contact form responses to hello@resultspro.ng
+func (m *Mailer) SendContactMessageEmail(name, senderEmail, phone, category, message string) error {
+	to := "hello@resultspro.ng"
+	subject := fmt.Sprintf("[PuzzlePro Contact] %s - %s", category, name)
+
+	if phone == "" {
+		phone = "Not provided"
+	}
+	if category == "" {
+		category = "General Inquiry"
+	}
+
+	html := fmt.Sprintf(`
+		<div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 16px; background-color: #ffffff;">
+			<div style="text-align: center; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; padding-bottom: 16px;">
+				<h1 style="color: #0f172a; margin: 0; font-size: 22px; font-weight: 800;">New Contact Form Message 📩</h1>
+				<p style="color: #64748b; font-size: 13px; margin-top: 4px;">PuzzlePro Website Inquiry</p>
+			</div>
+
+			<div style="background-color: #f8fafc; padding: 18px; border-radius: 12px; border: 1px solid #e2e8f0; margin-bottom: 20px;">
+				<p style="margin: 6px 0; font-size: 13px; color: #334155;"><strong>Sender Name:</strong> %s</p>
+				<p style="margin: 6px 0; font-size: 13px; color: #334155;"><strong>Sender Email:</strong> <a href="mailto:%s" style="color: #0284c7; text-decoration: none;">%s</a></p>
+				<p style="margin: 6px 0; font-size: 13px; color: #334155;"><strong>Phone:</strong> %s</p>
+				<p style="margin: 6px 0; font-size: 13px; color: #334155;"><strong>Inquiry Category:</strong> %s</p>
+			</div>
+
+			<div style="background-color: #ffffff; padding: 18px; border-radius: 12px; border: 1px solid #cbd5e1; margin-bottom: 20px;">
+				<h4 style="margin: 0 0 8px 0; color: #0f172a; font-size: 13px; text-transform: uppercase;">Message Content:</h4>
+				<p style="margin: 0; color: #334155; font-size: 14px; line-height: 1.6; white-space: pre-wrap;">%s</p>
+			</div>
+
+			<div style="margin-top: 28px; padding-top: 16px; border-top: 1px solid #f1f5f9; text-align: center; color: #94a3b8; font-size: 12px;">
+				PuzzlePro Contact System • ResultsPro Support (hello@resultspro.ng)
+			</div>
+		</div>
+	`, name, senderEmail, senderEmail, phone, category, message)
+
+	text := fmt.Sprintf("New contact message from %s (%s, Phone: %s, Category: %s):\n\n%s", name, senderEmail, phone, category, message)
+
+	return m.SendEmail(to, subject, html, text)
+}
+

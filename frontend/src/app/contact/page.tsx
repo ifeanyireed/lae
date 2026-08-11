@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { SiteHeader } from '@/components/SiteHeader';
 import { SiteFooter } from '@/components/SiteFooter';
+import { sendContactForm } from '@/services/api';
 import { 
   IconMail, 
   IconPhone, 
@@ -29,17 +30,23 @@ export default function ContactPage() {
 
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formError, setFormError] = useState('');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.email || !formData.message) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    setFormError('');
+    const res = await sendContactForm(formData);
+    setLoading(false);
+
+    if (res && res.success) {
       setSubmitted(true);
-    }, 800);
+    } else {
+      setFormError(res?.error || 'Failed to dispatch email. Please try again.');
+    }
   };
 
   const faqs = [
@@ -213,6 +220,11 @@ export default function ContactPage() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-5">
+                {formError && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-semibold">
+                    {formError}
+                  </div>
+                )}
                 
                 {/* Category Selection */}
                 <div>

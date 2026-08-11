@@ -1591,6 +1591,54 @@ func (p *PlayerServiceHandler) SendEmailHandler(w http.ResponseWriter, r *http.R
 	_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": true, "message": "Email sent successfully"})
 }
 
+// SendContactFormHandler processes 'Send Us a Message' form and mails response to hello@resultspro.ng
+func (p *PlayerServiceHandler) SendContactFormHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if r.Method != http.MethodPost {
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Method not allowed"})
+		return
+	}
+
+	var req struct {
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Phone    string `json:"phone"`
+		Category string `json:"category"`
+		Message  string `json:"message"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || strings.TrimSpace(req.Name) == "" || strings.TrimSpace(req.Email) == "" || strings.TrimSpace(req.Message) == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Name, Email, and Message are required fields"})
+		return
+	}
+
+	if p.Mailer != nil {
+		err := p.Mailer.SendContactMessageEmail(
+			strings.TrimSpace(req.Name),
+			strings.TrimSpace(req.Email),
+			strings.TrimSpace(req.Phone),
+			strings.TrimSpace(req.Category),
+			strings.TrimSpace(req.Message),
+		)
+		if err != nil {
+			log.Printf("⚠️ Error sending contact email to hello@resultspro.ng: %v", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": "Failed to send message email"})
+			return
+		}
+	} else {
+		log.Printf("📩 [Contact Message Mock] To: hello@resultspro.ng | From: %s (%s) | Category: %s | Msg: %s", req.Name, req.Email, req.Category, req.Message)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"message": "Thank you! Your message has been sent to hello@resultspro.ng",
+	})
+}
+
 func generate6DigitCode() string {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	return fmt.Sprintf("%06d", r.Intn(1000000))

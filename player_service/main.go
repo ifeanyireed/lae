@@ -39,6 +39,7 @@ func main() {
 	mux.HandleFunc("/api/v1/player/groups", h.GetGroupsHandler)
 	mux.HandleFunc("/api/v1/player/centres", h.GetCentresHandler)
 	mux.HandleFunc("/api/v1/email/send", h.SendEmailHandler)
+	mux.HandleFunc("/api/v1/contact/send", h.SendContactFormHandler)
 
 	// Auth, Verification & Password Reset Endpoints
 	mux.HandleFunc("/api/v1/auth/send-verification", h.SendVerificationHandler)
