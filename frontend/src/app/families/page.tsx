@@ -38,10 +38,11 @@ import {
   saveSubscription,
 } from '@/services/api';
 import { authenticateUser } from '@/services/rbac';
+import { getCharacterAvatarUrl } from '@/utils/cdn';
 
 const AVATAR_OPTIONS = Array.from(
   { length: 20 },
-  (_, i) => `https://cdn.resultspro.ng/assets/character${i + 1}.jpg`
+  (_, i) => `/images/character${i + 1}.jpg`
 );
 
 export interface ChildAccount {
@@ -611,7 +612,7 @@ export default function FamiliesPage() {
                     <td className="py-3.5 px-3">
                       <div className="flex items-center space-x-2.5">
                         <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 relative shrink-0 overflow-hidden shadow-xs">
-                          <Image src={ch.avatar} alt={ch.name} fill className="object-cover" />
+                          <Image src={getCharacterAvatarUrl(ch.avatar)} alt={ch.name} fill className="object-cover" />
                         </div>
                         <span className="font-normal text-slate-900">{ch.name}</span>
                       </div>
@@ -961,7 +962,7 @@ export default function FamiliesPage() {
                         childForm.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
                       }`}
                     >
-                      <Image src={avatarPath} alt="Avatar" fill className="object-cover" />
+                      <Image src={getCharacterAvatarUrl(avatarPath)} alt="Avatar" fill className="object-cover" />
                     </button>
                   ))}
                 </div>

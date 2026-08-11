@@ -23,10 +23,11 @@ import {
   IconAlertCircle,
   IconX,
 } from '@tabler/icons-react';
+import { getCharacterAvatarUrl } from '@/utils/cdn';
 
 const AVATAR_OPTIONS = Array.from(
   { length: 20 },
-  (_, i) => `https://cdn.resultspro.ng/assets/character${i + 1}.jpg`
+  (_, i) => `/images/character${i + 1}.jpg`
 );
 
 export default function OnboardingPage() {
@@ -517,7 +518,7 @@ export default function OnboardingPage() {
                             child.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
                           }`}
                         >
-                          <Image src={avatarPath} alt="Avatar" fill className="object-cover" />
+                          <Image src={getCharacterAvatarUrl(avatarPath)} alt="Avatar" fill className="object-cover" />
                         </button>
                       ))}
                     </div>
@@ -613,7 +614,7 @@ export default function OnboardingPage() {
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2.5">
                       <div className="w-8 h-8 rounded-full bg-slate-100 relative overflow-hidden border border-slate-200">
-                        <Image src={c.avatar} alt="Avatar" fill className="object-cover" />
+                        <Image src={getCharacterAvatarUrl(c.avatar)} alt="Avatar" fill className="object-cover" />
                       </div>
                       <div>
                         <h4 className="text-xs font-medium text-slate-900">{c.name || 'Child Account'}</h4>

@@ -8,23 +8,26 @@ const LOCAL_PUBLIC_ASSETS = ['/scroll.svg', '/play.svg', '/reset.svg', '/start.s
 
 export const CHARACTER_AVATARS_CDN = Array.from(
   { length: 20 },
-  (_, i) => `${CDN_BASE_URL}/character${i + 1}.jpg`
+  (_, i) => `/images/character${i + 1}.jpg`
 );
 
 export function getCharacterAvatarUrl(avatarPath?: string, index: number = 1): string {
-  if (!avatarPath) return CHARACTER_AVATARS_CDN[0];
-  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) return avatarPath;
+  if (!avatarPath) return '/images/character1.jpg';
 
   const match = avatarPath.match(/character(\d+)/i);
   if (match && match[1]) {
     const num = parseInt(match[1], 10);
     if (num >= 1 && num <= 20) {
-      return CHARACTER_AVATARS_CDN[num - 1];
+      return `/images/character${num}.jpg`;
     }
   }
 
-  const idx = (Math.max(1, index) - 1) % 20;
-  return CHARACTER_AVATARS_CDN[idx];
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://') || avatarPath.startsWith('/')) {
+    return avatarPath;
+  }
+
+  const idx = ((Math.max(1, index) - 1) % 20) + 1;
+  return `/images/character${idx}.jpg`;
 }
 
 /**

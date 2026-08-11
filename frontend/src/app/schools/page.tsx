@@ -49,10 +49,11 @@ import {
   GroupApiItem,
 } from '@/services/api';
 import { authenticateUser } from '@/services/rbac';
+import { getCharacterAvatarUrl } from '@/utils/cdn';
 
 const AVATAR_OPTIONS = Array.from(
   { length: 20 },
-  (_, i) => `https://cdn.resultspro.ng/assets/character${i + 1}.jpg`
+  (_, i) => `/images/character${i + 1}.jpg`
 );
 
 export interface SchoolStudent {
@@ -213,7 +214,7 @@ export default function SchoolsPage() {
         return {
           id: u.id,
           name: u.name,
-          avatar: u.avatar || '/images/character1.jpg',
+          avatar: getCharacterAvatarUrl(u.avatar),
           studentCode: u.studentCode,
           groupName: u.groupName || 'Grade 5 Coding Class',
           centreId: matchingGroup?.centreId || 0,
@@ -798,7 +799,7 @@ export default function SchoolsPage() {
                       <td className="py-3.5 px-3">
                         <div className="flex items-center space-x-3">
                           <div className="w-8 h-8 rounded-full relative overflow-hidden border border-slate-200 shrink-0">
-                            <Image src={st.avatar} alt={st.name} fill className="object-cover" />
+                            <Image src={getCharacterAvatarUrl(st.avatar)} alt={st.name} fill className="object-cover" />
                           </div>
                           <div>
                             <span className="font-medium text-slate-900 block">{st.name}</span>
@@ -1392,7 +1393,7 @@ export default function SchoolsPage() {
                         studentForm.avatar === avatarPath ? 'border-amber-500 scale-110 shadow-sm' : 'border-transparent opacity-70'
                       }`}
                     >
-                      <Image src={avatarPath} alt="Avatar" fill className="object-cover" />
+                      <Image src={getCharacterAvatarUrl(avatarPath)} alt="Avatar" fill className="object-cover" />
                     </button>
                   ))}
                 </div>

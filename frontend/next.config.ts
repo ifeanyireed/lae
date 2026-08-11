@@ -25,6 +25,16 @@ const nextConfig: NextConfig = {
         hostname: 'resultspro.ng',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'cdn.resultspro.ng',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.resultspro.ng',
+        pathname: '/**',
+      },
     ],
   },
 };

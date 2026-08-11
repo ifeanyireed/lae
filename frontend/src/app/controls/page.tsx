@@ -50,10 +50,11 @@ import {
   IconDeviceLaptop,
   IconMapPin,
 } from '@tabler/icons-react';
+import { getCharacterAvatarUrl } from '@/utils/cdn';
 
 const AVATAR_OPTIONS = Array.from(
   { length: 20 },
-  (_, i) => `https://cdn.resultspro.ng/assets/character${i + 1}.jpg`
+  (_, i) => `/images/character${i + 1}.jpg`
 );
 
 // Types for Admin Platform Modules
@@ -1235,7 +1236,7 @@ export default function AdminControlsPage() {
                           {/* Student Character Avatar */}
                           <div className="w-8 h-8 rounded-full bg-slate-100 border border-slate-200 relative shrink-0 overflow-hidden shadow-xs transition-transform hover:scale-110">
                             <Image
-                              src={usr.avatar || '/images/character1.jpg'}
+                              src={getCharacterAvatarUrl(usr.avatar)}
                               alt={usr.name}
                               fill
                               className="object-cover"
@@ -1680,7 +1681,7 @@ export default function AdminControlsPage() {
                           : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'
                       }`}
                     >
-                      <Image src={avatarPath} alt="Character Avatar" fill className="object-cover" />
+                      <Image src={getCharacterAvatarUrl(avatarPath)} alt="Character Avatar" fill className="object-cover" />
                     </button>
                   ))}
                 </div>

@@ -22,6 +22,7 @@ import {
   IconEyeOff,
 } from '@tabler/icons-react';
 import { fetchGroupStudentsByCode } from '@/services/api';
+import { getCharacterAvatarUrl } from '@/utils/cdn';
 
 interface StudentItem {
   id: string;
@@ -358,7 +359,7 @@ export default function StudentCodesPage() {
                       <div className="flex items-center space-x-3 min-w-0">
                         <div className="w-9 h-9 rounded-full bg-slate-800 border border-slate-700 overflow-hidden shrink-0">
                           <Image
-                            src={st.avatar || '/images/character1.jpg'}
+                            src={getCharacterAvatarUrl(st.avatar)}
                             alt={st.name}
                             width={36}
                             height={36}
