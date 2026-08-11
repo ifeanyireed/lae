@@ -337,38 +337,137 @@ const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
   }
 
   const lines = (text || '').split('\n');
-  const actionBlocks: CodeBlock[] = [];
+  const topActionBlocks: CodeBlock[] = [];
+  const containerStack: CodeBlock[] = [];
+
+  const addToActiveContainer = (block: CodeBlock) => {
+    if (containerStack.length > 0) {
+      const parent = containerStack[containerStack.length - 1];
+      if (!parent.children) parent.children = [];
+      parent.children.push(block);
+    } else {
+      topActionBlocks.push(block);
+    }
+  };
 
   lines.forEach((rawLine, idx) => {
     const line = rawLine.trim();
     if (!line) return;
 
     const lower = line.toLowerCase();
+
+    // Check for Closing Container Tags first!
+    if (lower.startsWith('</html>') || lower === '</html>') {
+      if (containerStack.length > 0 && containerStack[containerStack.length - 1].type === 'html_tag') {
+        containerStack.pop();
+      }
+      return;
+    }
+    if (lower.startsWith('</head>') || lower === '</head>') {
+      if (containerStack.length > 0 && containerStack[containerStack.length - 1].type === 'head_tag') {
+        containerStack.pop();
+      }
+      return;
+    }
+    if (lower.startsWith('</body>') || lower === '</body>') {
+      if (containerStack.length > 0 && containerStack[containerStack.length - 1].type === 'body_tag') {
+        containerStack.pop();
+      }
+      return;
+    }
+    if (lower.startsWith('</ul>') || lower === '</ul>') {
+      if (containerStack.length > 0 && containerStack[containerStack.length - 1].type === 'list_tag') {
+        containerStack.pop();
+      }
+      return;
+    }
+
+    // Check Opening Container Tags!
+    if (lower.startsWith('<!doctype') || lower.includes('doctype')) {
+      addToActiveContainer({
+        instanceId: `parsed-dt-${idx}`,
+        type: 'doctype',
+        label: '<!doctype html>',
+        category: 'html',
+        blockClass: 'bg-purple-700 text-white border-purple-900 font-bold',
+      });
+      return;
+    }
+
+    if (lower.startsWith('<html') || lower === '<html>') {
+      const htmlBlock: CodeBlock = {
+        instanceId: `parsed-html-${idx}`,
+        type: 'html_tag',
+        label: '<html>',
+        category: 'html',
+        blockClass: 'bg-blue-600 text-white border-blue-800 font-bold',
+        children: [],
+      };
+      addToActiveContainer(htmlBlock);
+      containerStack.push(htmlBlock);
+      return;
+    }
+
+    if (lower.startsWith('<head') || lower === '<head>') {
+      const headBlock: CodeBlock = {
+        instanceId: `parsed-head-${idx}`,
+        type: 'head_tag',
+        label: '<head>',
+        category: 'html',
+        blockClass: 'bg-[#FF9100] text-white border-[#E65100] font-bold',
+        children: [],
+      };
+      addToActiveContainer(headBlock);
+      containerStack.push(headBlock);
+      return;
+    }
+
+    if (lower.startsWith('<body') || lower === '<body>') {
+      const bodyBlock: CodeBlock = {
+        instanceId: `parsed-body-${idx}`,
+        type: 'body_tag',
+        label: '<body>',
+        category: 'html',
+        blockClass: 'bg-[#F1D300] text-slate-950 border-[#C7AD00] font-bold',
+        children: [],
+      };
+      addToActiveContainer(bodyBlock);
+      containerStack.push(bodyBlock);
+      return;
+    }
+
+    if (lower.startsWith('<ul') || lower === '<ul>') {
+      const listBlock: CodeBlock = {
+        instanceId: `parsed-ul-${idx}`,
+        type: 'list_tag',
+        label: '<ul>',
+        category: 'html',
+        blockClass: 'bg-purple-700 text-white border-purple-900 font-bold',
+        children: [],
+      };
+      addToActiveContainer(listBlock);
+      containerStack.push(listBlock);
+      return;
+    }
+
+    // Leaf HTML & Motion Blocks
     let blockDef: Omit<CodeBlock, 'instanceId'> | null = null;
     let customTextValue: string | undefined = undefined;
     let customStepValue: number | undefined = undefined;
 
-    if (lower.includes('<!doctype') || lower.includes('doctype')) {
-      blockDef = { type: 'doctype', label: '<!doctype html>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold' };
-    } else if (lower.includes('<html') || lower.includes('</html>')) {
-      blockDef = { type: 'html_tag', label: '<html>', category: 'html', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold' };
-    } else if (lower.includes('<head') || lower.includes('</head>')) {
-      blockDef = { type: 'head_tag', label: '<head>', category: 'html', blockClass: 'bg-[#FF9100] text-white border-[#E65100] font-bold' };
-    } else if (lower.includes('<title') || lower.includes('</title>')) {
+    if (lower.includes('<title')) {
       blockDef = { type: 'title_tag', label: '<title>', category: 'html', blockClass: 'bg-[#E91E63] text-white border-[#C2185B] font-bold' };
       const m = line.match(/<title>(.*?)<\/title>/i);
       if (m && m[1]) customTextValue = m[1];
-    } else if (lower.includes('<body') || lower.includes('</body>')) {
-      blockDef = { type: 'body_tag', label: '<body>', category: 'html', blockClass: 'bg-[#F1D300] text-slate-950 border-[#C7AD00] font-bold' };
-    } else if (lower.includes('<h1') || lower.includes('</h1>')) {
+    } else if (lower.includes('<h1')) {
       blockDef = { type: 'h1_tag', label: '<h1>', category: 'html', blockClass: 'bg-[#B80751] text-white border-[#90053E] font-bold' };
       const m = line.match(/<h1>(.*?)<\/h1>/i);
       if (m && m[1]) customTextValue = m[1];
-    } else if (lower.includes('<p') || lower.includes('</p>')) {
+    } else if (lower.includes('<p')) {
       blockDef = { type: 'p_tag', label: '<p>', category: 'html', blockClass: 'bg-[#EC4899] text-white border-[#DB2777] font-bold' };
       const m = line.match(/<p>(.*?)<\/p>/i);
       if (m && m[1]) customTextValue = m[1];
-    } else if (lower.includes('<text') || lower.includes('<span>')) {
+    } else if (lower.includes('<span>') || lower.includes('<text')) {
       blockDef = { type: 'text_input', label: 'text', category: 'html', blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold' };
       const m = line.match(/<span>(.*?)<\/span>/i) || line.match(/<text>(.*?)<\/text>/i);
       if (m && m[1]) customTextValue = m[1];
@@ -389,7 +488,7 @@ const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
     }
 
     if (blockDef) {
-      actionBlocks.push({
+      addToActiveContainer({
         ...blockDef,
         instanceId: `parsed-${idx}-${Date.now()}`,
         textValue: customTextValue !== undefined ? customTextValue : blockDef.textValue,
@@ -398,7 +497,7 @@ const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
     }
   });
 
-  return [...hatBlocks, ...actionBlocks];
+  return [...hatBlocks, ...topActionBlocks];
 };
 
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
