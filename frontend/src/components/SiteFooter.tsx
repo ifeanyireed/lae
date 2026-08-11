@@ -67,11 +67,6 @@ export const SiteFooter: React.FC = () => {
                 <span>• Setup Wizard & Registration</span>
               </Link>
             </li>
-            <li>
-              <Link href="/controls" className="hover:text-amber-600 transition-colors flex items-center space-x-1.5">
-                <span>• Admin Controls</span>
-              </Link>
-            </li>
           </ul>
         </div>
 

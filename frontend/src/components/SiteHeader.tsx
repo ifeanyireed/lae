@@ -9,8 +9,6 @@ import {
   IconX, 
   IconSparkles, 
   IconCode, 
-  IconSchool, 
-  IconUsers, 
   IconMail, 
   IconBook 
 } from '@tabler/icons-react';
@@ -22,8 +20,6 @@ export const SiteHeader: React.FC = () => {
   const navItems = [
     { label: 'Home', href: '/', icon: IconCode },
     { label: 'About Us', href: '/about', icon: IconBook },
-    { label: 'Schools', href: '/schools', icon: IconSchool },
-    { label: 'Families', href: '/families', icon: IconUsers },
     { label: 'Contact', href: '/contact', icon: IconMail },
   ];
 
