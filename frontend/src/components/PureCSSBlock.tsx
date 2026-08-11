@@ -32,7 +32,7 @@ import {
 export interface PureCSSBlockProps {
   type: string;
   label: string;
-  category?: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html';
+  category?: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html' | 'css' | 'js' | 'javascript' | 'python';
   icon?: React.ReactNode;
   stepValue?: number;
   textValue?: string;

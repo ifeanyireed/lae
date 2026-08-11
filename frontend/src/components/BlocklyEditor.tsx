@@ -50,7 +50,7 @@ export interface CodeBlock {
   instanceId: string;
   type: string;
   label: string;
-  category: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html';
+  category: 'motion' | 'looks' | 'sound' | 'events' | 'control' | 'vars' | 'html' | 'css' | 'js' | 'javascript' | 'python';
   blockClass: string;
   stepValue?: number;
   repeatCount?: number;
@@ -198,12 +198,34 @@ const getInitialIdeCode = (worldId: number): string => {
   return '';
 };
 
+const isCodeBlockType = (type: string): boolean => {
+  return [
+    'doctype', 'doctype_html',
+    'html', 'html_tag',
+    'head', 'head_tag',
+    'title', 'title_tag',
+    'body', 'body_tag',
+    'h1', 'h1_tag', 'heading', 'heading_tag',
+    'p', 'p_tag', 'paragraph', 'paragraph_tag',
+    'text', 'text_tag', 'text_input',
+    'list', 'list_tag',
+    'link', 'link_tag',
+    'img', 'img_tag',
+    'css_color', 'css_font_size', 'css_background', 'css_margin',
+    'js_console_log', 'console_log', 'js_alert', 'alert', 'js_const', 'js_var', 'js_let', 'js_function',
+    'py_print', 'print', 'py_def', 'py_import'
+  ].includes(type);
+};
+
 const renderBlocksToText = (blocksList: CodeBlock[], indentLevel: number, worldId: number): string[] => {
   const indent = '  '.repeat(indentLevel);
   let lines: string[] = [];
 
   (blocksList || []).forEach((b) => {
-    if (b.type === 'when_flag_clicked' || b.type === 'when_html_started') return;
+    // Only HTML, CSS, JavaScript, and Python blocks render on the code editor
+    const isCodeCategory = b.category === 'html' || b.category === 'css' || b.category === 'js' || b.category === 'javascript' || b.category === 'python';
+    const isCodeType = isCodeBlockType(b.type);
+    if (!isCodeCategory && !isCodeType) return;
 
     // 1. DOCTYPE
     if (b.type === 'doctype' || b.type === 'doctype_html') {
@@ -276,49 +298,15 @@ const renderBlocksToText = (blocksList: CodeBlock[], indentLevel: number, worldI
     else if (b.type === 'css_font_size') lines.push(`${indent}font-size: ${b.textValue || '2rem'};`);
     else if (b.type === 'css_background') lines.push(`${indent}background-color: ${b.textValue || '#0f172a'};`);
     else if (b.type === 'css_margin') lines.push(`${indent}margin: ${b.textValue || '20px'};`);
-    // Motion & Control blocks
-    else if (b.type === 'move_forward') {
-      if (worldId === 5) lines.push(`${indent}move_forward(${b.stepValue || 1})`);
-      else lines.push(`${indent}moveForward(${b.stepValue || 1});`);
-    }
-    else if (b.type === 'turn_left') {
-      if (worldId === 5) lines.push(`${indent}turn_left()`);
-      else lines.push(`${indent}turnLeft();`);
-    }
-    else if (b.type === 'turn_right') {
-      if (worldId === 5) lines.push(`${indent}turn_right()`);
-      else lines.push(`${indent}turnRight();`);
-    }
-    else if (b.type === 'turn_around') {
-      if (worldId === 5) lines.push(`${indent}turn_around()`);
-      else lines.push(`${indent}turnAround();`);
-    }
-    else if (b.type === 'say_hello') {
-      if (worldId === 5) lines.push(`${indent}print("${b.textValue || 'Hello World!'}")`);
-      else lines.push(`${indent}say("${b.textValue || 'Hello!' }");`);
-    }
-    else if (b.type === 'collect_coin') {
-      if (worldId === 5) lines.push(`${indent}collect_coin()`);
-      else lines.push(`${indent}collectCoin();`);
-    }
-    else if (b.type === 'repeat') {
-      if (worldId === 5) {
-        lines.push(`${indent}for i in range(${b.repeatCount || 1}):`);
-        if (b.children && b.children.length > 0) {
-          lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
-        } else {
-          lines.push(`${indent}    move_forward()`);
-        }
-      } else {
-        lines.push(`${indent}for (let i = 0; i < ${b.repeatCount || 1}; i++) {`);
-        if (b.children && b.children.length > 0) {
-          lines.push(...renderBlocksToText(b.children, indentLevel + 1, worldId));
-        } else {
-          lines.push(`${indent}  moveForward(1);`);
-        }
-        lines.push(`${indent}}`);
-      }
-    }
+    // JavaScript Blocks
+    else if (b.type === 'js_console_log' || b.type === 'console_log') lines.push(`${indent}console.log("${b.textValue || 'Hello World'}");`);
+    else if (b.type === 'js_alert' || b.type === 'alert') lines.push(`${indent}alert("${b.textValue || 'Hello World'}");`);
+    else if (b.type === 'js_const') lines.push(`${indent}const x = ${b.stepValue || 10};`);
+    else if (b.type === 'js_function') lines.push(`${indent}function main() {\n${indent}  // JS Logic\n${indent}}`);
+    // Python Blocks
+    else if (b.type === 'py_print' || b.type === 'print') lines.push(`${indent}print("${b.textValue || 'Hello World'}")`);
+    else if (b.type === 'py_def') lines.push(`${indent}def main():\n${indent}    pass`);
+    else if (b.type === 'py_import') lines.push(`${indent}import math`);
   });
 
   return lines;
