@@ -937,7 +937,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                       {/* RUN BUTTON (STANDALONE SVG) */}
                       <motion.button
                         type="button"
-                        whileHover={{ scale: 1.18, rotate: 5 }}
+                        whileHover={{ scale: 1.15, rotate: 5 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => {
                           soundManager.playClick();
@@ -945,7 +945,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                             onRunCode(program, speed);
                           }
                         }}
-                        className="relative w-14 h-14 sm:w-16 sm:h-16 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
+                        className="relative w-12 h-12 sm:w-14 sm:h-14 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
                         title="Run Code"
                       >
                         <Image
