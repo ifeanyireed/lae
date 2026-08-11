@@ -863,67 +863,11 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
         <div className="pt-3 flex flex-col flex-1 min-h-0 space-y-2 w-full h-full relative">
           {isIdeMode ? (
             <div className="pt-1 flex flex-col flex-1 min-h-0 space-y-2 w-full h-full relative text-slate-100 font-mono">
-              {/* IDE Toolbar */}
-              <div className="flex items-center justify-between px-3 py-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-sm text-xs select-none shrink-0">
-                <div className="flex items-center space-x-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
-                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
-                  <span className="font-bold text-slate-300 ml-2 flex items-center space-x-1.5">
-                    <IconFileCode className="w-4 h-4 text-purple-400" />
-                    <span>{getIdeFilename(activeWorldId)}</span>
-                  </span>
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playClick();
-                      setIdeCodeText(getInitialIdeCode(activeWorldId));
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition border border-slate-700 cursor-pointer"
-                    title="Reset to Starter Template"
-                  >
-                    Reset
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playClick();
-                      navigator.clipboard.writeText(ideCodeText);
-                    }}
-                    className="px-2.5 py-1 rounded-lg bg-purple-950/80 hover:bg-purple-900 text-purple-300 hover:text-white text-[11px] font-bold transition border border-purple-700 cursor-pointer"
-                    title="Copy Code to Clipboard"
-                  >
-                    Copy
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playClick();
-                      if (onRunCode) {
-                        onRunCode(program, speed);
-                      }
-                    }}
-                    className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-[11px] font-black uppercase tracking-wider transition shadow-sm border border-emerald-400 flex items-center space-x-1 cursor-pointer"
-                  >
-                    <IconSparkles className="w-3.5 h-3.5" />
-                    <span>Run Code</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* IDE Text Area Editor */}
-              <div className="flex-1 w-full relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden flex flex-col p-3 shadow-inner min-h-0">
-                <div className="flex items-center justify-between text-[10px] font-sans text-slate-400 border-b border-slate-800/80 pb-1.5 mb-2 shrink-0">
-                  <span>{getLanguageLabel(activeWorldId)} Code Editor</span>
-                  <span>UTF-8 • {ideCodeText.split('\n').length} lines</span>
-                </div>
-
-                <div className="flex-1 flex space-x-3 overflow-y-auto min-h-0">
+              {/* IDE Text Area Editor Container */}
+              <div className="flex-1 w-full relative bg-slate-950/95 border border-slate-800 rounded-3xl overflow-hidden flex flex-col p-4 shadow-2xl min-h-0">
+                <div className="flex-1 flex space-x-3 overflow-y-auto min-h-0 pr-16 pb-16">
                   {/* Line Numbers */}
-                  <div className="text-slate-600 text-xs text-right select-none font-mono py-0.5 pr-2 border-r border-slate-800/80 flex flex-col space-y-1 shrink-0">
+                  <div className="text-slate-600 text-xs text-right select-none font-mono py-0.5 pr-2.5 border-r border-slate-800/80 flex flex-col space-y-1 shrink-0">
                     {ideCodeText.split('\n').map((_, idx) => (
                       <div key={idx}>{idx + 1}</div>
                     ))}
@@ -934,10 +878,86 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                     value={ideCodeText}
                     onChange={(e) => setIdeCodeText(e.target.value)}
                     spellCheck={false}
-                    className="flex-1 bg-transparent text-slate-100 text-xs font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full"
+                    className="flex-1 bg-transparent text-slate-100 text-xs sm:text-sm font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full"
                     placeholder="Write code here..."
                   />
                 </div>
+
+                {/* Floating Action Buttons at Bottom Right of IDE with Swirl Framer Motion Animation */}
+                <AnimatePresence>
+                  {isIdeMode && (
+                    <motion.div
+                      key="ide-floating-actions"
+                      initial={{ opacity: 0, scale: 0, rotate: -180 }}
+                      animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                      exit={{ opacity: 0, scale: 0, rotate: 180 }}
+                      transition={{ type: 'spring', stiffness: 220, damping: 18 }}
+                      className="absolute bottom-2 right-4 z-50 flex items-center -space-x-4 pointer-events-auto filter drop-shadow-2xl"
+                    >
+                      {/* RESET BUTTON (STANDALONE SVG) */}
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.15, rotate: -10 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          soundManager.playClick();
+                          setIdeCodeText(getInitialIdeCode(activeWorldId));
+                        }}
+                        className="relative w-12 h-12 sm:w-14 sm:h-14 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
+                        title="Reset Code to Starter Template"
+                      >
+                        <Image
+                          src="/IDE_Reset.svg"
+                          alt="Reset Code"
+                          fill
+                          className="object-contain"
+                        />
+                      </motion.button>
+
+                      {/* COPY BUTTON (STANDALONE SVG) */}
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.15, rotate: 10 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          soundManager.playClick();
+                          navigator.clipboard.writeText(ideCodeText);
+                        }}
+                        className="relative w-12 h-12 sm:w-14 sm:h-14 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
+                        title="Copy Code to Clipboard"
+                      >
+                        <Image
+                          src="/IDE_Copy.svg"
+                          alt="Copy Code"
+                          fill
+                          className="object-contain"
+                        />
+                      </motion.button>
+
+                      {/* RUN BUTTON (STANDALONE SVG) */}
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.18, rotate: 5 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => {
+                          soundManager.playClick();
+                          if (onRunCode) {
+                            onRunCode(program, speed);
+                          }
+                        }}
+                        className="relative w-14 h-14 sm:w-16 sm:h-16 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
+                        title="Run Code"
+                      >
+                        <Image
+                          src="/IDE_Run.svg"
+                          alt="Run Code"
+                          fill
+                          className="object-contain"
+                        />
+                      </motion.button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
           ) : (
