@@ -1479,6 +1479,8 @@ export default function Home() {
               <BlocklyEditor 
                 availableBlocks={currentLevel.availableBlocks}
                 maxBlocks={currentLevel.maxBlocks}
+                currentLevelNumber={currentLevel.levelNumber}
+                currentAdventureId={currentLevel.adventureId}
                 onRunCode={(p, s) => handleRunProgram(p, s)}
                 onReset={handleResetLevel}
                 onReturnToStart={handleReturnToStartPos}

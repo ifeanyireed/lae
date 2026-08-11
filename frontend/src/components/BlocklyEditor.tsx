@@ -72,6 +72,8 @@ export interface CharacterItem {
 interface BlocklyEditorProps {
   availableBlocks?: string[];
   maxBlocks?: number;
+  currentLevelNumber?: number;
+  currentAdventureId?: number;
   onRunCode?: (program: CodeBlock[], speed?: number) => void;
   onReset?: () => void;
   onReturnToStart?: () => void;
@@ -255,9 +257,84 @@ const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
   return codeLines.join('\n');
 };
 
+const parseTextToProgram = (text: string, worldId: number): CodeBlock[] => {
+  const hatBlocks: CodeBlock[] = [
+    { instanceId: 'default-when-clicked', type: 'when_flag_clicked', label: 'when play clicked', category: 'events', blockClass: 'block-events' },
+  ];
+  if (worldId === 2) {
+    hatBlocks.push({ instanceId: 'default-html-hat', type: 'when_html_started', label: 'HTML', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold' });
+  }
+
+  const lines = (text || '').split('\n');
+  const actionBlocks: CodeBlock[] = [];
+
+  lines.forEach((rawLine, idx) => {
+    const line = rawLine.trim();
+    if (!line) return;
+
+    const lower = line.toLowerCase();
+    let blockDef: Omit<CodeBlock, 'instanceId'> | null = null;
+    let customTextValue: string | undefined = undefined;
+    let customStepValue: number | undefined = undefined;
+
+    if (lower.includes('<!doctype') || lower.includes('doctype')) {
+      blockDef = { type: 'doctype', label: '<!doctype html>', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold' };
+    } else if (lower.includes('<html') || lower.includes('</html>')) {
+      blockDef = { type: 'html_tag', label: '<html>', category: 'html', blockClass: 'bg-blue-600 text-white border-blue-800 font-bold' };
+    } else if (lower.includes('<head') || lower.includes('</head>')) {
+      blockDef = { type: 'head_tag', label: '<head>', category: 'html', blockClass: 'bg-[#FF9100] text-white border-[#E65100] font-bold' };
+    } else if (lower.includes('<title') || lower.includes('</title>')) {
+      blockDef = { type: 'title_tag', label: '<title>', category: 'html', blockClass: 'bg-[#E91E63] text-white border-[#C2185B] font-bold' };
+      const m = line.match(/<title>(.*?)<\/title>/i);
+      if (m && m[1]) customTextValue = m[1];
+    } else if (lower.includes('<body') || lower.includes('</body>')) {
+      blockDef = { type: 'body_tag', label: '<body>', category: 'html', blockClass: 'bg-[#F1D300] text-slate-950 border-[#C7AD00] font-bold' };
+    } else if (lower.includes('<h1') || lower.includes('</h1>')) {
+      blockDef = { type: 'h1_tag', label: '<h1>', category: 'html', blockClass: 'bg-[#B80751] text-white border-[#90053E] font-bold' };
+      const m = line.match(/<h1>(.*?)<\/h1>/i);
+      if (m && m[1]) customTextValue = m[1];
+    } else if (lower.includes('<p') || lower.includes('</p>')) {
+      blockDef = { type: 'p_tag', label: '<p>', category: 'html', blockClass: 'bg-[#EC4899] text-white border-[#DB2777] font-bold' };
+      const m = line.match(/<p>(.*?)<\/p>/i);
+      if (m && m[1]) customTextValue = m[1];
+    } else if (lower.includes('<text') || lower.includes('<span>')) {
+      blockDef = { type: 'text_input', label: 'text', category: 'html', blockClass: 'bg-[#00A2FF] text-white border-[#0088D6] font-bold' };
+      const m = line.match(/<span>(.*?)<\/span>/i) || line.match(/<text>(.*?)<\/text>/i);
+      if (m && m[1]) customTextValue = m[1];
+    } else if (lower.includes('moveforward') || lower.includes('move_forward')) {
+      blockDef = { type: 'move_forward', label: 'move forward', category: 'motion', blockClass: 'block-motion', stepValue: 1 };
+      const m = line.match(/\((\d+)\)/);
+      if (m && m[1]) customStepValue = parseInt(m[1], 10);
+    } else if (lower.includes('turnleft') || lower.includes('turn_left')) {
+      blockDef = { type: 'turn_left', label: 'turn left', category: 'motion', blockClass: 'block-motion' };
+    } else if (lower.includes('turnright') || lower.includes('turn_right')) {
+      blockDef = { type: 'turn_right', label: 'turn right', category: 'motion', blockClass: 'block-motion' };
+    } else if (lower.includes('turnaround') || lower.includes('turn_around')) {
+      blockDef = { type: 'turn_around', label: 'turn around', category: 'motion', blockClass: 'block-motion' };
+    } else if (lower.includes('repeat') || lower.includes('for')) {
+      blockDef = { type: 'repeat', label: 'repeat 1 time', category: 'control', blockClass: 'block-control', repeatCount: 1 };
+      const m = line.match(/(\d+)/);
+      if (m && m[1]) customStepValue = parseInt(m[1], 10);
+    }
+
+    if (blockDef) {
+      actionBlocks.push({
+        ...blockDef,
+        instanceId: `parsed-${idx}-${Date.now()}`,
+        textValue: customTextValue !== undefined ? customTextValue : blockDef.textValue,
+        stepValue: customStepValue !== undefined ? customStepValue : blockDef.stepValue,
+      });
+    }
+  });
+
+  return [...hatBlocks, ...actionBlocks];
+};
+
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   availableBlocks,
   maxBlocks,
+  currentLevelNumber,
+  currentAdventureId,
   onRunCode,
   onReset,
   onReturnToStart,
@@ -275,8 +352,18 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   const activeWorldId = selectedWorldId || (isWorld2 ? 2 : 1);
   const dragControls = useDragControls();
 
-  const [isIdeMode, setIsIdeMode] = useState<boolean>(false);
+  const isCodeEditorOnlyLevel = (activeWorldId === 2 || isWorld2) &&
+    (currentAdventureId === 1 || !currentAdventureId) &&
+    (currentLevelNumber !== undefined && currentLevelNumber >= 5 && currentLevelNumber <= 12);
+
+  const [isIdeMode, setIsIdeMode] = useState<boolean>(isCodeEditorOnlyLevel);
   const [ideCodeText, setIdeCodeText] = useState<string>('');
+
+  useEffect(() => {
+    if (isCodeEditorOnlyLevel) {
+      setIsIdeMode(true);
+    }
+  }, [isCodeEditorOnlyLevel]);
 
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const lineNumbersRef = React.useRef<HTMLDivElement>(null);
@@ -496,6 +583,11 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   };
 
   const handleAddBlock = (blockDef: Omit<CodeBlock, 'instanceId'>, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (isCodeEditorOnlyLevel && (blockDef.category === 'html' || activeCategory === 'html')) {
+      soundManager.playClick();
+      setIsIdeMode(true);
+      return;
+    }
     if (program.length >= (maxBlocks ?? 15)) {
       soundManager.playError();
       return;
@@ -968,11 +1060,16 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   <textarea
                     ref={textareaRef}
                     value={ideCodeText}
-                    onChange={(e) => setIdeCodeText(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setIdeCodeText(val);
+                      const parsed = parseTextToProgram(val, activeWorldId);
+                      setProgram(parsed);
+                    }}
                     onScroll={handleTextareaScroll}
                     spellCheck={false}
                     className="flex-1 bg-transparent text-slate-100 text-xs sm:text-sm font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full overflow-y-auto py-0.5"
-                    placeholder="Write code here..."
+                    placeholder="Write HTML code here..."
                   />
                 </div>
 
@@ -1035,7 +1132,9 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                         onClick={() => {
                           soundManager.playClick();
                           if (onRunCode) {
-                            onRunCode(program, speed);
+                            const programToRun = isIdeMode ? parseTextToProgram(ideCodeText, activeWorldId) : program;
+                            if (isIdeMode) setProgram(programToRun);
+                            onRunCode(programToRun, speed);
                           }
                         }}
                         className="relative w-12 h-12 sm:w-14 sm:h-14 focus:outline-none cursor-pointer border-0 bg-transparent p-0 shrink-0"
@@ -1100,7 +1199,11 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                         key={tab.id}
                         onClick={() => {
                           soundManager.playClick();
-                          setActiveCategory(tab.id);
+                          if (isCodeEditorOnlyLevel && tab.id === 'html') {
+                            setIsIdeMode(true);
+                          } else {
+                            setActiveCategory(tab.id);
+                          }
                         }}
                         className={`w-fit px-2.5 py-1 rounded-full text-[10px] font-black transition text-center whitespace-normal break-words leading-tight border shadow-sm ${
                           isSelected
@@ -1134,50 +1237,75 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               </div>
 
               <div className="bg-white/50 rounded-2xl border border-slate-300/80 h-full overflow-y-auto w-full shadow-inner p-2 relative flex flex-col justify-between">
-                <div 
-                  style={{
-                    transform: `scale(${paletteZoomScale})`,
-                    transformOrigin: 'top left',
-                    width: `${100 / Math.max(0.1, paletteZoomScale)}%`,
-                  }}
-                  className="flex flex-wrap items-start content-start gap-2 transition-transform duration-150 ease-out"
-                >
-                  {filteredPalette.map((block) => {
-                    const isLoop = isLoopBlockType(block.type);
+                {isCodeEditorOnlyLevel && activeCategory === 'html' ? (
+                  <div className="flex flex-col items-center justify-center h-full p-4 text-center bg-amber-500/10 border-2 border-dashed border-amber-500/40 rounded-2xl">
+                    <span className="text-2xl mb-1">⌨️</span>
+                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-wide">Direct Drag & Drop Disabled</h4>
+                    <p className="text-[11px] font-bold text-slate-800 mt-1 max-w-[240px]">
+                      Levels 2.1.5 – 2.1.12 force direct code typing! Type your HTML tags directly into the Code Editor.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundManager.playClick();
+                        setIsIdeMode(true);
+                      }}
+                      className="mt-2.5 px-4 py-1.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs rounded-full border border-amber-500 shadow-md transition cursor-pointer"
+                    >
+                      Open Code Editor
+                    </button>
+                  </div>
+                ) : (
+                  <div 
+                    style={{
+                      transform: `scale(${paletteZoomScale})`,
+                      transformOrigin: 'top left',
+                      width: `${100 / Math.max(0.1, paletteZoomScale)}%`,
+                    }}
+                    className="flex flex-wrap items-start content-start gap-2 transition-transform duration-150 ease-out"
+                  >
+                    {filteredPalette.map((block) => {
+                      const isLoop = isLoopBlockType(block.type);
 
-                    return (
-                      <div
-                        key={block.type}
-                        draggable={true}
-                        onDragStart={(e) => {
-                          e.dataTransfer.setData('application/json', JSON.stringify(block));
-                          e.dataTransfer.effectAllowed = 'copy';
-                        }}
-                        onClick={(e) => handleAddBlock(block, e as any)}
-                        className="cursor-grab active:cursor-grabbing hover:brightness-105 transition-all shrink-0"
-                        title="Click or drag to drop in code stack"
-                      >
-                        {isLoop ? (
-                          <PureCSSLoopBlock 
-                            type={block.type}
-                            label={block.label}
-                            repeatCount={block.repeatCount ?? 1}
-                            isPalette={true}
-                          />
-                        ) : (
-                          <PureCSSBlock 
-                            category={block.category}
-                            type={block.type} 
-                            label={block.label} 
-                            stepValue={block.stepValue}
-                            textValue={block.textValue}
-                            isPalette={true} 
-                          />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                      return (
+                        <div
+                          key={block.type}
+                          draggable={true}
+                          onDragStart={(e) => {
+                            if (isCodeEditorOnlyLevel && (block.category === 'html' || activeCategory === 'html')) {
+                              e.preventDefault();
+                              setIsIdeMode(true);
+                              return;
+                            }
+                            e.dataTransfer.setData('application/json', JSON.stringify(block));
+                            e.dataTransfer.effectAllowed = 'copy';
+                          }}
+                          onClick={(e) => handleAddBlock(block, e as any)}
+                          className="cursor-grab active:cursor-grabbing hover:brightness-105 transition-all shrink-0"
+                          title="Click or drag to drop in code stack"
+                        >
+                          {isLoop ? (
+                            <PureCSSLoopBlock 
+                              type={block.type}
+                              label={block.label}
+                              repeatCount={block.repeatCount ?? 1}
+                              isPalette={true}
+                            />
+                          ) : (
+                            <PureCSSBlock 
+                              category={block.category}
+                              type={block.type} 
+                              label={block.label} 
+                              stepValue={block.stepValue}
+                              textValue={block.textValue}
+                              isPalette={true} 
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {/* Floating Palette Zoom Controls */}
                 <div className="sticky bottom-0 right-0 ml-auto pt-1 z-30 pointer-events-auto shrink-0">
