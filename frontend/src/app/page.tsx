@@ -1485,6 +1485,7 @@ export default function Home() {
                 program={program}
                 setProgram={setProgram}
                 isWorld2={isWorld2}
+                selectedWorldId={selectedWorldId}
               />
             </div>
           )}

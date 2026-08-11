@@ -80,6 +80,7 @@ interface BlocklyEditorProps {
   program?: CodeBlock[];
   setProgram?: React.Dispatch<React.SetStateAction<CodeBlock[]>>;
   isWorld2?: boolean;
+  selectedWorldId?: number;
 }
 
 export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
@@ -132,6 +133,116 @@ export const ALL_SCRATCH_PALETTE: Array<Omit<CodeBlock, 'instanceId'>> = [
   { type: 'img_tag', label: '<img src="...">', category: 'html', blockClass: 'bg-purple-700 text-white border-purple-900 font-bold', icon: <IconPhoto className="w-3.5 h-3.5" /> },
 ];
 
+const getLanguageLabel = (worldId: number): string => {
+  switch (worldId) {
+    case 2: return 'HTML5';
+    case 3: return 'CSS3';
+    case 4: return 'JavaScript';
+    case 5: return 'Python';
+    default: return 'Code';
+  }
+};
+
+const getIdeFilename = (worldId: number): string => {
+  switch (worldId) {
+    case 2: return 'index.html';
+    case 3: return 'styles.css';
+    case 4: return 'script.js';
+    case 5: return 'main.py';
+    default: return 'script.txt';
+  }
+};
+
+const getInitialIdeCode = (worldId: number): string => {
+  switch (worldId) {
+    case 2:
+      return `<!DOCTYPE html>\n<html>\n  <head>\n    <title>The Digital Kingdom</title>\n  </head>\n  <body>\n    <h1>Welcome Builder!</h1>\n    <p>HTML builds the kingdom structure.</p>\n  </body>\n</html>`;
+    case 3:
+      return `/* World 3: CSS Stylesheet */\nbody {\n  background-color: #0f172a;\n  color: #f8fafc;\n  font-family: 'Varela Round', sans-serif;\n}\n\nh1 {\n  color: #f59e0b;\n  font-size: 2.2rem;\n  text-align: center;\n}\n\np {\n  color: #94a3b8;\n  line-height: 1.6;\n}`;
+    case 4:
+      return `// World 4: JavaScript Logic\nfunction runQuest() {\n  moveForward(1);\n  turnRight();\n  say("Awaken the Kingdom!");\n}\n\nrunQuest();`;
+    case 5:
+      return `# World 5: Python Power Engine\ndef main():\n    for i in range(3):\n        move_forward()\n        collect_coin()\n    turn_left()\n    print("Python Master Active")\n\nif __name__ == "__main__":\n    main()`;
+    default:
+      return `// Code Editor\nmoveForward();`;
+  }
+};
+
+const convertProgramToText = (blocks: CodeBlock[], worldId: number): string => {
+  if (worldId === 2) {
+    let htmlLines: string[] = [
+      '<!DOCTYPE html>',
+      '<html>',
+      '  <head>',
+      '    <title>The Digital Kingdom</title>',
+      '  </head>',
+      '  <body>',
+    ];
+    blocks.forEach((b) => {
+      if (b.type === 'h1_tag') htmlLines.push(`    <h1>${b.textValue || 'Welcome Builder'}</h1>`);
+      else if (b.type === 'p_tag') htmlLines.push(`    <p>${b.textValue || 'Build the world with HTML tags.'}</p>`);
+      else if (b.type === 'text_input') htmlLines.push(`    <span>${b.textValue || 'Sample Text'}</span>`);
+      else if (b.type === 'list_tag') htmlLines.push('    <ul>\n      <li>First Item</li>\n      <li>Second Item</li>\n    </ul>');
+      else if (b.type === 'link_tag') htmlLines.push('    <a href="/schools">Kingdom Link</a>');
+      else if (b.type === 'img_tag') htmlLines.push('    <img src="/monkey1.svg" alt="Monkey" />');
+    });
+    if (blocks.length === 0 || !blocks.some(b => ['h1_tag', 'p_tag', 'text_input'].includes(b.type))) {
+      htmlLines.push('    <h1>Welcome Builder</h1>');
+      htmlLines.push('    <p>Construct the digital kingdom using HTML code tags.</p>');
+    }
+    htmlLines.push('  </body>');
+    htmlLines.push('</html>');
+    return htmlLines.join('\n');
+  }
+
+  if (worldId === 3) {
+    return getInitialIdeCode(3);
+  }
+
+  if (worldId === 4) {
+    let jsLines: string[] = ['// World 4: JavaScript Logic', 'function runQuest() {'];
+    blocks.forEach((b) => {
+      if (b.type === 'move_forward') jsLines.push(`  moveForward(${b.stepValue || 1});`);
+      else if (b.type === 'turn_left') jsLines.push('  turnLeft();');
+      else if (b.type === 'turn_right') jsLines.push('  turnRight();');
+      else if (b.type === 'turn_around') jsLines.push('  turnAround();');
+      else if (b.type === 'say_hello') jsLines.push(`  say("${b.textValue || 'Hello!' }");`);
+      else if (b.type === 'collect_coin') jsLines.push('  collectCoin();');
+    });
+    if (jsLines.length <= 2) {
+      jsLines.push('  moveForward(1);');
+      jsLines.push('  turnRight();');
+      jsLines.push('  say("Awaken the Kingdom!");');
+    }
+    jsLines.push('}');
+    jsLines.push('\nrunQuest();');
+    return jsLines.join('\n');
+  }
+
+  if (worldId === 5) {
+    let pyLines: string[] = ['# World 5: Python Power Engine', 'def main():'];
+    blocks.forEach((b) => {
+      if (b.type === 'move_forward') pyLines.push(`    move_forward(${b.stepValue || 1})`);
+      else if (b.type === 'turn_left') pyLines.push('    turn_left()');
+      else if (b.type === 'turn_right') pyLines.push('    turn_right()');
+      else if (b.type === 'turn_around') pyLines.push('    turn_around()');
+      else if (b.type === 'say_hello') pyLines.push(`    print("${b.textValue || 'Hello World!'}")`);
+      else if (b.type === 'collect_coin') pyLines.push('    collect_coin()');
+    });
+    if (pyLines.length <= 2) {
+      pyLines.push('    for i in range(3):');
+      pyLines.push('        move_forward()');
+      pyLines.push('    turn_left()');
+      pyLines.push('    print("Python Master Active")');
+    }
+    pyLines.push('\nif __name__ == "__main__":');
+    pyLines.push('    main()');
+    return pyLines.join('\n');
+  }
+
+  return getInitialIdeCode(worldId);
+};
+
 export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   availableBlocks,
   maxBlocks,
@@ -147,8 +258,13 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
   program: externalProgram,
   setProgram: externalSetProgram,
   isWorld2 = false,
+  selectedWorldId = 1,
 }) => {
+  const activeWorldId = selectedWorldId || (isWorld2 ? 2 : 1);
   const dragControls = useDragControls();
+
+  const [isIdeMode, setIsIdeMode] = useState<boolean>(false);
+  const [ideCodeText, setIdeCodeText] = useState<string>('');
 
   const [internalCategory, setInternalCategory] = useState<string>('motion');
   const activeCategory = externalCategory || internalCategory;
@@ -659,12 +775,46 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
           isCollapsed ? 'h-full pb-0 border-b-0 space-x-1.5' : 'pb-3 border-b border-slate-900/15'
         }`}
       >
-        <div className={`flex items-center space-x-1.5 ${isCollapsed ? 'border-r border-slate-900/15 pr-2 mr-0.5' : ''}`}>
+        <div className={`flex items-center space-x-2 ${isCollapsed ? 'border-r border-slate-900/15 pr-2 mr-0.5' : ''}`}>
           <IconGripHorizontal className="w-3.5 h-3.5 text-slate-800 opacity-80" />
           <span className="text-[11px] font-black text-slate-950 font-mono tracking-wide flex items-center space-x-1 whitespace-nowrap">
             <IconPuzzle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-            <span>Scratch Editor</span>
+            <span>{isIdeMode ? `${getLanguageLabel(activeWorldId)} IDE` : 'Scratch Editor'}</span>
           </span>
+
+          {/* IDE MODE TOGGLE SWITCH (WORLDS 2-5) */}
+          {(activeWorldId >= 2 || isWorld2) && !isCollapsed && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                soundManager.playClick();
+                const nextIde = !isIdeMode;
+                setIsIdeMode(nextIde);
+                if (nextIde) {
+                  setIdeCodeText(convertProgramToText(program, activeWorldId));
+                }
+              }}
+              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md cursor-pointer border ${
+                isIdeMode
+                  ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white border-purple-400 shadow-purple-500/30'
+                  : 'bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-700 hover:border-amber-400/50'
+              }`}
+              title={isIdeMode ? 'Switch back to Scratch Blocks' : 'Switch to Code IDE'}
+            >
+              {isIdeMode ? (
+                <>
+                  <IconPuzzle className="w-3.5 h-3.5 text-amber-300 shrink-0" />
+                  <span>Blocks</span>
+                </>
+              ) : (
+                <>
+                  <IconFileCode className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
+                  <span>IDE Mode ({getLanguageLabel(activeWorldId)})</span>
+                </>
+              )}
+            </button>
+          )}
         </div>
 
         <div className="flex items-center space-x-1.5" onClick={(e) => isCollapsed && e.stopPropagation()}>
@@ -711,8 +861,87 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
       {/* Main Workspace Content */}
       {!isCollapsed && (
         <div className="pt-3 flex flex-col flex-1 min-h-0 space-y-2 w-full h-full relative">
-          
-          {/* Top Palette & Heroes Row */}
+          {isIdeMode ? (
+            <div className="pt-1 flex flex-col flex-1 min-h-0 space-y-2 w-full h-full relative text-slate-100 font-mono">
+              {/* IDE Toolbar */}
+              <div className="flex items-center justify-between px-3 py-2 bg-slate-900 border border-slate-800 rounded-2xl shadow-sm text-xs select-none shrink-0">
+                <div className="flex items-center space-x-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block" />
+                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />
+                  <span className="font-bold text-slate-300 ml-2 flex items-center space-x-1.5">
+                    <IconFileCode className="w-4 h-4 text-purple-400" />
+                    <span>{getIdeFilename(activeWorldId)}</span>
+                  </span>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick();
+                      setIdeCodeText(getInitialIdeCode(activeWorldId));
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-[11px] font-bold transition border border-slate-700 cursor-pointer"
+                    title="Reset to Starter Template"
+                  >
+                    Reset
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick();
+                      navigator.clipboard.writeText(ideCodeText);
+                    }}
+                    className="px-2.5 py-1 rounded-lg bg-purple-950/80 hover:bg-purple-900 text-purple-300 hover:text-white text-[11px] font-bold transition border border-purple-700 cursor-pointer"
+                    title="Copy Code to Clipboard"
+                  >
+                    Copy
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick();
+                      if (onRunCode) {
+                        onRunCode(program, speed);
+                      }
+                    }}
+                    className="px-3 py-1 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-[11px] font-black uppercase tracking-wider transition shadow-sm border border-emerald-400 flex items-center space-x-1 cursor-pointer"
+                  >
+                    <IconSparkles className="w-3.5 h-3.5" />
+                    <span>Run Code</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* IDE Text Area Editor */}
+              <div className="flex-1 w-full relative bg-slate-950 border border-slate-800 rounded-2xl overflow-hidden flex flex-col p-3 shadow-inner min-h-0">
+                <div className="flex items-center justify-between text-[10px] font-sans text-slate-400 border-b border-slate-800/80 pb-1.5 mb-2 shrink-0">
+                  <span>{getLanguageLabel(activeWorldId)} Code Editor</span>
+                  <span>UTF-8 • {ideCodeText.split('\n').length} lines</span>
+                </div>
+
+                <div className="flex-1 flex space-x-3 overflow-y-auto min-h-0">
+                  {/* Line Numbers */}
+                  <div className="text-slate-600 text-xs text-right select-none font-mono py-0.5 pr-2 border-r border-slate-800/80 flex flex-col space-y-1 shrink-0">
+                    {ideCodeText.split('\n').map((_, idx) => (
+                      <div key={idx}>{idx + 1}</div>
+                    ))}
+                  </div>
+
+                  {/* Code Input Area */}
+                  <textarea
+                    value={ideCodeText}
+                    onChange={(e) => setIdeCodeText(e.target.value)}
+                    spellCheck={false}
+                    className="flex-1 bg-transparent text-slate-100 text-xs font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full"
+                    placeholder="Write code here..."
+                  />
+                </div>
+              </div>
+            </div>
+          ) : (
+            <>
           <div 
             style={{ height: `${topSectionPercent}%` }} 
             className="w-full flex items-stretch gap-2 flex-shrink-0 min-h-[90px] relative"
@@ -1009,8 +1238,10 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
               </div>
             </div>
 
-          </div>
+            </div>
 
+          </>
+          )}
         </div>
       )}
     </div>
