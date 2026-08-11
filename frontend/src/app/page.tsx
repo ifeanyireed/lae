@@ -35,7 +35,7 @@ export default function Home() {
   const [userContext, setUserContext] = useState({
     id: 1,
     username: 'Explorer',
-    role: 'admin' as 'admin' | 'user', // Default admin role for dev; updated by Host Platform token or Auth modal
+    role: 'user' as 'admin' | 'user', // Default standard user role; updated by Host Platform token or Auth modal
     groupId: 1,
     groupName: 'Jungle Explorers Group A',
     avatar: '/images/character1.jpg',
