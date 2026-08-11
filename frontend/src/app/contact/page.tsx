@@ -45,7 +45,7 @@ export default function ContactPage() {
   const faqs = [
     {
       q: 'How do I register a school or classroom for PuzzlePro?',
-      a: 'You can visit our School Portal (/schools) or complete the onboarding wizard (/onboarding). Alternatively, call us at 08067028859 or email hello@resultspro.ng for bulk student licensing and custom school setup.',
+      a: 'You can visit our School Portal (/schools) or complete the onboarding wizard (/onboarding). Alternatively, call us at +234 803 542 8870 or email hello@resultspro.ng for bulk student licensing and custom school setup.',
     },
     {
       q: 'Is PuzzlePro suitable for complete beginners with no prior coding experience?',
@@ -122,8 +122,8 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-bold text-slate-900 text-xs uppercase tracking-wider">Phone / WhatsApp</h3>
-                    <a href="tel:08067028859" className="text-amber-600 font-semibold text-xs sm:text-sm mt-1 hover:underline block">
-                      08067028859
+                    <a href="tel:+2348035428870" className="text-amber-600 font-semibold text-xs sm:text-sm mt-1 hover:underline block">
+                      +234 803 542 8870
                     </a>
                   </div>
                 </div>
@@ -269,7 +269,7 @@ export default function ContactPage() {
                   </label>
                   <input
                     type="tel"
-                    placeholder="e.g. 08067028859"
+                    placeholder="e.g. +234 803 542 8870"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"

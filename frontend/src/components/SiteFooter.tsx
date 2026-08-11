@@ -108,8 +108,8 @@ export const SiteFooter: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2.5">
               <Phone className="w-4 h-4 text-amber-600 shrink-0" />
-              <a href="tel:08067028859" className="text-slate-700 hover:text-amber-600 transition font-medium">
-                08067028859
+              <a href="tel:+2348035428870" className="text-slate-700 hover:text-amber-600 transition font-medium">
+                +234 803 542 8870
               </a>
             </div>
             <div className="flex items-center space-x-2.5">

@@ -183,7 +183,7 @@ export default function TermsPage() {
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
                   <Phone className="w-4 h-4 text-amber-600" />
-                  <span><strong>Phone:</strong> 08067028859</span>
+                  <span><strong>Phone:</strong> +234 803 542 8870</span>
                 </div>
                 <div className="flex items-center space-x-2 text-slate-700">
                   <Mail className="w-4 h-4 text-amber-600" />

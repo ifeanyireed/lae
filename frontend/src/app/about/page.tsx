@@ -259,8 +259,8 @@ export default function AboutPage() {
               <Phone className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div>
                 <div className="font-bold text-slate-900 text-xs uppercase tracking-wider">Phone</div>
-                <a href="tel:08067028859" className="text-slate-600 text-xs mt-1 hover:text-amber-600 transition block font-medium">
-                  08067028859
+                <a href="tel:+2348035428870" className="text-slate-600 text-xs mt-1 hover:text-amber-600 transition block font-medium">
+                  +234 803 542 8870
                 </a>
               </div>
             </div>
