@@ -517,6 +517,7 @@ export default function Home() {
     if (wpType === 'html_tag' || wpType === 'html') return '<html>';
     if (wpType === 'head_tag' || wpType === 'head') return '<head>';
     if (wpType === 'title_tag' || wpType === 'title') return '<title>';
+    if (wpType === 'body_tag' || wpType === 'body') return '<body>';
     if (wpType === 'text_tag' || wpType === 'text') return '<text>';
     if (wpType === 'heading_tag' || wpType === 'heading' || wpType === 'h1_tag' || wpType === 'h1') return '<h1>';
     if (wpType === 'paragraph_tag' || wpType === 'paragraph' || wpType === 'p_tag' || wpType === 'p') return '<p>';
