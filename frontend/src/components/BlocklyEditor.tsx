@@ -880,9 +880,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   setIdeCodeText(convertProgramToText(program, activeWorldId));
                 }
               }}
-              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-600/80 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner p-0.5 ${
-                isIdeMode ? 'bg-purple-600' : 'bg-slate-800'
-              }`}
+              className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-600/80 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner p-0.5 bg-slate-800"
               title={isIdeMode ? 'Switch to Block Editor' : 'Switch to Code Editor'}
             >
               <span
