@@ -337,15 +337,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
     setIdeCodeText(convertProgramToText(program, activeWorldId));
   }, [program, activeWorldId]);
 
-  // Auto-scroll Scratch Blocks stack to active step or newly added block on activity
-  useEffect(() => {
-    if (!isIdeMode && codeStackContainerRef.current) {
-      codeStackContainerRef.current.scrollTo({
-        top: codeStackContainerRef.current.scrollHeight,
-        behavior: 'smooth',
-      });
-    }
-  }, [program.length, activeStepIndex, isIdeMode]);
+
 
   // Auto-scroll IDE editor to active line or latest typed line on activity
   useEffect(() => {
