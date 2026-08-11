@@ -652,11 +652,11 @@ func (p *PlayerServiceHandler) SaveOrganisationHandler(w http.ResponseWriter, r 
 
 	for _, gName := range req.Groups {
 		if strings.TrimSpace(gName) != "" {
-			gCode := strings.ToLower(strings.ReplaceAll(gName, " ", "-"))
+			gCode := fmt.Sprintf("%06d", (time.Now().UnixNano()/1000)%900000+100000)
 			_, _ = p.DB.ExecContext(ctx, `
 				INSERT INTO groups (organisation_id, name, code) VALUES (?, ?, ?)
 				ON DUPLICATE KEY UPDATE organisation_id = VALUES(organisation_id), name = VALUES(name)
-			`, req.ID, gName, fmt.Sprintf("%s-%s", req.ID, gCode))
+			`, req.ID, gName, gCode)
 		}
 	}
 
@@ -1203,7 +1203,7 @@ func (p *PlayerServiceHandler) SaveGroupHandler(w http.ResponseWriter, r *http.R
 	}
 
 	if req.Code == "" {
-		req.Code = fmt.Sprintf("%s-%s", req.OrganisationID, strings.ToLower(strings.ReplaceAll(req.Name, " ", "-")))
+		req.Code = fmt.Sprintf("%06d", (time.Now().UnixNano()/1000)%900000+100000)
 	}
 
 	ctx := r.Context()

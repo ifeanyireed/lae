@@ -168,7 +168,7 @@ export default function StudentCodesPage() {
               <span className="text-amber-400 font-medium">Instant Access Codes.</span>
             </h1>
             <p className="text-xs text-slate-200/90 mt-3 leading-relaxed font-normal">
-              Enter your class Group Code provided by your teacher to search your name, grab your 8-digit passwordless code, and jump right into coding!
+              Enter your 6-digit class Group Code provided by your teacher to search your name, grab your 8-digit passwordless code, and jump right into coding!
             </p>
           </div>
 
@@ -186,8 +186,8 @@ export default function StudentCodesPage() {
               <span className="text-[11px] text-slate-200/80">Click copy and paste your code directly into sign in.</span>
             </div>
             <div className="bg-white/10 backdrop-blur-md p-3 rounded-2xl border border-white/15">
-              <span className="text-amber-300 font-medium block mb-1">Secure & Passwordless</span>
-              <span className="text-[11px] text-slate-200/80">Protected with personal 8-digit student access tokens.</span>
+              <span className="text-amber-300 font-medium block mb-1">6-Digit Serial Code</span>
+              <span className="text-[11px] text-slate-200/80">Search by your class 6-digit serial number.</span>
             </div>
           </div>
 
@@ -211,7 +211,7 @@ export default function StudentCodesPage() {
                   className="object-contain mb-2 drop-shadow-md shrink-0 transition-transform hover:scale-105"
                 />
                 <h2 className="text-xl font-medium text-white md:text-slate-900 tracking-tight">
-                  Enter Group Code
+                  Enter 6-Digit Group Code
                 </h2>
                 <p className="text-[10px] text-slate-400 md:text-slate-500 font-normal uppercase tracking-wide mt-0.5">
                   Get student access codes for your class
@@ -234,19 +234,20 @@ export default function StudentCodesPage() {
 
                 <div>
                   <label className="block text-[9px] font-normal text-slate-300 md:text-slate-600 uppercase mb-1.5 tracking-wider">
-                    Group / Class Code
+                    6-Digit Serial Group Code
                   </label>
                   <div className="relative">
                     <input
                       type="text"
-                      placeholder="e.g. grade-5-coding or STEM-ALPHA"
+                      placeholder="e.g. 784912 or 592810"
                       value={groupCodeInput}
                       onChange={(e) => {
                         setGroupCodeInput(e.target.value);
                         setErrorMessage('');
                       }}
                       required
-                      className="w-full pl-10 pr-4 py-3 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-xs font-mono font-medium text-white md:text-slate-900 transition-all duration-200 placeholder:text-slate-400"
+                      maxLength={12}
+                      className="w-full pl-10 pr-4 py-3 bg-slate-950/50 md:bg-white border border-white/10 md:border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500/30 focus:border-amber-500 shadow-sm text-sm font-mono font-bold tracking-widest text-white md:text-slate-900 transition-all duration-200 placeholder:text-slate-400 placeholder:font-normal placeholder:tracking-normal"
                     />
                     <IconKey className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                   </div>
@@ -274,10 +275,10 @@ export default function StudentCodesPage() {
               {/* Sample Quick Badges */}
               <div className="pt-2 border-t border-slate-200/40">
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-2 font-normal">
-                  Try Sample Group Codes:
+                  Try Sample 6-Digit Group Codes:
                 </span>
                 <div className="flex flex-wrap gap-1.5">
-                  {['grade-5-coding', 'senior-coders', 'stem-lab-1'].map((sample) => (
+                  {['784912', '592810', '310492'].map((sample) => (
                     <button
                       key={sample}
                       type="button"

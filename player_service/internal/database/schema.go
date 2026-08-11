@@ -238,8 +238,10 @@ func (db *DB) seedAccessCodeUsers(ctx context.Context) {
 		ON DUPLICATE KEY UPDATE domain = VALUES(domain), token = VALUES(token)
 	`)
 
-	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO centres (id, organisation_id, name, location, code) VALUES (1, 'org_001', 'Main Campus', 'Central Education Hub', 'main-campus')")
-	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (1, 'org_001', 1, 'Grade 5 Coding Class', 'grade-5-coding')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO centres (id, organisation_id, name, location, code) VALUES (1, 'org_001', 'Main Campus', 'Central Education Hub', '784912')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (1, 'org_001', 1, 'Grade 5 Coding Class', '784912')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (2, 'org_001', 1, 'Senior Coders Club', '592810')")
+	_, _ = db.ExecContext(ctx, "INSERT IGNORE INTO groups (id, organisation_id, centre_id, name, code) VALUES (3, 'org_001', 1, 'STEM Lab 1', '310492')")
 
 	seedUsers := []struct {
 		Username       string

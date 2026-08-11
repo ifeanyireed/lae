@@ -1503,14 +1503,14 @@ export default function SchoolsPage() {
 
               <div>
                 <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
-                  Group Code <span className="text-[9px] text-slate-400 font-normal">(For Student Self-Service at /codes)</span>
+                  6-Digit Group Code <span className="text-[9px] text-slate-400 font-normal">(6-Digit Serial for Student Self-Service at /codes)</span>
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. grade-5-coding or STEM-ALPHA"
+                  placeholder="e.g. 784912 or 592810"
                   value={groupForm.code}
                   onChange={(e) => setGroupForm({ ...groupForm, code: e.target.value })}
-                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-wider text-slate-900 outline-none"
                 />
               </div>
 
