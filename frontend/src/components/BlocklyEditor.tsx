@@ -819,14 +819,10 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
           isCollapsed ? 'h-full pb-0 border-b-0 space-x-1.5' : 'pb-3 border-b border-slate-900/15'
         }`}
       >
-        <div className={`flex items-center space-x-2 ${isCollapsed ? 'border-r border-slate-900/15 pr-2 mr-0.5' : ''}`}>
+        <div className={`flex items-center space-x-2.5 ${isCollapsed ? 'border-r border-slate-900/15 pr-2 mr-0.5' : ''}`}>
           <IconGripHorizontal className="w-3.5 h-3.5 text-slate-800 opacity-80" />
-          <span className="text-[11px] font-black text-slate-950 font-mono tracking-wide flex items-center space-x-1 whitespace-nowrap">
-            <IconPuzzle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
-            <span>{isIdeMode ? `${getLanguageLabel(activeWorldId)} IDE` : 'Scratch Editor'}</span>
-          </span>
 
-          {/* IDE MODE TOGGLE SWITCH (WORLDS 2-5) */}
+          {/* TOGGLE SWITCH IN FRONT WITH NO TEXT INSIDE (WORLDS 2-5) */}
           {(activeWorldId >= 2 || isWorld2) && !isCollapsed && (
             <button
               type="button"
@@ -839,26 +835,23 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   setIdeCodeText(convertProgramToText(program, activeWorldId));
                 }
               }}
-              className={`flex items-center space-x-1.5 px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all duration-200 shadow-md cursor-pointer border ${
-                isIdeMode
-                  ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 text-white border-purple-400 shadow-purple-500/30'
-                  : 'bg-slate-900 hover:bg-slate-800 text-amber-400 border-slate-700 hover:border-amber-400/50'
+              className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-600/80 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner p-0.5 ${
+                isIdeMode ? 'bg-purple-600' : 'bg-slate-800'
               }`}
-              title={isIdeMode ? 'Switch back to Scratch Blocks' : 'Switch to Code IDE'}
+              title={isIdeMode ? 'Switch to Block Editor' : 'Switch to Code Editor'}
             >
-              {isIdeMode ? (
-                <>
-                  <IconPuzzle className="w-3.5 h-3.5 text-amber-300 shrink-0" />
-                  <span>Blocks</span>
-                </>
-              ) : (
-                <>
-                  <IconFileCode className="w-3.5 h-3.5 text-amber-400 shrink-0 animate-pulse" />
-                  <span>IDE Mode ({getLanguageLabel(activeWorldId)})</span>
-                </>
-              )}
+              <span
+                className={`pointer-events-none inline-block h-3.5 w-3.5 transform rounded-full bg-amber-400 shadow-md ring-0 transition duration-200 ease-in-out ${
+                  isIdeMode ? 'translate-x-4 bg-amber-300' : 'translate-x-0 bg-amber-400'
+                }`}
+              />
             </button>
           )}
+
+          <span className="text-[11px] font-black text-slate-950 font-mono tracking-wide flex items-center space-x-1 whitespace-nowrap">
+            <IconPuzzle className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+            <span>Block Editor/Code Editor</span>
+          </span>
         </div>
 
         <div className="flex items-center space-x-1.5" onClick={(e) => isCollapsed && e.stopPropagation()}>
