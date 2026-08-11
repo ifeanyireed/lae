@@ -113,6 +113,7 @@ export default function SchoolsPage() {
     name: '',
     centreId: 0,
     code: '',
+    assignedWorldId: 1,
   });
 
   // Centre Modal state
@@ -324,11 +325,12 @@ export default function SchoolsPage() {
       centreName: selectedCentre?.name || '',
       name: groupForm.name,
       code: groupForm.code || undefined,
+      assignedWorldId: groupForm.assignedWorldId || 1,
     });
 
     setIsGroupModalOpen(false);
     setEditingGroup(null);
-    setGroupForm({ id: 0, name: '', centreId: 0, code: '' });
+    setGroupForm({ id: 0, name: '', centreId: 0, code: '', assignedWorldId: 1 });
     await loadDataFromDB(activeOrgId);
   };
 
@@ -904,6 +906,7 @@ export default function SchoolsPage() {
                     name: '',
                     centreId: centresList[0]?.id || 0,
                     code: '',
+                    assignedWorldId: 1,
                   });
                   setIsGroupModalOpen(true);
                 }}
@@ -938,7 +941,12 @@ export default function SchoolsPage() {
                   <div key={grp.id || grp.name} className="bg-slate-50 p-5 rounded-2xl border border-slate-200 flex flex-col justify-between gap-3 hover:border-amber-300 transition">
                     <div>
                       <div className="flex items-center justify-between">
-                        <span className="bg-purple-100 text-purple-800 text-[10px] font-medium px-2 py-0.5 rounded-md uppercase">Class</span>
+                        <div className="flex items-center gap-1.5">
+                          <span className="bg-purple-100 text-purple-800 text-[10px] font-medium px-2 py-0.5 rounded-md uppercase">Class</span>
+                          <span className="bg-amber-500/20 text-amber-900 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-md uppercase">
+                            World {grp.assignedWorldId || 1}
+                          </span>
+                        </div>
                         {grp.centreName && (
                           <span className="bg-emerald-100 text-emerald-800 text-[10px] font-medium px-2 py-0.5 rounded-md flex items-center gap-1">
                             <IconMapPin className="w-3 h-3 shrink-0" />
@@ -995,6 +1003,7 @@ export default function SchoolsPage() {
                             name: grp.name,
                             centreId: grp.centreId || 0,
                             code: grp.code || '',
+                            assignedWorldId: grp.assignedWorldId || 1,
                           });
                           setIsGroupModalOpen(true);
                         }}
@@ -1528,6 +1537,21 @@ export default function SchoolsPage() {
                   onChange={(e) => setGroupForm({ ...groupForm, code: e.target.value })}
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono font-bold tracking-wider text-slate-900 outline-none"
                 />
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">Enforced World Assignment (All Students Inherit)</label>
+                <select
+                  value={groupForm.assignedWorldId || 1}
+                  onChange={(e) => setGroupForm({ ...groupForm, assignedWorldId: parseInt(e.target.value) })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 outline-none cursor-pointer"
+                >
+                  <option value={1}>World 1 (Junior Camp — HTML Fundamentals)</option>
+                  <option value={2}>World 2 (Senior Camp — HTML Document Structure)</option>
+                  <option value={3}>World 3 (CSS Stylists)</option>
+                  <option value={4}>World 4 (JS Logic Wizards)</option>
+                  <option value={5}>World 5 (Python Masters)</option>
+                </select>
               </div>
 
               <div className="flex items-center justify-end space-x-3 pt-2">

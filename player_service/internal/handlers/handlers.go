@@ -184,8 +184,13 @@ func (p *PlayerServiceHandler) CodeLoginHandler(w http.ResponseWriter, r *http.R
 	}
 
 	var groupName string
-	_ = p.DB.QueryRowContext(ctx, "SELECT name FROM groups WHERE id = ?", user.GroupID).Scan(&groupName)
+	var groupAssignedWorld int = 1
+	_ = p.DB.QueryRowContext(ctx, "SELECT name, COALESCE(assigned_world_id, 1) FROM groups WHERE id = ?", user.GroupID).Scan(&groupName, &groupAssignedWorld)
 	user.GroupName = groupName
+	if groupAssignedWorld > 0 {
+		user.AssignedWorldID = groupAssignedWorld
+		_, _ = p.DB.ExecContext(ctx, "UPDATE users SET assigned_world_id = ? WHERE id = ?", groupAssignedWorld, user.ID)
+	}
 
 	progressList := p.getUserProgressList(ctx, user.ID)
 	token, _ := auth.GenerateToken(user.ID, user.Username, user.Role, user.AccessCode)
@@ -448,7 +453,7 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 	}
 
 	query := `
-		SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, g.code, g.created_at
+		SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, g.code, COALESCE(g.assigned_world_id, 1), g.created_at
 		FROM groups g
 		LEFT JOIN centres c ON g.centre_id = c.id
 	`
@@ -481,10 +486,13 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 	for rows.Next() {
 		var g database.Group
 		var createdAt string
-		if err := rows.Scan(&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &createdAt); err == nil {
+		if err := rows.Scan(&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &g.AssignedWorldID, &createdAt); err == nil {
 			if g.Code == "" || len(g.Code) != 6 {
 				g.Code = fmt.Sprintf("%06d", (g.ID*123456+784912)%900000+100000)
 				_, _ = p.DB.ExecContext(r.Context(), "UPDATE groups SET code = ? WHERE id = ?", g.Code, g.ID)
+			}
+			if g.AssignedWorldID <= 0 {
+				g.AssignedWorldID = 1
 			}
 			groups = append(groups, g)
 		}
@@ -820,6 +828,16 @@ func (p *PlayerServiceHandler) SaveUserAdminHandler(w http.ResponseWriter, r *ht
 		groupID = 1
 	}
 
+	if req.AssignedWorldID <= 0 {
+		var gWorld int
+		_ = p.DB.QueryRowContext(ctx, "SELECT COALESCE(assigned_world_id, 1) FROM groups WHERE id = ?", groupID).Scan(&gWorld)
+		if gWorld > 0 {
+			req.AssignedWorldID = gWorld
+		} else {
+			req.AssignedWorldID = 1
+		}
+	}
+
 	if req.ID > 0 {
 		_, err := p.DB.ExecContext(ctx, `
 			UPDATE users SET
@@ -1043,6 +1061,16 @@ func (p *PlayerServiceHandler) BatchSaveUsersHandler(w http.ResponseWriter, r *h
 			groupID = 1
 		}
 
+		if u.AssignedWorldID <= 0 {
+			var gWorld int
+			_ = p.DB.QueryRowContext(ctx, "SELECT COALESCE(assigned_world_id, 1) FROM groups WHERE id = ?", groupID).Scan(&gWorld)
+			if gWorld > 0 {
+				u.AssignedWorldID = gWorld
+			} else {
+				u.AssignedWorldID = 1
+			}
+		}
+
 		res, err := p.DB.ExecContext(ctx, `
 			INSERT INTO users (username, access_code, role, organisation_id, group_id, avatar, assigned_world_id, total_xp, total_stars)
 			VALUES (?, ?, ?, ?, ?, ?, ?, 100, 0)
@@ -1249,20 +1277,26 @@ func (p *PlayerServiceHandler) SaveGroupHandler(w http.ResponseWriter, r *http.R
 		centreID = req.CentreID
 	}
 
+	if req.AssignedWorldID <= 0 {
+		req.AssignedWorldID = 1
+	}
+
 	if req.ID > 0 {
 		_, err := p.DB.ExecContext(ctx, `
-			UPDATE groups SET name = ?, code = ?, organisation_id = ?, centre_id = ? WHERE id = ?
-		`, req.Name, req.Code, req.OrganisationID, centreID, req.ID)
+			UPDATE groups SET name = ?, code = ?, organisation_id = ?, centre_id = ?, assigned_world_id = ? WHERE id = ?
+		`, req.Name, req.Code, req.OrganisationID, centreID, req.AssignedWorldID, req.ID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})
 			return
 		}
+		// Synchronize all students in this group to the group's assigned world
+		_, _ = p.DB.ExecContext(ctx, "UPDATE users SET assigned_world_id = ? WHERE group_id = ?", req.AssignedWorldID, req.ID)
 	} else {
 		res, err := p.DB.ExecContext(ctx, `
-			INSERT INTO groups (organisation_id, centre_id, name, code) VALUES (?, ?, ?, ?)
-			ON DUPLICATE KEY UPDATE organisation_id = VALUES(organisation_id), centre_id = VALUES(centre_id), name = VALUES(name)
-		`, req.OrganisationID, centreID, req.Name, req.Code)
+			INSERT INTO groups (organisation_id, centre_id, name, code, assigned_world_id) VALUES (?, ?, ?, ?, ?)
+			ON DUPLICATE KEY UPDATE organisation_id = VALUES(organisation_id), centre_id = VALUES(centre_id), name = VALUES(name), assigned_world_id = VALUES(assigned_world_id)
+		`, req.OrganisationID, centreID, req.Name, req.Code, req.AssignedWorldID)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			_ = json.NewEncoder(w).Encode(map[string]interface{}{"success": false, "error": err.Error()})

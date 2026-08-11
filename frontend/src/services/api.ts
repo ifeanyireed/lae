@@ -365,6 +365,7 @@ export interface GroupApiItem {
   centreName?: string;
   name: string;
   code?: string;
+  assignedWorldId?: number;
 }
 
 export async function fetchCentres(organisationId?: string): Promise<CentreApiItem[]> {
@@ -442,6 +443,7 @@ export async function fetchGroups(organisationId?: string, centreId?: number): P
         centreName: g.centre_name || '',
         name: g.name,
         code: g.code || '',
+        assignedWorldId: g.assigned_world_id || 1,
       }));
     }
   } catch (e) {}
@@ -456,6 +458,7 @@ export async function saveGroup(group: Partial<GroupApiItem>): Promise<GroupApiI
       centre_id: group.centreId || null,
       name: group.name,
       code: group.code || '',
+      assigned_world_id: group.assignedWorldId || 1,
     };
     const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/groups`, {
       method: 'POST',
@@ -471,6 +474,7 @@ export async function saveGroup(group: Partial<GroupApiItem>): Promise<GroupApiI
         centreName: group.centreName || '',
         name: data.group.name,
         code: data.group.code || '',
+        assignedWorldId: data.group.assigned_world_id || 1,
       };
     }
   } catch (e) {}

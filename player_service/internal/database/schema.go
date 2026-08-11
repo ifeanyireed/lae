@@ -33,13 +33,14 @@ type Centre struct {
 }
 
 type Group struct {
-	ID             int       `json:"id"`
-	OrganisationID string    `json:"organisation_id,omitempty"`
-	CentreID       int       `json:"centre_id,omitempty"`
-	CentreName     string    `json:"centre_name,omitempty"`
-	Name           string    `json:"name"`
-	Code           string    `json:"code"`
-	CreatedAt      time.Time `json:"created_at,omitempty"`
+	ID              int       `json:"id"`
+	OrganisationID  string    `json:"organisation_id,omitempty"`
+	CentreID        int       `json:"centre_id,omitempty"`
+	CentreName      string    `json:"centre_name,omitempty"`
+	Name            string    `json:"name"`
+	Code            string    `json:"code"`
+	AssignedWorldID int       `json:"assigned_world_id,omitempty"`
+	CreatedAt       time.Time `json:"created_at,omitempty"`
 }
 
 type User struct {
@@ -121,6 +122,7 @@ func (db *DB) InitPlayerServiceSchema() error {
 		centre_id INT DEFAULT NULL,
 		name VARCHAR(255) NOT NULL,
 		code VARCHAR(100) UNIQUE NOT NULL,
+		assigned_world_id INT DEFAULT 1,
 		created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 		FOREIGN KEY (organisation_id) REFERENCES organisations(id) ON DELETE CASCADE
 	) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
@@ -197,6 +199,7 @@ func (db *DB) InitPlayerServiceSchema() error {
 	}
 	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN organisation_id VARCHAR(100) DEFAULT NULL;")
 	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN centre_id INT DEFAULT NULL;")
+	_, _ = db.ExecContext(ctx, "ALTER TABLE groups ADD COLUMN assigned_world_id INT DEFAULT 1;")
 
 	if _, err := db.ExecContext(ctx, createUsersTable); err != nil {
 		log.Printf("Warning: Users table creation error: %v", err)
