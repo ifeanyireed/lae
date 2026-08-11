@@ -192,9 +192,18 @@ export default function SchoolsPage() {
 
       // Read Groups from DB
       const remoteGroups = await fetchGroups(orgId || undefined);
-      setGroupsDetailList(remoteGroups);
-      if (remoteGroups.length > 0) {
-        setGroupsList(remoteGroups.map((g) => g.name));
+      const formattedGroups = (remoteGroups || []).map((g, idx) => {
+        const rawCode = g.code || '';
+        const is6Digit = /^\d{6}$/.test(rawCode.trim());
+        const fallbackCode = (((g.id || idx + 1) * 123456 + 784912) % 800000 + 100000).toString();
+        return {
+          ...g,
+          code: is6Digit ? rawCode.trim() : fallbackCode,
+        };
+      });
+      setGroupsDetailList(formattedGroups);
+      if (formattedGroups.length > 0) {
+        setGroupsList(formattedGroups.map((g) => g.name));
       }
 
       // Read Users / Students directly from Database
@@ -940,26 +949,32 @@ export default function SchoolsPage() {
                       <p className="text-xs text-slate-500 mt-0.5">{count} Students Enrolled</p>
                       
                       {/* Group Code Pill Badge for Instructor Copy & Student /codes Lookup */}
-                      <div className="mt-2.5 flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
-                        <div className="flex items-center space-x-1.5 overflow-hidden">
-                          <IconKey className="w-3.5 h-3.5 text-amber-600 shrink-0" />
-                          <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider shrink-0">Code:</span>
-                          <span className="text-xs font-mono font-bold text-slate-900 truncate">{grp.code || `GRP-${grp.id || 101}`}</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const codeToCopy = grp.code || `GRP-${grp.id || 101}`;
-                            navigator.clipboard.writeText(codeToCopy);
-                            setCopiedCodeId(`grp-${grp.id}`);
-                            setTimeout(() => setCopiedCodeId(null), 2000);
-                          }}
-                          className="p-1 text-slate-400 hover:text-slate-800 transition cursor-pointer shrink-0"
-                          title="Copy Group Code for Students"
-                        >
-                          {copiedCodeId === `grp-${grp.id}` ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
-                        </button>
-                      </div>
+                      {(() => {
+                        const displayCode = (grp.code && /^\d{6}$/.test(grp.code.trim()))
+                          ? grp.code.trim()
+                          : (((grp.id || 1) * 123456 + 784912) % 800000 + 100000).toString();
+                        return (
+                          <div className="mt-2.5 flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                            <div className="flex items-center space-x-1.5 overflow-hidden">
+                              <IconKey className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                              <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider shrink-0">6-Digit Code:</span>
+                              <span className="text-xs font-mono font-bold text-slate-900 truncate">{displayCode}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(displayCode);
+                                setCopiedCodeId(`grp-${grp.id}`);
+                                setTimeout(() => setCopiedCodeId(null), 2000);
+                              }}
+                              className="p-1 text-slate-400 hover:text-slate-800 transition cursor-pointer shrink-0"
+                              title="Copy 6-Digit Group Code for Students"
+                            >
+                              {copiedCodeId === `grp-${grp.id}` ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
+                            </button>
+                          </div>
+                        );
+                      })()}
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                       <button

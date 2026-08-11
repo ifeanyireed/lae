@@ -482,6 +482,10 @@ func (p *PlayerServiceHandler) GetGroupsHandler(w http.ResponseWriter, r *http.R
 		var g database.Group
 		var createdAt string
 		if err := rows.Scan(&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &createdAt); err == nil {
+			if g.Code == "" || len(g.Code) != 6 {
+				g.Code = fmt.Sprintf("%06d", (g.ID*123456+784912)%900000+100000)
+				_, _ = p.DB.ExecContext(r.Context(), "UPDATE groups SET code = ? WHERE id = ?", g.Code, g.ID)
+			}
 			groups = append(groups, g)
 		}
 	}
