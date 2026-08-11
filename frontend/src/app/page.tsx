@@ -502,9 +502,10 @@ export default function Home() {
       'html_tag', 'html',
       'head_tag', 'head',
       'title_tag', 'title',
+      'text_tag', 'text',
+      'heading_tag', 'heading', 'h1_tag', 'h1',
+      'paragraph_tag', 'paragraph', 'p_tag', 'p',
       'body_tag', 'body',
-      'h1_tag', 'h1',
-      'p_tag', 'p',
       'list_tag', 'list',
       'link_tag', 'link',
       'img_tag', 'img'
@@ -516,6 +517,9 @@ export default function Home() {
     if (wpType === 'html_tag' || wpType === 'html') return '<html>';
     if (wpType === 'head_tag' || wpType === 'head') return '<head>';
     if (wpType === 'title_tag' || wpType === 'title') return '<title>';
+    if (wpType === 'text_tag' || wpType === 'text') return '<text>';
+    if (wpType === 'heading_tag' || wpType === 'heading' || wpType === 'h1_tag' || wpType === 'h1') return '<h1>';
+    if (wpType === 'paragraph_tag' || wpType === 'paragraph' || wpType === 'p_tag' || wpType === 'p') return '<p>';
     return `<${wpType}>`;
   };
 
@@ -525,9 +529,10 @@ export default function Home() {
     if (wpType === 'html_tag' || wpType === 'html') reqTypes = ['html_tag', 'html'];
     if (wpType === 'head_tag' || wpType === 'head') reqTypes = ['head_tag', 'head'];
     if (wpType === 'title_tag' || wpType === 'title') reqTypes = ['title_tag', 'title'];
+    if (wpType === 'text_tag' || wpType === 'text') reqTypes = ['text_tag', 'text', 'text_input'];
+    if (wpType === 'heading_tag' || wpType === 'heading' || wpType === 'h1_tag' || wpType === 'h1') reqTypes = ['heading_tag', 'heading', 'h1_tag', 'h1'];
+    if (wpType === 'paragraph_tag' || wpType === 'paragraph' || wpType === 'p_tag' || wpType === 'p') reqTypes = ['paragraph_tag', 'paragraph', 'p_tag', 'p'];
     if (wpType === 'body_tag' || wpType === 'body') reqTypes = ['body_tag', 'body'];
-    if (wpType === 'h1_tag' || wpType === 'h1') reqTypes = ['h1_tag', 'h1'];
-    if (wpType === 'p_tag' || wpType === 'p') reqTypes = ['p_tag', 'p'];
     if (wpType === 'list_tag' || wpType === 'list') reqTypes = ['list_tag', 'list'];
     if (wpType === 'link_tag' || wpType === 'link') reqTypes = ['link_tag', 'link'];
     if (wpType === 'img_tag' || wpType === 'img') reqTypes = ['img_tag', 'img'];

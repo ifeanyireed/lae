@@ -34,6 +34,16 @@ const HTML_BLOCK_CONFIGS: Record<string, { color: string; label: string; border:
   head_tag: { color: '#FF9100', label: '<head>', border: '#E65100' },
   title: { color: '#E91E63', label: '<title>', border: '#C2185B' },
   title_tag: { color: '#E91E63', label: '<title>', border: '#C2185B' },
+  text: { color: '#00A2FF', label: '<text>', border: '#0088D6' },
+  text_tag: { color: '#00A2FF', label: '<text>', border: '#0088D6' },
+  heading: { color: '#B80751', label: '<h1>', border: '#90053E' },
+  heading_tag: { color: '#B80751', label: '<h1>', border: '#90053E' },
+  h1: { color: '#B80751', label: '<h1>', border: '#90053E' },
+  h1_tag: { color: '#B80751', label: '<h1>', border: '#90053E' },
+  paragraph: { color: '#EC4899', label: '<p>', border: '#DB2777' },
+  paragraph_tag: { color: '#EC4899', label: '<p>', border: '#DB2777' },
+  p: { color: '#EC4899', label: '<p>', border: '#DB2777' },
+  p_tag: { color: '#EC4899', label: '<p>', border: '#DB2777' },
 };
 
 interface GameCanvasProps {
@@ -827,6 +837,9 @@ export const GameCanvas: React.FC<GameCanvasProps> = ({
                           <option value="html_tag">HTML Tag (&lt;html&gt;)</option>
                           <option value="head_tag">HEAD Tag (&lt;head&gt;)</option>
                           <option value="title_tag">TITLE Tag (&lt;title&gt;)</option>
+                          <option value="text_tag">TEXT Tag (&lt;text&gt;)</option>
+                          <option value="heading_tag">HEADING Tag (&lt;h1&gt;)</option>
+                          <option value="paragraph_tag">PARAGRAPH Tag (&lt;p&gt;)</option>
                         </optgroup>
                         <option value="goal">Finish Pipe</option>
                       </select>
