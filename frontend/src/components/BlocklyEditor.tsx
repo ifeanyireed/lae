@@ -1353,7 +1353,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
             </div>
 
             {/* Floating Code Stack Zoom Control Widget locked to bottom-right of stack dropzone */}
-            <div className="sticky bottom-3 right-3 ml-auto z-50 pointer-events-auto shrink-0 shadow-lg">
+            <div className="sticky bottom-0 right-0 ml-auto pt-1 z-50 pointer-events-auto shrink-0 shadow-lg">
               <div className="flex items-center space-x-1 bg-white/90 backdrop-blur-md px-2 py-1 rounded-full border border-slate-300 shadow-md">
                 <button
                   onClick={() => { soundManager.playClick(); setCodeStackZoomScale(z => Math.max(0.5, Math.round((z - 0.15) * 100) / 100)); }}
