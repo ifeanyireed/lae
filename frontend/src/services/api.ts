@@ -549,7 +549,7 @@ export async function sendContactForm(data: {
   }
 }
 
-export async function fetchGroupStudentsByCode(groupCode: string): Promise<{
+export async function fetchGroupStudentsByCode(groupCode: string, search?: string): Promise<{
   success: boolean;
   error?: string;
   group?: {
@@ -568,7 +568,11 @@ export async function fetchGroupStudentsByCode(groupCode: string): Promise<{
   }>;
 }> {
   try {
-    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/group/students?code=${encodeURIComponent(groupCode)}`);
+    let url = `${PLAYER_SERVICE_URL}/api/v1/group/students?code=${encodeURIComponent(groupCode)}`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const res = await fetch(url);
     return await res.json();
   } catch (e: any) {
     return { success: false, error: 'Network request failed connecting to server' };

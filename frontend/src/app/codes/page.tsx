@@ -94,9 +94,14 @@ export default function StudentCodesPage() {
     setTimeout(() => setCopiedStudentId(null), 2500);
   };
 
-  const filteredStudents = students.filter((s) =>
-    s.name.toLowerCase().includes(nameSearch.toLowerCase())
-  );
+  const filteredStudents = students.filter((s) => {
+    const q = nameSearch.trim().toLowerCase();
+    if (!q) return true;
+    return (
+      s.name.toLowerCase().includes(q) ||
+      (s.student_code && s.student_code.toLowerCase().includes(q))
+    );
+  });
 
   return (
     <main className="min-h-screen bg-slate-950 flex flex-col justify-between relative overflow-hidden font-sans select-none">
