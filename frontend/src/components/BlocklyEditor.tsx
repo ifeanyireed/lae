@@ -490,10 +490,12 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
     }
   }, [program.length, ensureHatBlocks, setProgram]);
 
-  // Live translation: compile stacked blocks into actual code whenever blocks change
+  // Live translation: compile stacked blocks into actual code whenever blocks change (only in Block Editor mode)
   useEffect(() => {
-    setIdeCodeText(convertProgramToText(program, activeWorldId));
-  }, [program, activeWorldId]);
+    if (!isIdeMode) {
+      setIdeCodeText(convertProgramToText(program, activeWorldId));
+    }
+  }, [program, activeWorldId, isIdeMode]);
 
 
 
@@ -1040,6 +1042,9 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 setIsIdeMode(nextIde);
                 if (nextIde) {
                   setIdeCodeText(convertProgramToText(program, activeWorldId));
+                } else {
+                  const parsed = parseTextToProgram(ideCodeText, activeWorldId);
+                  setProgram(parsed);
                 }
               }}
               className="relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border border-slate-600/80 transition-colors duration-200 ease-in-out focus:outline-none shadow-inner p-0.5 bg-slate-800"
@@ -1131,12 +1136,7 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                   <textarea
                     ref={textareaRef}
                     value={ideCodeText}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setIdeCodeText(val);
-                      const parsed = parseTextToProgram(val, activeWorldId);
-                      setProgram(parsed);
-                    }}
+                    onChange={(e) => setIdeCodeText(e.target.value)}
                     onScroll={handleTextareaScroll}
                     spellCheck={false}
                     className="flex-1 bg-transparent text-slate-100 text-xs sm:text-sm font-mono resize-none focus:outline-none leading-6 tracking-wide selection:bg-purple-900 selection:text-white h-full overflow-y-auto py-0.5"
