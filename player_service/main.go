@@ -77,6 +77,7 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+	mux.HandleFunc("/api/v1/group/students", h.GetStudentsByGroupCodeHandler)
 
 	// Admin Controls & Portal REST Endpoints
 	mux.HandleFunc("/api/v1/organisations", func(w http.ResponseWriter, r *http.Request) {

@@ -111,6 +111,7 @@ export default function SchoolsPage() {
     id: 0,
     name: '',
     centreId: 0,
+    code: '',
   });
 
   // Centre Modal state
@@ -312,11 +313,12 @@ export default function SchoolsPage() {
       centreId: groupForm.centreId || undefined,
       centreName: selectedCentre?.name || '',
       name: groupForm.name,
+      code: groupForm.code || undefined,
     });
 
     setIsGroupModalOpen(false);
     setEditingGroup(null);
-    setGroupForm({ id: 0, name: '', centreId: 0 });
+    setGroupForm({ id: 0, name: '', centreId: 0, code: '' });
     await loadDataFromDB(activeOrgId);
   };
 
@@ -891,6 +893,7 @@ export default function SchoolsPage() {
                     id: 0,
                     name: '',
                     centreId: centresList[0]?.id || 0,
+                    code: '',
                   });
                   setIsGroupModalOpen(true);
                 }}
@@ -935,6 +938,28 @@ export default function SchoolsPage() {
                       </div>
                       <h3 className="text-base font-medium text-slate-900 mt-2">{grp.name}</h3>
                       <p className="text-xs text-slate-500 mt-0.5">{count} Students Enrolled</p>
+                      
+                      {/* Group Code Pill Badge for Instructor Copy & Student /codes Lookup */}
+                      <div className="mt-2.5 flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
+                        <div className="flex items-center space-x-1.5 overflow-hidden">
+                          <IconKey className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                          <span className="text-[10px] font-normal text-slate-500 uppercase tracking-wider shrink-0">Code:</span>
+                          <span className="text-xs font-mono font-bold text-slate-900 truncate">{grp.code || `GRP-${grp.id || 101}`}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const codeToCopy = grp.code || `GRP-${grp.id || 101}`;
+                            navigator.clipboard.writeText(codeToCopy);
+                            setCopiedCodeId(`grp-${grp.id}`);
+                            setTimeout(() => setCopiedCodeId(null), 2000);
+                          }}
+                          className="p-1 text-slate-400 hover:text-slate-800 transition cursor-pointer shrink-0"
+                          title="Copy Group Code for Students"
+                        >
+                          {copiedCodeId === `grp-${grp.id}` ? <IconCheck className="w-3.5 h-3.5 text-emerald-600" /> : <IconCopy className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200/60">
                       <button
@@ -953,6 +978,7 @@ export default function SchoolsPage() {
                             id: grp.id,
                             name: grp.name,
                             centreId: grp.centreId || 0,
+                            code: grp.code || '',
                           });
                           setIsGroupModalOpen(true);
                         }}
@@ -1473,6 +1499,19 @@ export default function SchoolsPage() {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-normal text-slate-500 uppercase mb-1">
+                  Group Code <span className="text-[9px] text-slate-400 font-normal">(For Student Self-Service at /codes)</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="e.g. grade-5-coding or STEM-ALPHA"
+                  value={groupForm.code}
+                  onChange={(e) => setGroupForm({ ...groupForm, code: e.target.value })}
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-900 outline-none"
+                />
               </div>
 
               <div className="flex items-center justify-end space-x-3 pt-2">

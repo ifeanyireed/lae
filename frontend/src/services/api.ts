@@ -549,4 +549,30 @@ export async function sendContactForm(data: {
   }
 }
 
+export async function fetchGroupStudentsByCode(groupCode: string): Promise<{
+  success: boolean;
+  error?: string;
+  group?: {
+    id: number;
+    name: string;
+    code: string;
+    centre_name?: string;
+    school_name?: string;
+  };
+  students?: Array<{
+    id: string;
+    name: string;
+    student_code: string;
+    avatar: string;
+    total_xp: number;
+  }>;
+}> {
+  try {
+    const res = await fetch(`${PLAYER_SERVICE_URL}/api/v1/group/students?code=${encodeURIComponent(groupCode)}`);
+    return await res.json();
+  } catch (e: any) {
+    return { success: false, error: 'Network request failed connecting to server' };
+  }
+}
+
 

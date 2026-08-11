@@ -1835,5 +1835,114 @@ func (p *PlayerServiceHandler) ResetPasswordHandler(w http.ResponseWriter, r *ht
 	})
 }
 
+// GetStudentsByGroupCodeHandler returns group details and student access codes for a group code
+func (p *PlayerServiceHandler) GetStudentsByGroupCodeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	if p.DB == nil {
+		w.WriteHeader(http.StatusOK)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Database connection unavailable",
+		})
+		return
+	}
+
+	rawCode := strings.TrimSpace(r.URL.Query().Get("code"))
+	if rawCode == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Group code is required",
+		})
+		return
+	}
+
+	ctx := r.Context()
+	cleanCode := strings.ReplaceAll(strings.ToUpper(rawCode), "-", "")
+
+	var g database.Group
+	var schoolName string
+
+	queryGroup := `
+		SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, COALESCE(g.code, ''), COALESCE(o.name, 'School')
+		FROM groups g
+		LEFT JOIN centres c ON g.centre_id = c.id
+		LEFT JOIN organisations o ON g.organisation_id = o.id
+		WHERE REPLACE(UPPER(g.code), '-', '') = ? OR LOWER(g.code) = LOWER(?) OR g.name = ?
+		LIMIT 1
+	`
+	groupIDInt, _ := strconv.Atoi(rawCode)
+	err := p.DB.QueryRowContext(ctx, queryGroup, cleanCode, rawCode, rawCode).Scan(
+		&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &schoolName,
+	)
+
+	if err != nil && groupIDInt > 0 {
+		_ = p.DB.QueryRowContext(ctx, `
+			SELECT g.id, COALESCE(g.organisation_id, ''), COALESCE(g.centre_id, 0), COALESCE(c.name, ''), g.name, COALESCE(g.code, ''), COALESCE(o.name, 'School')
+			FROM groups g
+			LEFT JOIN centres c ON g.centre_id = c.id
+			LEFT JOIN organisations o ON g.organisation_id = o.id
+			WHERE g.id = ?
+			LIMIT 1
+		`, groupIDInt).Scan(&g.ID, &g.OrganisationID, &g.CentreID, &g.CentreName, &g.Name, &g.Code, &schoolName)
+	}
+
+	if g.ID == 0 {
+		w.WriteHeader(http.StatusNotFound)
+		_ = json.NewEncoder(w).Encode(map[string]interface{}{
+			"success": false,
+			"error":   "Group code not found. Please verify your code with your instructor.",
+		})
+		return
+	}
+
+	// Query students in this group
+	rows, err := p.DB.QueryContext(ctx, `
+		SELECT id, username, COALESCE(access_code, ''), COALESCE(avatar, ''), COALESCE(total_xp, 0)
+		FROM users
+		WHERE group_id = ? OR LOWER(group_id) = LOWER(?)
+		ORDER BY username ASC
+	`, g.ID, g.Name)
+
+	var students []map[string]interface{}
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var uID int
+			var uname, accessCode, avatar string
+			var totalXP int
+			if err := rows.Scan(&uID, &uname, &accessCode, &avatar, &totalXP); err == nil {
+				if avatar == "" {
+					avatar = "https://cdn.resultspro.ng/assets/character1.jpg"
+				}
+				students = append(students, map[string]interface{}{
+					"id":           fmt.Sprintf("%d", uID),
+					"name":         uname,
+					"student_code": accessCode,
+					"avatar":       avatar,
+					"total_xp":     totalXP,
+				})
+			}
+		}
+	}
+
+	if students == nil {
+		students = make([]map[string]interface{}, 0)
+	}
+
+	w.WriteHeader(http.StatusOK)
+	_ = json.NewEncoder(w).Encode(map[string]interface{}{
+		"success": true,
+		"group": map[string]interface{}{
+			"id":          g.ID,
+			"name":        g.Name,
+			"code":        g.Code,
+			"centre_name": g.CentreName,
+			"school_name": schoolName,
+		},
+		"students": students,
+	})
+}
+
 
 
