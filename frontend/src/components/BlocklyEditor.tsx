@@ -35,7 +35,11 @@ import {
   IconLink,
   IconPhoto,
   IconZoomIn,
-  IconZoomOut
+  IconZoomOut,
+  IconBrandHtml5,
+  IconBrandCss3,
+  IconBrandJavascript,
+  IconBrandPython
 } from '@tabler/icons-react';
 import { soundManager } from '@/utils/sound';
 import { animateBlockSnap, animateButtonPress } from '@/utils/gsapAnimations';
@@ -140,6 +144,41 @@ const getLanguageLabel = (worldId: number): string => {
     case 4: return 'JavaScript';
     case 5: return 'Python';
     default: return 'Code';
+  }
+};
+
+const renderLanguageLogo = (worldId: number) => {
+  switch (worldId) {
+    case 2: // HTML
+      return (
+        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-orange-500/15 border border-orange-500/30 text-orange-600 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandHtml5 className="w-3.5 h-3.5 text-orange-500 shrink-0" />
+          <span>HTML5</span>
+        </span>
+      );
+    case 3: // CSS
+      return (
+        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-blue-500/15 border border-blue-500/30 text-blue-600 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandCss3 className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+          <span>CSS3</span>
+        </span>
+      );
+    case 4: // JavaScript
+      return (
+        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-amber-400/20 border border-amber-500/30 text-amber-800 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandJavascript className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+          <span>JavaScript</span>
+        </span>
+      );
+    case 5: // Python
+      return (
+        <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-700 text-[10px] font-black tracking-wider uppercase shadow-sm">
+          <IconBrandPython className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+          <span>Python</span>
+        </span>
+      );
+    default:
+      return null;
   }
 };
 
@@ -852,6 +891,17 @@ export const BlocklyEditor: React.FC<BlocklyEditorProps> = ({
                 }`}
               />
             </button>
+          )}
+
+          {/* LANGUAGE LOGO AFTER THE TOGGLE SWITCH IN CODE EDITOR MODE */}
+          {isIdeMode && (activeWorldId >= 2 || isWorld2) && !isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="flex items-center ml-0.5"
+            >
+              {renderLanguageLogo(activeWorldId)}
+            </motion.div>
           )}
         </div>
 
