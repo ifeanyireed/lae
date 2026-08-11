@@ -4,7 +4,7 @@ export const CDN_BASE_URL = (process.env.NEXT_PUBLIC_CDN_URL || 'https://cdn.res
 const ASSET_VERSION_KEY = process.env.NEXT_PUBLIC_BUILD_VERSION || '2.1.1_v1';
 
 // Local assets stored directly in /public directory that should bypass external CDN URL
-const LOCAL_PUBLIC_ASSETS = ['/2_1_1.svg', '/scroll.svg', '/play.svg', '/reset.svg', '/start.svg', '/monkey1.svg'];
+const LOCAL_PUBLIC_ASSETS = ['/scroll.svg', '/play.svg', '/reset.svg', '/start.svg', '/monkey1.svg'];
 
 export const CHARACTER_AVATARS_CDN = Array.from(
   { length: 20 },
