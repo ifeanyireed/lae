@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint",
+    "optimize:assets": "python3 ../scripts/optimize_assets.py",
     "cdn:deploy": "python3 ../scripts/upload_to_cdn.py"
   },
   "dependencies": {

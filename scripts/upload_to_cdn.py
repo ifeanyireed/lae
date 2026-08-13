@@ -11,12 +11,14 @@ REMOTE_PATH = os.getenv("CDN_REMOTE_PATH", "domains/resultspro.ng/public_html/cd
 
 LOCAL_PUBLIC_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../frontend/public"))
 
-# Heavy background and stage assets to sync to CDN
-import re
-CDN_ASSETS = [
-    f for f in os.listdir(LOCAL_PUBLIC_DIR)
-    if re.match(r'^\d+_\d+_\d+\.svg$', f) or f.startswith("Adventure") or f.endswith(".jpeg")
-]
+# Include all optimized vector, image, video, and background assets
+CDN_ASSETS = []
+for root, dirs, files in os.walk(LOCAL_PUBLIC_DIR):
+    for f in files:
+        if not f.startswith('.') and f.endswith(('.svg', '.jpg', '.jpeg', '.png', '.mov', '.mp4', '.webm')):
+            full_p = os.path.join(root, f)
+            rel_p = os.path.relpath(full_p, LOCAL_PUBLIC_DIR)
+            CDN_ASSETS.append(rel_p)
 
 print(f"🚀 Preparing to sync {len(CDN_ASSETS)} assets to CDN ({HOST}:{PORT} -> {REMOTE_PATH})...")
 
@@ -39,10 +41,25 @@ try:
     uploaded_count = 0
     for filename in CDN_ASSETS:
         local_filepath = os.path.join(LOCAL_PUBLIC_DIR, filename)
-        remote_filepath = f"{REMOTE_PATH}/{filename}"
+        remote_filepath = f"{REMOTE_PATH}/{filename}".replace("\\", "/")
+        
+        # Ensure remote parent directory exists
+        remote_dir = os.path.dirname(remote_filepath)
+        dir_parts = remote_dir.strip("/").split("/")
+        c_path = ""
+        for p in dir_parts:
+            c_path += "/" + p
+            try:
+                sftp.mkdir(c_path)
+            except IOError:
+                pass
+                
         print(f"  Uploading {filename}...")
-        sftp.put(local_filepath, remote_filepath)
-        uploaded_count += 1
+        try:
+            sftp.put(local_filepath, remote_filepath)
+            uploaded_count += 1
+        except Exception as e:
+            print(f"  ❌ Error uploading {filename}: {e}")
 
     sftp.close()
     transport.close()
