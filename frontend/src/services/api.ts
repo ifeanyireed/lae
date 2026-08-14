@@ -1,6 +1,8 @@
 import { Organisation, PlatformUser, Subscription } from '@/app/controls/page';
 
-const PLAYER_SERVICE_URL = process.env.NEXT_PUBLIC_PLAYER_SERVICE_URL || 'http://localhost:8081';
+const PLAYER_SERVICE_URL = (
+  process.env.NEXT_PUBLIC_PLAYER_SERVICE_URL || 'https://player-service-y1ur.onrender.com'
+).replace(/\/+$/, '');
 
 // ORGANISATIONS / SCHOOLS & FAMILIES
 export async function fetchOrganisations(type?: string, id?: string): Promise<Organisation[]> {

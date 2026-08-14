@@ -59,6 +59,6 @@ services:
     staticPublishPath: out
     envVars:
       - key: NEXT_PUBLIC_GAME_ENGINE_URL
-        value: https://game-engine-service.onrender.com
+        value: https://game-engine-service-nkyc.onrender.com
       - key: NEXT_PUBLIC_PLAYER_SERVICE_URL
-        value: https://player-service-bttg.onrender.com
+        value: https://player-service-y1ur.onrender.com
