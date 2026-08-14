@@ -113,13 +113,16 @@ export default function StudentCodesPage() {
           loop
           muted
           playsInline
+          poster="/images/login_bg_poster.jpg"
+          aria-hidden="true"
+          tabIndex={-1}
           onError={(e) => {
             (e.target as HTMLElement).style.display = 'none';
           }}
           className="absolute inset-0 w-full h-full object-cover filter brightness-85 contrast-105 z-0"
         >
+          <source src="/login_bg.mp4" type="video/mp4" />
           <source src="/login_bg.mov" type="video/quicktime" />
-          <source src="/login_bg.mov" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-blue-950/85 to-slate-950/65 z-0" />
       </div>
